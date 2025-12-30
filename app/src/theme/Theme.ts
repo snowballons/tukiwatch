@@ -1,0 +1,29 @@
+export const Palette = {
+  // Dark Mode (Primary)
+  background: '#0A0A0A',
+  backgroundGradient: ['#1A1A2E', '#0A0A0A'],
+  card: '#161616',
+  text: '#FFFFFF',
+  textMuted: '#A1A1AA',
+  
+  // Accents
+  primary: '#2B35FF',
+  secondary: '#1C1C1E',
+  live: '#10B981',    // Vivid Emerald
+  offline: '#3F3F46', // Zinc Gray
+  accent: '#00D1FF',
+  border: '#27272A',
+  
+  // Light Mode (Optional - for later)
+  lightBackground: '#F9FAFB',
+  lightCard: '#FFFFFF',
+  lightText: '#111827',
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};

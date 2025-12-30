@@ -9,7 +9,7 @@ import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 // Screen Imports
-import { AuthScreen } from './src/screens/AuthScreen';
+import { AuthScreen } from './src/components/AuthScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { AddScreen } from './src/screens/AddScreen';
@@ -57,10 +57,10 @@ export default function App() {
         // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
-
+        
         // Set up auth listener
         supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-
+        
         // Simulate loading time for branded splash
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (e) {
