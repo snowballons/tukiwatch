@@ -8,7 +8,7 @@ __pycache__/
 # =========================
 # Virtual Environments
 # =========================
-venv/
+.venv/
 .env/
 .env.*
 .env
@@ -17,6 +17,8 @@ venv/
 # =========================
 .vscode/
 .idea/
+streamlink-docs/
+docs/
 
 # =========================
 # OS
