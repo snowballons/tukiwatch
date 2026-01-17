@@ -18,7 +18,7 @@ build/
 .env
 venv/
 env/
-
+streamwatch-back
 # =========================
 # Railway & Deployment
 # =========================
