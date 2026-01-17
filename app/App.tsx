@@ -16,6 +16,7 @@ import { AddScreen } from './src/screens/AddScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
 import { StreamProvider } from './src/context/StreamContext';
+import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { Palette } from './src/theme/Theme';
 
 // Keep the splash screen visible while we fetch resources
@@ -54,9 +55,13 @@ export default function App() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
+        // Get initial session with timeout
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Supabase session error:', error);
+        } else {
+          setSession(session);
+        }
 
         // Set up auth listener
         supabase.auth.onAuthStateChange((_event, session) => setSession(session));
@@ -64,7 +69,7 @@ export default function App() {
         // Simulate loading time for branded splash
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (e) {
-        console.warn(e);
+        console.error('Network error:', e);
       } finally {
         setAppIsReady(true);
       }
@@ -75,12 +80,22 @@ export default function App() {
 
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
+      // Hide the native splash screen
       await SplashScreen.hideAsync();
     }
   }, [appIsReady]);
 
+  // Always hide the native splash immediately to show our custom one
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
   if (!appIsReady) {
-    return null;
+    return (
+      <View style={styles.container}>
+        <CustomSplashScreen />
+      </View>
+    );
   }
 
   if (!session) {

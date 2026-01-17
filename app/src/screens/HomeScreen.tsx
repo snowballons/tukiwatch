@@ -16,7 +16,7 @@ export function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refreshStreams();
+    await refreshStreams(true); // Bypass cache on manual refresh
     setRefreshing(false);
   };
 
@@ -68,6 +68,9 @@ export function HomeScreen() {
               isLive={true}
               url={stream.url}
               onPress={() => handleStreamPress(stream)}
+              category={stream.category}
+              platform={stream.platform}
+              isCached={stream._cached}
             />
           ))
         )}

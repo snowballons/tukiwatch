@@ -36,17 +36,41 @@ export function AddScreen() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !previewData) return;
 
-    const { error } = await supabase.from('favorites').insert([
-      {
-        user_id: user.id,
-        streamer_name: previewData.author || "Unknown",
-        original_url: url,
-      },
-    ]);
+    try {
+      // Check if URL already exists for this user
+      const { data: existingFavorites, error: checkError } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('original_url', url);
 
-    if (!error) {
-      Alert.alert("Saved", "Added to your library.");
-      handleClear(); // Reset after successful save
+      if (checkError) {
+        Alert.alert("Error", "Failed to check for duplicates.");
+        return;
+      }
+
+      if (existingFavorites && existingFavorites.length > 0) {
+        Alert.alert("Already Added", "This stream is already in your library.");
+        return;
+      }
+
+      // Insert new favorite
+      const { error } = await supabase.from('favorites').insert([
+        {
+          user_id: user.id,
+          streamer_name: previewData.author || "Unknown",
+          original_url: url,
+        },
+      ]);
+
+      if (!error) {
+        Alert.alert("Saved", "Added to your library.");
+        handleClear(); // Reset after successful save
+      } else {
+        Alert.alert("Error", "Failed to add stream to library.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to add stream to library.");
     }
   };
 
@@ -98,6 +122,8 @@ export function AddScreen() {
             isLive={true}
             url={url}
             onPress={() => { }}
+            category={previewData.category}
+            platform={previewData.platform}
           />
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>

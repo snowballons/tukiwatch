@@ -13,6 +13,12 @@ export interface LiveStream {
   url: string;
   status: 'online' | 'offline' | 'loading';
   streamer_name?: string;
+  // Enhanced metadata from backend
+  category?: string;
+  stream_id?: string;
+  platform?: string;
+  // Cache indicator
+  _cached?: boolean;
 }
 
 export interface StreamResolution {
@@ -24,4 +30,11 @@ export interface StreamResolution {
   all_qualities?: Record<string, string>;
   error?: string;
   original_url?: string;
+  // Enhanced metadata from backend
+  category?: string;
+  stream_id?: string;
+  platform?: string;
+  stream_types?: string[];
+  // Cache indicator
+  _cached?: boolean;
 }

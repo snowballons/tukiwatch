@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
 import { StreamCard } from '../components/StreamCard';
 import { useStreamResolver } from '../hooks/useStreamResolver';
+import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
 
 export function LibraryScreen() {
@@ -11,19 +12,64 @@ export function LibraryScreen() {
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<any>();
 
-  const offlineStreams = streams.filter(stream => stream.status === 'offline');
+  const allStreams = streams; // Show all streams (both online and offline)
 
   const handleStreamPress = async (stream: any) => {
-    const data = await resolve(stream.url);
-    if (data && data.status === 'online') {
-      navigation.navigate('Player', { streamData: data });
-      // Refresh streams after successful play to update status
-      await refreshStreams();
-    } else if (data) {
-      Alert.alert("Offline", data.error || "Stream is not live.");
+    // If stream is already known to be online, resolve and play directly
+    if (stream.status === 'online') {
+      const data = await resolve(stream.url);
+      if (data && data.status === 'online') {
+        navigation.navigate('Player', { streamData: data });
+        // Refresh streams after successful play to update status
+        await refreshStreams();
+      } else {
+        Alert.alert("Stream Unavailable", "Stream went offline. Refreshing library...");
+        await refreshStreams();
+      }
     } else {
-      Alert.alert("Error", "Could not connect to engine.");
+      // For offline streams, check if they're now online
+      const data = await resolve(stream.url);
+      if (data && data.status === 'online') {
+        navigation.navigate('Player', { streamData: data });
+        // Refresh streams after successful play to update status
+        await refreshStreams();
+      } else if (data) {
+        Alert.alert("Offline", data.error || "Stream is not live.");
+      } else {
+        Alert.alert("Error", "Could not connect to engine.");
+      }
     }
+  };
+
+  const handleDeleteStream = async (streamId: number, streamerName: string) => {
+    Alert.alert(
+      "Delete Stream",
+      `Remove "${streamerName}" from your library?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('favorites')
+                .delete()
+                .eq('id', streamId);
+
+              if (!error) {
+                Alert.alert("Deleted", "Stream removed from library.");
+                await refreshStreams();
+              } else {
+                Alert.alert("Error", "Failed to delete stream.");
+              }
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete stream.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -40,7 +86,7 @@ export function LibraryScreen() {
       <Text style={styles.headerTitle}>My Library</Text>
 
       <FlatList
-        data={offlineStreams}
+        data={allStreams}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
@@ -48,15 +94,20 @@ export function LibraryScreen() {
             title={item.streamer_name || item.title}
             streamer={item.author || 'Unknown'}
             thumbnail={item.thumbnail}
-            isLive={false}
+            isLive={item.status === 'online'}
             url={item.url}
             onPress={() => handleStreamPress(item)}
+            category={item.category}
+            platform={item.platform}
+            showDelete={true}
+            onDelete={() => handleDeleteStream(item.id, item.streamer_name || item.title)}
+            isCached={item._cached}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>All favorites are live!</Text>
-            <Text style={styles.emptySubtext}>Check the Home tab to watch them.</Text>
+            <Text style={styles.emptyText}>No streams in library</Text>
+            <Text style={styles.emptySubtext}>Add some streams to get started!</Text>
           </View>
         }
       />

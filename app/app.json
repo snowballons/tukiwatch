@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "StreamWatch",
-    "slug": "StreamWatchApp",
+    "slug": "streamwatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -30,6 +30,12 @@
     },
     "plugins": [
       "expo-video"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2879c1fe-24f0-415e-b606-b5ab7888d48b"
+      }
+    },
+    "owner": "lunderwood1967s-organization"
   }
 }

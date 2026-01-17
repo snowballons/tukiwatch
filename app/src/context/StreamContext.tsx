@@ -6,7 +6,7 @@ import { Favorite, LiveStream } from '../types';
 interface StreamContextType {
   streams: LiveStream[];
   loading: boolean;
-  refreshStreams: () => Promise<void>;
+  refreshStreams: (bypassCache?: boolean) => Promise<void>;
 }
 
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
@@ -15,7 +15,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
   const [streams, setStreams] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshStreams = async () => {
+  const refreshStreams = async (bypassCache: boolean = false) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -31,7 +31,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
       }
 
       const urls = favorites.map((fav: Favorite) => fav.original_url);
-      const statusResults = await streamService.checkBatchStatus(urls);
+      const statusResults = await streamService.checkBatchStatus(urls, bypassCache);
       
       // Add favorite metadata to stream results
       const enrichedStreams = statusResults.map((stream, index) => ({
@@ -42,16 +42,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
 
       setStreams(enrichedStreams);
     } catch (error: any) {
-      // Rate limiting disabled - simplified error handling
       console.error('Failed to refresh streams:', error);
-      
-      // // Handle rate limiting errors
-      // if (error.message && error.message.includes('limit')) {
-      //   console.error('Rate limited:', error.message);
-      //   // Don't clear streams on rate limit, keep showing cached data
-      // } else {
-      //   console.error('Failed to refresh streams:', error);
-      // }
     } finally {
       setLoading(false);
     }

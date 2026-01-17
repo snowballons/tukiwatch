@@ -20,6 +20,31 @@ export const Palette = {
   lightText: '#111827',
 };
 
+export const PlatformColors = {
+  twitch: '#9146FF',
+  youtube: '#FF0000',
+  kick: '#53FC18',
+  facebook: '#1877F2',
+  instagram: '#E4405F',
+  tiktok: '#000000',
+  bigo: '#FF6B35',
+  dailymotion: '#0066DC',
+  vimeo: '#1AB7EA',
+  steam: '#171A21',
+  bilibili: '#FB7299',
+  huya: '#FF7F00',
+  picarto: '#1DA1F2',
+  trovo: '#00D7FF',
+  ustreamtv: '#3388CC',
+  vk: '#4680C2',
+  dlive: '#FFD700',
+  goodgame: '#00AA00',
+  abematv: '#00D4AA',
+  aloula: '#FF6B6B',
+  unknown: '#6B7280',
+  default: '#6B7280'
+};
+
 export const Spacing = {
   xs: 4,
   sm: 8,
