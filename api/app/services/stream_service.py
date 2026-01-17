@@ -7,7 +7,6 @@ from app.exceptions import (
     NoPluginException,
     NoStreamsException,
     PluginException,
-    BrowserRequiredException,
 )
 from app.cache import cache
 from app.utils import (
@@ -104,13 +103,6 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
             platform=extract_platform_from_url(url),
         )
     except PluginError as e:
-        if "Chromium-based web browser" in str(e):
-            return StreamStatus(
-                url=url,
-                status="error",
-                error="Browser required but not available",
-                platform=extract_platform_from_url(url),
-            )
         return StreamStatus(
             url=url,
             status="error",
@@ -198,8 +190,6 @@ def resolve_stream_details(url: str):
     except NoStreamsError:
         raise NoStreamsException(url)
     except PluginError as e:
-        if "Chromium-based web browser" in str(e):
-            raise BrowserRequiredException(url)
         raise PluginException(url, str(e))
     except Exception as e:
         raise PluginException(url, f"Unexpected error: {str(e)}")

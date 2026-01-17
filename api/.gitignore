@@ -4,6 +4,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg-info/
+dist/
+build/
 
 # =========================
 # Virtual Environments
@@ -12,11 +16,38 @@ __pycache__/
 .env/
 .env.*
 .env
+venv/
+env/
+
+# =========================
+# Railway & Deployment
+# =========================
+.railway/
+.vercel/
+.netlify/
+
+# =========================
+# Testing & Coverage
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+test_*.py
+*_test.py
+
 # =========================
 # Editor / IDE
 # =========================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Documentation
+# =========================
 streamlink-docs/
 docs/
 
@@ -25,9 +56,23 @@ docs/
 # =========================
 .DS_Store
 Thumbs.db
+*.tmp
 
 # =========================
-# Logs
+# Logs & Cache
 # =========================
 *.log
+.cache/
+.ruff_cache/
+
+# =========================
+# Analysis & Profiling
+# =========================
+*.prof
+.prof/
+OPTIMIZATION_SUMMARY.md
+CF_WORKERS_TEST_RESULTS.md
+RENDER_ANALYSIS.md
+RAILWAY_ANALYSIS.md
+PLATFORM_COMPARISON.md
 

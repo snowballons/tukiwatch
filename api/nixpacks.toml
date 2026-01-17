@@ -1,0 +1,17 @@
+# Railway.app Configuration for Streamlink API
+
+[phases.setup]
+# Install system packages required for streamlink
+aptPkgs = [
+    "libxml2-dev",
+    "libxslt1-dev", 
+    "build-essential"
+]
+
+[phases.install]
+# Install Python dependencies
+cmds = ["pip install -r requirements.txt"]
+
+[phases.start]
+# Start the FastAPI application
+cmd = "gunicorn main:app --host 0.0.0.0 --port $PORT --workers 2"

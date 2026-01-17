@@ -21,7 +21,6 @@ class StreamlinkSessionPool:
     def _create_session(self) -> Streamlink:
         """Create a pre-configured Streamlink session"""
         session = Streamlink()
-        session.set_option("webbrowser-executable", config.CHROME_PATH)
         session.set_option(
             "http-headers",
             "User-Agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",

@@ -20,11 +20,3 @@ class NoStreamsException(StreamlinkAPIException):
 class PluginException(StreamlinkAPIException):
     def __init__(self, url: str, error: str):
         super().__init__(status_code=422, detail=f"Plugin error for {url}: {error}")
-
-
-class BrowserRequiredException(StreamlinkAPIException):
-    def __init__(self, url: str):
-        super().__init__(
-            status_code=503,
-            detail=f"Browser required for {url} but not available. Install Chromium.",
-        )
