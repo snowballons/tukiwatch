@@ -7,6 +7,7 @@ from app.exceptions import (
     NoPluginException,
     NoStreamsException,
     PluginException,
+    BrowserRequiredException,
 )
 from app.cache import cache
 from app.utils import (
@@ -103,11 +104,33 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
             platform=extract_platform_from_url(url),
         )
     except PluginError as e:
+        error_msg = str(e)
+        platform = extract_platform_from_url(url)
+        
+        # Check for browser-related errors
+        if any(keyword in error_msg.lower() for keyword in [
+            "chromium-based web browser", 
+            "403 client error: forbidden",
+            "browser", 
+            "cloudflare"
+        ]):
+            return StreamStatus(
+                url=url,
+                status="error",
+                error="Browser dependency required",
+                platform=platform,
+                error_details={
+                    "type": "browser_required",
+                    "message": f"{platform.title()} requires browser automation",
+                    "reason": "Platform uses anti-bot protection"
+                }
+            )
+        
         return StreamStatus(
             url=url,
             status="error",
-            error=f"Plugin error: {str(e)}",
-            platform=extract_platform_from_url(url),
+            error=f"Plugin error: {error_msg}",
+            platform=platform,
         )
     except Exception as e:
         return StreamStatus(
@@ -190,7 +213,18 @@ def resolve_stream_details(url: str):
     except NoStreamsError:
         raise NoStreamsException(url)
     except PluginError as e:
-        raise PluginException(url, str(e))
+        error_msg = str(e)
+        
+        # Check for browser-related errors and convert to BrowserRequiredException
+        if any(keyword in error_msg.lower() for keyword in [
+            "chromium-based web browser", 
+            "403 client error: forbidden",
+            "browser", 
+            "cloudflare"
+        ]):
+            raise BrowserRequiredException(url)
+            
+        raise PluginException(url, error_msg)
     except Exception as e:
         raise PluginException(url, f"Unexpected error: {str(e)}")
     finally:

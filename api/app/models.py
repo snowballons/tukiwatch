@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 
 class BatchRequest(BaseModel):
@@ -17,6 +17,7 @@ class StreamStatus(BaseModel):
     category: str = ""
     stream_id: str = ""
     platform: str = ""
+    error_details: Optional[Dict[str, Any]] = None
 
 
 class StreamResolution(BaseModel):
@@ -33,3 +34,4 @@ class StreamResolution(BaseModel):
     stream_id: Optional[str] = None
     platform: Optional[str] = None
     stream_types: Optional[List[str]] = None
+    error_details: Optional[Dict[str, Any]] = None
