@@ -2,7 +2,6 @@ import queue
 import threading
 import time
 from streamlink.session import Streamlink
-from config import config
 
 
 class StreamlinkSessionPool:

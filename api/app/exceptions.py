@@ -46,7 +46,7 @@ class BrowserRequiredException(StreamlinkAPIException):
                 "error": "Browser dependency required",
                 "platform": info["name"],
                 "reason": f"This platform {info['reason']}",
-                "message": f"Browser automation is not available in this deployment",
+                "message": "Browser automation is not available in this deployment",
                 "alternative": info["alternative"],
                 "url": url
             }
