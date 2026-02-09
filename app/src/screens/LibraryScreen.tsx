@@ -128,32 +128,51 @@ export function LibraryScreen() {
       </View>
 
       {/* Platform Filter */}
-      {platforms.length > 1 && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterContainer}
-          contentContainerStyle={styles.filterContent}
+      <View style={styles.filterSectionWrapper}>
+        {/* "All" button (constant) */}
+        <TouchableOpacity
+          key="all"
+          style={[
+            styles.filterChip,
+            filterPlatform === 'all' && styles.filterChipActive
+          ]}
+          onPress={() => setFilterPlatform('all')}
         >
-          {platforms.map(platform => (
-            <TouchableOpacity
-              key={platform}
-              style={[
-                styles.filterChip,
-                filterPlatform === platform && styles.filterChipActive
-              ]}
-              onPress={() => setFilterPlatform(platform)}
-            >
-              <Text style={[
-                styles.filterChipText,
-                filterPlatform === platform && styles.filterChipTextActive
-              ]}>
-                {platform === 'all' ? 'All' : platform}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+          <Text style={[
+            styles.filterChipText,
+            filterPlatform === 'all' && styles.filterChipTextActive
+          ]}>
+            All
+          </Text>
+        </TouchableOpacity>
+
+        {/* Scrollable platforms */}
+        {platforms.length > 1 && ( // Only render scrollable if there are other platforms
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollableFilterContent} // New style for scrollable content
+          >
+            {platforms.filter(p => p !== 'all').map(platform => ( // Filter out 'all'
+              <TouchableOpacity
+                key={platform}
+                style={[
+                  styles.filterChip,
+                  filterPlatform === platform && styles.filterChipActive
+                ]}
+                onPress={() => setFilterPlatform(platform)}
+              >
+                <Text style={[
+                  styles.filterChipText,
+                  filterPlatform === platform && styles.filterChipTextActive
+                ]}>
+                  {platform}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
 
       <FlatList
         data={filteredStreams}
@@ -222,12 +241,18 @@ const styles = StyleSheet.create({
     color: Palette.text,
     fontSize: 16
   },
-  filterContainer: {
+  filterSectionWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
-    maxHeight: 40
+    maxHeight: 40, // Keeping this to maintain overall height
   },
-  filterContent: {
-    gap: 8
+  filterContainer: {
+    flex: 1, // Takes remaining space
+  },
+  scrollableFilterContent: {
+    gap: 8,
+    paddingRight: Spacing.lg, // Add padding to the end of the scrollable content
   },
   filterChip: {
     paddingHorizontal: 16,
