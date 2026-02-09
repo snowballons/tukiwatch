@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: Palette.card,
     borderWidth: 1,
-    borderColor: Palette.border
+    borderColor: Palette.border,
   },
   filterChipActive: {
     backgroundColor: Palette.primary,
