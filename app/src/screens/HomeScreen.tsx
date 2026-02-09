@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
 import { StreamCard } from '../components/StreamCard';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
+import { Search, X } from 'lucide-react-native';
 
 export function HomeScreen() {
   const { streams, loading, refreshStreams } = useStreams();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPlatform, setFilterPlatform] = useState('all');
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<any>();
 
-  const liveStreams = streams.filter(stream => stream.status === 'online');
+  const platforms = useMemo(() => {
+    const liveStreams = streams.filter(s => s.status === 'online');
+    const unique = new Set(liveStreams.map(s => s.platform).filter(Boolean));
+    return ['all', ...Array.from(unique)];
+  }, [streams]);
+
+  const filteredStreams = useMemo(() => {
+    let result = streams.filter(stream => stream.status === 'online');
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.author?.toLowerCase().includes(query) || 
+        s.title?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (filterPlatform !== 'all') {
+      result = result.filter(s => s.platform === filterPlatform);
+    }
+    
+    return result;
+  }, [streams, searchQuery, filterPlatform]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refreshStreams(true); // Bypass cache on manual refresh
+    await refreshStreams(true);
     setRefreshing(false);
   };
 
@@ -47,11 +72,56 @@ export function HomeScreen() {
         <Text style={styles.title}>Live Now</Text>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Search color={Palette.textMuted} size={20} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search live streams..."
+          placeholderTextColor={Palette.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <X color={Palette.textMuted} size={20} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Platform Filter */}
+      {platforms.length > 1 && (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {platforms.map(platform => (
+            <TouchableOpacity
+              key={platform}
+              style={[
+                styles.filterChip,
+                filterPlatform === platform && styles.filterChipActive
+              ]}
+              onPress={() => setFilterPlatform(platform)}
+            >
+              <Text style={[
+                styles.filterChipText,
+                filterPlatform === platform && styles.filterChipTextActive
+              ]}>
+                {platform === 'all' ? 'All' : platform}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {liveStreams.length === 0 ? (
+        {filteredStreams.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No favorites are live</Text>
             <Text style={styles.emptySubtitle}>
@@ -59,7 +129,7 @@ export function HomeScreen() {
             </Text>
           </View>
         ) : (
-          liveStreams.map((stream) => (
+          filteredStreams.map((stream) => (
             <StreamCard
               key={stream.id}
               title={stream.title}
@@ -91,6 +161,53 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
   welcomeText: { color: Palette.textMuted, fontSize: 14, fontWeight: '500' },
   title: { color: Palette.text, fontSize: 28, fontWeight: 'bold' },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Palette.card,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginHorizontal: Spacing.lg,
+    marginBottom: 12,
+    height: 48
+  },
+  searchIcon: {
+    marginRight: 8
+  },
+  searchInput: {
+    flex: 1,
+    color: Palette.text,
+    fontSize: 16
+  },
+  filterContainer: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: 16,
+    maxHeight: 40
+  },
+  filterContent: {
+    gap: 8
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Palette.card,
+    borderWidth: 1,
+    borderColor: Palette.border
+  },
+  filterChipActive: {
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary
+  },
+  filterChipText: {
+    color: Palette.textMuted,
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'capitalize'
+  },
+  filterChipTextActive: {
+    color: '#fff'
+  },
   scrollContent: { paddingHorizontal: Spacing.lg },
   centered: { justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: Palette.textMuted, marginTop: Spacing.md },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Keyboard, ScrollView, Modal, FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { StreamCard } from '../components/StreamCard';
@@ -37,6 +38,7 @@ const constructStreamUrl = (platformKey: string, identifier: string): string => 
 };
 
 export function AddScreen() {
+  const navigation = useNavigation();
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [identifier, setIdentifier] = useState('');
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
@@ -116,10 +118,12 @@ export function AddScreen() {
         Alert.alert("Saved", "Added to your library.");
         handleClear(); // Reset after successful save
       } else {
-        Alert.alert("Error", "Failed to add stream to library.");
+        console.error("Insert error:", error);
+        Alert.alert("Error", error.message || "Failed to add stream to library.");
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to add stream to library.");
+    } catch (error: any) {
+      console.error("Save error:", error);
+      Alert.alert("Error", error.message || "Failed to add stream to library.");
     }
   };
 
@@ -235,7 +239,7 @@ export function AddScreen() {
             thumbnail={previewData.thumbnail}
             isLive={true}
             url={constructedUrl}
-            onPress={() => { }}
+            onPress={() => navigation.navigate('Player', { streamData: previewData })}
             category={previewData.category}
             platform={previewData.platform}
           />

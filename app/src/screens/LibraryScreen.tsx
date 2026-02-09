@@ -1,18 +1,43 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
 import { StreamCard } from '../components/StreamCard';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
+import { Search, X } from 'lucide-react-native';
 
 export function LibraryScreen() {
   const { streams, loading, refreshStreams } = useStreams();
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<any>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPlatform, setFilterPlatform] = useState('all');
 
-  const allStreams = streams; // Show all streams (both online and offline)
+  const platforms = useMemo(() => {
+    const unique = new Set(streams.map(s => s.platform).filter(Boolean));
+    return ['all', ...Array.from(unique)];
+  }, [streams]);
+
+  const filteredStreams = useMemo(() => {
+    let result = streams;
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s => 
+        s.streamer_name?.toLowerCase().includes(query) || 
+        s.author?.toLowerCase().includes(query) ||
+        s.title?.toLowerCase().includes(query)
+      );
+    }
+    
+    if (filterPlatform !== 'all') {
+      result = result.filter(s => s.platform === filterPlatform);
+    }
+    
+    return result;
+  }, [streams, searchQuery, filterPlatform]);
 
   const handleStreamPress = async (stream: any) => {
     // If stream is already known to be online, resolve and play directly
@@ -85,8 +110,53 @@ export function LibraryScreen() {
     <View style={styles.container}>
       <Text style={styles.headerTitle}>My Library</Text>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Search color={Palette.textMuted} size={20} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search streams or streamers..."
+          placeholderTextColor={Palette.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <X color={Palette.textMuted} size={20} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Platform Filter */}
+      {platforms.length > 1 && (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {platforms.map(platform => (
+            <TouchableOpacity
+              key={platform}
+              style={[
+                styles.filterChip,
+                filterPlatform === platform && styles.filterChipActive
+              ]}
+              onPress={() => setFilterPlatform(platform)}
+            >
+              <Text style={[
+                styles.filterChipText,
+                filterPlatform === platform && styles.filterChipTextActive
+              ]}>
+                {platform === 'all' ? 'All' : platform}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
       <FlatList
-        data={allStreams}
+        data={filteredStreams}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
@@ -134,6 +204,51 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: Spacing.lg
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Palette.card,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    height: 48
+  },
+  searchIcon: {
+    marginRight: 8
+  },
+  searchInput: {
+    flex: 1,
+    color: Palette.text,
+    fontSize: 16
+  },
+  filterContainer: {
+    marginBottom: 16,
+    maxHeight: 40
+  },
+  filterContent: {
+    gap: 8
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Palette.card,
+    borderWidth: 1,
+    borderColor: Palette.border
+  },
+  filterChipActive: {
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary
+  },
+  filterChipText: {
+    color: Palette.textMuted,
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'capitalize'
+  },
+  filterChipTextActive: {
+    color: '#fff'
   },
   centered: {
     justifyContent: 'center',

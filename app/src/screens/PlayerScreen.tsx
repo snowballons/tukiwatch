@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, ScrollView, Modal, FlatList } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Palette, Spacing } from '../theme/Theme';
-import { X, Maximize, Settings2 } from 'lucide-react-native';
+import { X, ChevronDown } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
 export function PlayerScreen({ route, navigation }: any) {
-  const { streamData } = route.params; // We pass the resolved data from the previous screen
+  const { streamData, url } = route.params;
+  const sources = streamData || { best_quality: url };
   const [currentQuality, setCurrentQuality] = useState('best');
   const [isChanging, setIsChanging] = useState(false);
+  const [showQualityPicker, setShowQualityPicker] = useState(false);
 
-  const player = useVideoPlayer(streamData.best_quality, (p) => {
+  const player = useVideoPlayer(sources.best_quality, (p) => {
     p.loop = false;
     p.play();
   });
@@ -19,6 +21,7 @@ export function PlayerScreen({ route, navigation }: any) {
   const changeQuality = async (name: string, url: string) => {
     setIsChanging(true);
     setCurrentQuality(name);
+    setShowQualityPicker(false);
     await player.replaceAsync(url);
     player.play();
     setIsChanging(false);
@@ -31,7 +34,7 @@ export function PlayerScreen({ route, navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
           <X color="#fff" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{streamData.author}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{sources.author || 'Stream'}</Text>
         <View style={{ width: 40 }} /> 
       </View>
 
@@ -52,33 +55,68 @@ export function PlayerScreen({ route, navigation }: any) {
 
       {/* Metadata & Actions */}
       <ScrollView contentContainerStyle={styles.details}>
-        <Text style={styles.streamTitle}>{streamData.title}</Text>
+        <Text style={styles.streamTitle}>{sources.title || 'Live Stream'}</Text>
         
         <View style={styles.statusRow}>
           <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE</Text></View>
-          <Text style={styles.authorName}>{streamData.author}</Text>
+          <Text style={styles.authorName}>{sources.author || 'Unknown'}</Text>
         </View>
 
         <View style={styles.divider} />
 
-        <View style={styles.sectionHeader}>
-          <Settings2 color={Palette.textMuted} size={18} />
-          <Text style={styles.sectionTitle}>Stream Quality</Text>
-        </View>
+        {sources.all_qualities && (
+          <TouchableOpacity 
+            style={styles.qualitySelector}
+            onPress={() => setShowQualityPicker(true)}
+          >
+            <Text style={styles.qualitySelectorLabel}>Stream Quality</Text>
+            <View style={styles.qualitySelectorValue}>
+              <Text style={styles.qualitySelectorText}>{currentQuality}</Text>
+              <ChevronDown color={Palette.textMuted} size={20} />
+            </View>
+          </TouchableOpacity>
+        )}
 
-        <View style={styles.qualityGrid}>
-          {Object.entries(streamData.all_qualities).map(([name, url]) => (
-            <TouchableOpacity 
-              key={name} 
-              style={[styles.qualityBtn, currentQuality === name && styles.activeBtn]}
-              onPress={() => changeQuality(name, url as string)}
-            >
-              <Text style={[styles.qualityLabel, currentQuality === name && styles.activeText]}>
-                {name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Quality Picker Modal */}
+        {sources.all_qualities && (
+          <Modal
+            visible={showQualityPicker}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowQualityPicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                activeOpacity={1}
+                onPress={() => setShowQualityPicker(false)}
+              />
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Quality</Text>
+                <FlatList
+                  data={Object.entries(sources.all_qualities)}
+                  keyExtractor={([name]) => name}
+                  renderItem={({ item: [name, url] }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.qualityOption,
+                        currentQuality === name && styles.qualityOptionSelected
+                      ]}
+                      onPress={() => changeQuality(name, url as string)}
+                    >
+                      <Text style={[
+                        styles.qualityOptionText,
+                        currentQuality === name && styles.qualityOptionTextSelected
+                      ]}>
+                        {name}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
       </ScrollView>
     </View>
   );
@@ -99,11 +137,65 @@ const styles = StyleSheet.create({
   liveText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   authorName: { color: Palette.textMuted, fontSize: 16 },
   divider: { height: 1, backgroundColor: Palette.border, marginVertical: 25 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 15 },
-  sectionTitle: { color: Palette.text, fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  qualityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  qualityBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: Palette.card, borderWidth: 1, borderColor: Palette.border },
-  activeBtn: { backgroundColor: Palette.primary, borderColor: Palette.primary },
-  qualityLabel: { color: Palette.textMuted, fontSize: 13, fontWeight: '600' },
-  activeText: { color: '#fff' }
+  qualitySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Palette.card,
+    padding: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Palette.border,
+  },
+  qualitySelectorLabel: {
+    color: Palette.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  qualitySelectorValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  qualitySelectorText: {
+    color: Palette.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: Palette.card,
+    borderRadius: 16,
+    width: '80%',
+    maxHeight: '60%',
+    padding: 20,
+  },
+  modalTitle: {
+    color: Palette.text,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  qualityOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  qualityOptionSelected: {
+    backgroundColor: Palette.primary + '20',
+  },
+  qualityOptionText: {
+    color: Palette.text,
+    fontSize: 16,
+  },
+  qualityOptionTextSelected: {
+    color: Palette.primary,
+    fontWeight: '600',
+  },
 });

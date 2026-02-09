@@ -1,40 +1,86 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
-// import { LinearGradient } from 'expo-linear-gradient';
-import { LogIn, ArrowRight } from 'lucide-react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image, Modal } from 'react-native';
+import { LogIn } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
+import { PrivacyPolicyScreen } from './PrivacyPolicyScreen';
+import { TermsOfServiceScreen } from './TermsOfServiceScreen';
 
-// We define the gradient colors as a constant tuple to satisfy TypeScript
-const GRADIENT_COLORS: [string, string, ...string[]] = ['#1A1A2E', '#0A0A0A'];
-
-export function AuthScreen() {
+export function AuthScreen({ navigation }: any) {
   const [view, setView] = useState<'initial' | 'login' | 'signup'>('initial');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  
+  const emailInputRef = React.useRef<TextInput>(null);
+  const passwordInputRef = React.useRef<TextInput>(null);
 
   const handleSignIn = async () => {
     if (!email || !password) return Alert.alert("Required", "Please fill in all fields.");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    let loginEmail = email.trim();
+    
+    // Check if input is username (no @ symbol) or email
+    if (!email.includes('@')) {
+      // It's a username, look up the email
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', email.trim())
+        .single();
+      
+      if (profileError || !profiles) {
+        setLoading(false);
+        return Alert.alert("Error", "Username not found.");
+      }
+      
+      // Get the email from auth.users
+      const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profiles.id);
+      
+      if (userError || !user?.email) {
+        // Fallback: try to get email from user metadata or use RPC
+        const { data: userEmail, error: rpcError } = await supabase.rpc('get_user_email_by_username', {
+          username_input: email.trim()
+        });
+        
+        if (rpcError || !userEmail) {
+          setLoading(false);
+          return Alert.alert("Error", "Could not find account. Please use your email to sign in.");
+        }
+        
+        loginEmail = userEmail;
+      } else {
+        loginEmail = user.email;
+      }
+    }
+    
+    const { error } = await supabase.auth.signInWithPassword({ 
+      email: loginEmail, 
+      password 
+    });
+    
     if (error) Alert.alert("Error", error.message);
     setLoading(false);
   };
 
   const handleSignUp = async () => {
-    if (!email || !password) return Alert.alert("Required", "Please fill in all fields.");
+    if (!email || !password || !username) return Alert.alert("Required", "Please fill in all fields.");
+    if (username.length < 3) return Alert.alert("Error", "Username must be at least 3 characters.");
+    
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: { username }
+      }
+    });
     if (error) Alert.alert("Error", error.message);
-    else Alert.alert("Success", "Check your email for the confirmation link!");
-    setLoading(false);
-  };
-
-  const handleGuestEntry = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) Alert.alert("Error", error.message);
+    else Alert.alert("Success", "Account created! You can now sign in.");
     setLoading(false);
   };
 
@@ -51,23 +97,50 @@ export function AuthScreen() {
           
           <Text style={styles.title}>{view === 'login' ? 'Welcome Back' : 'Join StreamWatch'}</Text>
           
+          {view === 'signup' && (
+            <TextInput 
+              style={styles.input} 
+              placeholder="Username" 
+              placeholderTextColor="#666" 
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoFocus
+              returnKeyType="next"
+              onSubmitEditing={() => emailInputRef.current?.focus()}
+            />
+          )}
+          
           <TextInput 
+            ref={view === 'login' ? emailInputRef : undefined}
             style={styles.input} 
-            placeholder="Email" 
+            placeholder="Email or Username" 
             placeholderTextColor="#666" 
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
-            keyboardType="email-address"
+            keyboardType="default"
+            autoFocus={view === 'login'}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordInputRef.current?.focus()}
           />
           <TextInput 
+            ref={passwordInputRef}
             style={styles.input} 
             placeholder="Password" 
             placeholderTextColor="#666" 
             secureTextEntry 
             value={password}
             onChangeText={setPassword}
+            returnKeyType="done"
+            onSubmitEditing={view === 'login' ? handleSignIn : handleSignUp}
           />
+          
+          {view === 'login' && (
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotLink}>
+              <Text style={styles.forgotText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          )}
           
           <TouchableOpacity 
             style={styles.primaryBtn} 
@@ -108,15 +181,37 @@ export function AuthScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Guest Entry */}
-      <TouchableOpacity style={styles.guestLink} onPress={handleGuestEntry}>
-         <Text style={styles.guestTextMuted}>Just looking? </Text>
-         <Text style={styles.guestTextAction}>Continue as Guest <ArrowRight color={Palette.accent} size={14} /></Text>
-      </TouchableOpacity>
+      <View style={styles.footerContainer}>
+        <Text style={styles.footerText}>By continuing, you agree to StreamWatch's </Text>
+        <TouchableOpacity onPress={() => setShowTerms(true)}>
+          <Text style={styles.link}>Terms of Service</Text>
+        </TouchableOpacity>
+        <Text style={styles.footerText}> and </Text>
+        <TouchableOpacity onPress={() => setShowPrivacy(true)}>
+          <Text style={styles.link}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <Text style={styles.footerText}>.</Text>
+      </View>
 
-      <Text style={styles.footerText}>
-        By continuing, you agree to StreamWatch's Terms of Service and Privacy Policy.
-      </Text>
+      {/* Privacy Policy Modal */}
+      <Modal
+        visible={showPrivacy}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPrivacy(false)}
+      >
+        <PrivacyPolicyScreen onClose={() => setShowPrivacy(false)} />
+      </Modal>
+
+      {/* Terms of Service Modal */}
+      <Modal
+        visible={showTerms}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowTerms(false)}
+      >
+        <TermsOfServiceScreen onClose={() => setShowTerms(false)} />
+      </Modal>
     </View>
   );
 }
@@ -141,23 +236,18 @@ const styles = StyleSheet.create({
   },
   brandName: { color: '#fff', fontSize: 42, fontWeight: '900', letterSpacing: -1 },
   tagline: { color: Palette.textMuted, fontSize: 18, fontWeight: '500', marginTop: 4 },
-  card: { width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 28, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  card: { width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 28, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', marginBottom: 20 },
   primaryBtn: { backgroundColor: Palette.primary, height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   secondaryBtn: { backgroundColor: Palette.secondary, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: '700', marginHorizontal: 15 },
-  socialRow: { flexDirection: 'row', gap: 12 },
-  socialBtn: { flex: 1, height: 48, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  socialBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  guestLink: { marginTop: 40, flexDirection: 'row', alignItems: 'center' },
-  guestTextMuted: { color: Palette.textMuted, fontSize: 15 },
-  guestTextAction: { color: Palette.accent, fontSize: 15, fontWeight: '700' },
-  footerText: { position: 'absolute', bottom: 40, color: 'rgba(255,255,255,0.2)', fontSize: 10, textAlign: 'center', paddingHorizontal: 40 },
+  footerContainer: { position: 'absolute', bottom: 40, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingHorizontal: 40 },
+  footerText: { color: 'rgba(255,255,255,0.2)', fontSize: 10, textAlign: 'center' },
+  link: { color: Palette.accent, fontSize: 10, textDecorationLine: 'underline' },
   backBtn: { marginBottom: 20, alignSelf: 'flex-start' },
   backText: { color: Palette.text, fontWeight: 'bold', fontSize: 16 },
   formContainer: { width: '100%', justifyContent: 'center' },
   title: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 30 },
-  input: { backgroundColor: 'rgba(255,255,255,0.05)', height: 56, borderRadius: 12, paddingHorizontal: 16, color: '#fff', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }
+  input: { backgroundColor: 'rgba(255,255,255,0.05)', height: 56, borderRadius: 12, paddingHorizontal: 16, color: '#fff', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  forgotLink: { alignSelf: 'flex-end', marginBottom: 20 },
+  forgotText: { color: Palette.accent, fontSize: 14, fontWeight: '600' }
 });

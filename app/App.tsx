@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Linking } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -15,15 +15,35 @@ import { LibraryScreen } from './src/screens/LibraryScreen';
 import { AddScreen } from './src/screens/AddScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
+import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
+import { ResetPasswordScreen } from './src/screens/ResetPasswordScreen';
 import { StreamProvider } from './src/context/StreamContext';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { Palette } from './src/theme/Theme';
 
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+const linking = {
+  prefixes: ['streamwatch://', 'https://lnuxpkwnbesqrqsxyiek.supabase.co'],
+  config: {
+    screens: {
+      Auth: 'auth',
+      ResetPassword: 'reset-password',
+      MainTabs: {
+        screens: {
+          Home: 'home',
+          'My List': 'library',
+          Add: 'add',
+          Settings: 'settings',
+        },
+      },
+      Player: 'player',
+    },
+  },
+};
 
 function TabNavigator() {
   return (
@@ -55,7 +75,6 @@ export default function App() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Get initial session with timeout
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Supabase session error:', error);
@@ -63,10 +82,8 @@ export default function App() {
           setSession(session);
         }
 
-        // Set up auth listener
         supabase.auth.onAuthStateChange((_event, session) => setSession(session));
 
-        // Simulate loading time for branded splash
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (e) {
         console.error('Network error:', e);
@@ -78,14 +95,24 @@ export default function App() {
     prepare();
   }, []);
 
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+      if (url.includes('reset-password') || url.includes('type=recovery')) {
+        // Deep link will be handled by NavigationContainer
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
+
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
-      // Hide the native splash screen
       await SplashScreen.hideAsync();
     }
   }, [appIsReady]);
 
-  // Always hide the native splash immediately to show our custom one
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
@@ -101,7 +128,13 @@ export default function App() {
   if (!session) {
     return (
       <View style={styles.container} onLayout={onLayoutRootView}>
-        <AuthScreen />
+        <NavigationContainer linking={linking}>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Auth" component={AuthScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
       </View>
     );
   }
@@ -109,7 +142,7 @@ export default function App() {
   return (
     <StreamProvider>
       <View style={styles.container} onLayout={onLayoutRootView}>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
             <Stack.Screen name="MainTabs" component={TabNavigator} />
             <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
