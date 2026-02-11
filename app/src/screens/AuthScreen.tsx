@@ -80,7 +80,7 @@ export function AuthScreen({ navigation }: any) {
       }
     });
     if (error) Alert.alert("Error", error.message);
-    else Alert.alert("Success", "Account created! You can now sign in.");
+    else Alert.alert("Success", "Account created! Confirm email address and sign in.");
     setLoading(false);
   };
 
