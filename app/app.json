@@ -13,11 +13,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0A"
     },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.streamwatch.app",
-      "associatedDomains": ["applinks:lnuxpkwnbesqrqsxyiek.supabase.co"]
-    },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
@@ -40,9 +36,6 @@
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
-    },
-    "web": {
-      "favicon": "./assets/logo.png"
     },
     "plugins": [
       "expo-video"
