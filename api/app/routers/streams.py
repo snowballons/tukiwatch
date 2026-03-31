@@ -15,8 +15,7 @@ async def get_stream_url(url: str, bypass_cache: bool = False):
 
     # Clear cache if bypass requested
     if bypass_cache:
-        cache_key = f"resolve:{validated_url}"
-        cache._cache.pop(cache_key, None)
+        cache.delete(f"resolve:{validated_url}")
 
     try:
         return await asyncio.to_thread(
@@ -35,8 +34,7 @@ async def get_batch_status(request_data: BatchRequest, bypass_cache: bool = Fals
     # Clear cache if bypass requested
     if bypass_cache:
         for url in validated_urls:
-            cache_key = f"status:{url}"
-            cache._cache.pop(cache_key, None)
+            cache.delete(f"status:{url}")
 
     # Process all URLs concurrently
     tasks = [stream_service.check_single_stream(url) for url in validated_urls]

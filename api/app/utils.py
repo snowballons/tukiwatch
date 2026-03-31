@@ -36,8 +36,6 @@ def extract_platform_from_url(url: str) -> str:
             return "picarto"
         elif "trovo.live" in domain:
             return "trovo"
-        elif "ustream.tv" in domain:
-            return "ustreamtv"
         elif "vk.com" in domain:
             return "vk"
         elif "dlive.tv" in domain:
@@ -74,7 +72,6 @@ def generate_fallback_thumbnail(platform: str, author: str) -> str:
         "huya": "FF7F00",  # Orange
         "picarto": "1DA1F2",  # Blue
         "trovo": "00D7FF",  # Cyan
-        "ustreamtv": "3388CC",  # Blue
         "vk": "4680C2",  # Blue
         "dlive": "FFD700",  # Gold
         "goodgame": "00AA00",  # Green

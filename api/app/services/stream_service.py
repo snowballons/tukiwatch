@@ -8,6 +8,7 @@ from app.exceptions import (
     NoStreamsException,
     PluginException,
     BrowserRequiredException,
+    is_browser_error,
 )
 from app.cache import cache
 from app.utils import (
@@ -23,16 +24,36 @@ logging.getLogger("streamlink.plugins").setLevel(logging.CRITICAL)
 logging.getLogger("streamlink").setLevel(logging.ERROR)
 
 
+def _configure_twitch_session(session):
+    """Apply Twitch-specific session options if platform is Twitch."""
+    try:
+        session.set_option("twitch-supported-codecs", "h264,h265,av1")
+        session.set_option("twitch-low-latency", True)
+        if config.TWITCH_OAUTH_TOKEN:
+            session.set_option(
+                "twitch-api-header",
+                f"Authorization=OAuth {config.TWITCH_OAUTH_TOKEN}",
+            )
+    except Exception:
+        pass
+
+
+def _set_cached_flag(result):
+    """Add a '_cached' indicator to a result, handling both dicts and Pydantic models."""
+    if isinstance(result, dict):
+        result["_cached"] = True
+    elif hasattr(result, "model_dump"):
+        result.__dict__["_cached"] = True
+    return result
+
+
 async def check_single_stream(url: str) -> StreamStatus:
     """Check status of a single stream URL asynchronously"""
     # Check cache first (shorter TTL for status checks)
     cache_key = f"status:{url}"
     cached_result = cache.get(cache_key)
     if cached_result:
-        # Add cache indicator to cached results
-        if hasattr(cached_result, "__dict__"):
-            cached_result.__dict__["_cached"] = True
-        return cached_result
+        return _set_cached_flag(cached_result)
 
     try:
         result = await asyncio.to_thread(_resolve_stream_sync, url)
@@ -51,23 +72,9 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
     session = session_pool.get_session()
 
     try:
-        # Twitch-specific optimizations
         platform = extract_platform_from_url(url)
         if platform == "twitch":
-            try:
-                # Enable higher quality streams (h264, h265, av1)
-                session.set_option("twitch-supported-codecs", "h264,h265,av1")
-                # Enable low latency streaming for better performance
-                session.set_option("twitch-low-latency", True)
-                # Add OAuth token if available (for ad-free streams)
-                if config.TWITCH_OAUTH_TOKEN:
-                    session.set_option(
-                        "twitch-api-header",
-                        f"Authorization=OAuth {config.TWITCH_OAUTH_TOKEN}",
-                    )
-            except Exception:
-                # Ignore Twitch-specific option errors, continue with basic functionality
-                pass
+            _configure_twitch_session(session)
 
         plugin_name, plugin_class, resolved_url = session.resolve_url(url)
         plugin_instance = plugin_class(session, resolved_url)
@@ -106,14 +113,8 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
     except PluginError as e:
         error_msg = str(e)
         platform = extract_platform_from_url(url)
-        
-        # Check for browser-related errors
-        if any(keyword in error_msg.lower() for keyword in [
-            "chromium-based web browser", 
-            "403 client error: forbidden",
-            "browser", 
-            "cloudflare"
-        ]):
+
+        if is_browser_error(error_msg):
             return StreamStatus(
                 url=url,
                 status="error",
@@ -122,10 +123,10 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
                 error_details={
                     "type": "browser_required",
                     "message": f"{platform.title()} requires browser automation",
-                    "reason": "Platform uses anti-bot protection"
-                }
+                    "reason": "Platform uses anti-bot protection",
+                },
             )
-        
+
         return StreamStatus(
             url=url,
             status="error",
@@ -153,31 +154,14 @@ def resolve_stream_details(url: str):
     cache_key = f"resolve:{url}"
     cached_result = cache.get(cache_key)
     if cached_result:
-        # Add cache indicator to cached results
-        if isinstance(cached_result, dict):
-            cached_result["_cached"] = True
-        return cached_result
+        return _set_cached_flag(cached_result)
 
     session = session_pool.get_session()
 
     try:
-        # Twitch-specific optimizations
         platform = extract_platform_from_url(url)
         if platform == "twitch":
-            try:
-                # Enable higher quality streams (h264, h265, av1)
-                session.set_option("twitch-supported-codecs", "h264,h265,av1")
-                # Enable low latency streaming for better performance
-                session.set_option("twitch-low-latency", True)
-                # Add OAuth token if available (for ad-free streams)
-                if config.TWITCH_OAUTH_TOKEN:
-                    session.set_option(
-                        "twitch-api-header",
-                        f"Authorization=OAuth {config.TWITCH_OAUTH_TOKEN}",
-                    )
-            except Exception:
-                # Ignore Twitch-specific option errors, continue with basic functionality
-                pass
+            _configure_twitch_session(session)
 
         plugin_name, plugin_class, resolved_url = session.resolve_url(url)
         plugin_instance = plugin_class(session, resolved_url)
@@ -214,16 +198,10 @@ def resolve_stream_details(url: str):
         raise NoStreamsException(url)
     except PluginError as e:
         error_msg = str(e)
-        
-        # Check for browser-related errors and convert to BrowserRequiredException
-        if any(keyword in error_msg.lower() for keyword in [
-            "chromium-based web browser", 
-            "403 client error: forbidden",
-            "browser", 
-            "cloudflare"
-        ]):
+
+        if is_browser_error(error_msg):
             raise BrowserRequiredException(url)
-            
+
         raise PluginException(url, error_msg)
     except Exception as e:
         raise PluginException(url, f"Unexpected error: {str(e)}")

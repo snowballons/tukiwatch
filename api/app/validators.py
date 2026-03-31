@@ -38,7 +38,6 @@ def validate_url(url: str) -> str:
         "huya.com",
         "picarto.tv",
         "trovo.live",
-        "ustream.tv",
         "vk.com",
         "dlive.tv",
         "goodgame.ru",

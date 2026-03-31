@@ -2,6 +2,19 @@ from fastapi import HTTPException
 from app.utils import extract_platform_from_url
 
 
+BROWSER_ERROR_KEYWORDS = (
+    "chromium-based web browser",
+    "403 client error: forbidden",
+    "browser",
+    "cloudflare",
+)
+
+
+def is_browser_error(error_msg: str) -> bool:
+    error_lower = error_msg.lower()
+    return any(keyword in error_lower for keyword in BROWSER_ERROR_KEYWORDS)
+
+
 class StreamlinkAPIException(HTTPException):
     """Base exception for Streamlink API errors"""
 
@@ -25,21 +38,24 @@ class BrowserRequiredException(StreamlinkAPIException):
             "kick": {
                 "name": "Kick.com",
                 "reason": "requires browser automation to bypass Cloudflare protection",
-                "alternative": "Try using the official Kick.com website or mobile app"
+                "alternative": "Try using the official Kick.com website or mobile app",
             },
             "twitch": {
                 "name": "Twitch",
                 "reason": "may require browser for client-integrity tokens on some streams",
-                "alternative": "Most Twitch streams work without browser requirements"
-            }
+                "alternative": "Most Twitch streams work without browser requirements",
+            },
         }
-        
-        info = platform_info.get(platform, {
-            "name": platform.title(),
-            "reason": "requires browser automation",
-            "alternative": "Try using the official platform website or mobile app"
-        })
-        
+
+        info = platform_info.get(
+            platform,
+            {
+                "name": platform.title(),
+                "reason": "requires browser automation",
+                "alternative": "Try using the official platform website or mobile app",
+            },
+        )
+
         super().__init__(
             status_code=422,
             detail={
@@ -48,30 +64,24 @@ class BrowserRequiredException(StreamlinkAPIException):
                 "reason": f"This platform {info['reason']}",
                 "message": "Browser automation is not available in this deployment",
                 "alternative": info["alternative"],
-                "url": url
-            }
+                "url": url,
+            },
         )
 
 
 class PluginException(StreamlinkAPIException):
     def __init__(self, url: str, error: str):
-        platform = extract_platform_from_url(url)
-        
-        # Check for browser-related errors
-        if any(keyword in error.lower() for keyword in [
-            "chromium-based web browser", 
-            "403 client error: forbidden",
-            "browser", 
-            "cloudflare"
-        ]):
+        if is_browser_error(error):
             raise BrowserRequiredException(url)
-        
+
+        platform = extract_platform_from_url(url)
+
         super().__init__(
-            status_code=422, 
+            status_code=422,
             detail={
                 "error": "Plugin error",
                 "platform": platform,
                 "message": error,
-                "url": url
-            }
+                "url": url,
+            },
         )

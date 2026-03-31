@@ -6,16 +6,15 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "streamlink>=8.1.0",
-    "fastapi>=0.127.0",
-    "uvicorn>=0.40.0",
-    "gunicorn>=23.0.0",
-    "python-dotenv>=1.0.0",
-    "supabase>=2.11.0",
+    "streamlink>=8.2.1",
+    "fastapi>=0.135.2",
+    "uvicorn>=0.42.0",
+    "gunicorn>=25.3.0",
+    "python-dotenv>=1.2.2",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.14.10",
+    "ruff>=0.15.8",
     "memory-profiler>=0.61.0",
 ]

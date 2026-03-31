@@ -30,6 +30,9 @@ class SimpleCache:
         """Set cache entry with TTL in seconds (default 5 minutes)"""
         self._cache[key] = CacheEntry(data, time.time(), ttl)
 
+    def delete(self, key: str) -> None:
+        self._cache.pop(key, None)
+
     def clear(self) -> None:
         self._cache.clear()
 
