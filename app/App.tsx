@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, Linking } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home, Library, PlusCircle, Settings } from 'lucide-react-native';
@@ -26,7 +26,7 @@ SplashScreen.preventAutoHideAsync();
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const linking = {
+const linking: LinkingOptions<any> = {
   prefixes: ['streamwatch://', 'https://lnuxpkwnbesqrqsxyiek.supabase.co'],
   config: {
     screens: {

@@ -9,7 +9,7 @@ import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 // Screen Imports
-import { AuthScreen } from './src/components/AuthScreen';
+import { AuthScreen } from './src/screens/AuthScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { AddScreen } from './src/screens/AddScreen';

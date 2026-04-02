@@ -20,9 +20,19 @@ interface StreamCardProps {
   showDelete?: boolean;
   // Cache indicator
   isCached?: boolean;
+  fetchedAt?: number;
 }
 
-export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached }: StreamCardProps) {
+function formatCacheAge(fetchedAt: number): string {
+  const seconds = Math.floor((Date.now() - fetchedAt) / 1000);
+  if (seconds < 10) return 'just now';
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h`;
+}
+
+export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt }: StreamCardProps) {
   const [imageError, setImageError] = useState(false);
   
   const handlePress = () => {
@@ -65,7 +75,7 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
       {/* Cache Indicator */}
       {isCached && (
         <View style={styles.cacheBadge}>
-          <Text style={styles.cacheText}>⚡</Text>
+          <Text style={styles.cacheText}>⚡{fetchedAt ? ` ${formatCacheAge(fetchedAt)}` : ''}</Text>
         </View>
       )}
 
@@ -101,8 +111,8 @@ const styles = StyleSheet.create({
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   platformBadge: { position: 'absolute', top: 12, right: 12, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4 },
   platformText: { color: '#fff', fontSize: 9, fontWeight: '700', letterSpacing: 0.3 },
-  cacheBadge: { position: 'absolute', top: 12, right: 60, backgroundColor: 'rgba(255, 215, 0, 0.9)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 3 },
-  cacheText: { fontSize: 10 },
+  cacheBadge: { position: 'absolute', top: 12, right: 60, backgroundColor: 'rgba(255, 215, 0, 0.9)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 },
+  cacheText: { fontSize: 9, fontWeight: '700', color: '#000' },
   info: { padding: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   textContainer: { flex: 1, marginRight: 10 },
   title: { color: Palette.text, fontSize: 16, fontWeight: '600' },

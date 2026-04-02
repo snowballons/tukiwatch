@@ -1,7 +1,7 @@
 export const Palette = {
   // Dark Mode (Primary)
   background: '#0A0A0A',
-  backgroundGradient: ['#1A1A2E', '#0A0A0A'],
+  backgroundGradient: ['#1A1A2E', '#0A0A0A'] as const,
   card: '#161616',
   text: '#FFFFFF',
   textMuted: '#A1A1AA',

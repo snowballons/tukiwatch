@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
@@ -14,10 +14,11 @@ export function HomeScreen() {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<any>();
+  const isResolvingRef = useRef(false);
 
   const platforms = useMemo(() => {
     const liveStreams = streams.filter(s => s.status === 'online');
-    const unique = new Set(liveStreams.map(s => s.platform).filter(Boolean));
+    const unique = new Set(liveStreams.map(s => s.platform).filter((p): p is string => !!p));
     return ['all', ...Array.from(unique)];
   }, [streams]);
 
@@ -46,13 +47,19 @@ export function HomeScreen() {
   };
 
   const handleStreamPress = async (stream: any) => {
-    const data = await resolve(stream.url);
-    if (data && data.status === 'online') {
-      navigation.navigate('Player', { streamData: data });
-    } else if (data) {
-      Alert.alert("Offline", data.error || "Stream is not live.");
-    } else {
-      Alert.alert("Error", "Could not connect to engine.");
+    if (isResolvingRef.current) return;
+    isResolvingRef.current = true;
+    try {
+      const data = await resolve(stream.url);
+      if (data && data.status === 'online') {
+        navigation.navigate('Player', { streamData: data });
+      } else if (data) {
+        Alert.alert("Offline", data.error || "Stream is not live.");
+      } else {
+        Alert.alert("Error", "Could not connect to engine.");
+      }
+    } finally {
+      isResolvingRef.current = false;
     }
   };
 
@@ -160,6 +167,7 @@ export function HomeScreen() {
               category={stream.category}
               platform={stream.platform}
               isCached={stream._cached}
+              fetchedAt={stream._fetchedAt}
             />
           ))
         )}

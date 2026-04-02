@@ -11,6 +11,7 @@ import { Link, Plus, X, ChevronDown } from 'lucide-react-native';
 const PLATFORMS = [
   { key: 'twitch', name: 'Twitch', urlTemplate: 'https://www.twitch.tv/{identifier}', placeholder: 'Enter channel name (e.g., ninja)' },
   { key: 'youtube', name: 'YouTube', urlTemplate: 'https://www.youtube.com/{identifier}', placeholder: 'Enter channel/video ID (e.g., watch?v=... or channel/...)' },
+  { key: 'youtu-be', name: 'YouTube (youtu.be)', urlTemplate: 'https://youtu.be/{identifier}', placeholder: 'Enter video ID' },
   { key: 'facebook', name: 'Facebook', urlTemplate: 'https://www.facebook.com/{identifier}', placeholder: 'Enter page/video path (e.g., page/videos/...)' },
   { key: 'instagram', name: 'Instagram', urlTemplate: 'https://www.instagram.com/{identifier}', placeholder: 'Enter username or post path' },
   { key: 'tiktok', name: 'TikTok', urlTemplate: 'https://www.tiktok.com/{identifier}', placeholder: 'Enter @username or video path' },
@@ -22,7 +23,6 @@ const PLATFORMS = [
   { key: 'huya', name: 'Huya', urlTemplate: 'https://www.huya.com/{identifier}', placeholder: 'Enter streamer name' },
   { key: 'picarto', name: 'Picarto', urlTemplate: 'https://picarto.tv/{identifier}', placeholder: 'Enter channel name' },
   { key: 'trovo', name: 'Trovo', urlTemplate: 'https://trovo.live/{identifier}', placeholder: 'Enter channel name' },
-  { key: 'ustream', name: 'Ustream', urlTemplate: 'https://www.ustream.tv/{identifier}', placeholder: 'Enter channel/video path' },
   { key: 'vk', name: 'VK', urlTemplate: 'https://vk.com/{identifier}', placeholder: 'Enter video/user path' },
   { key: 'dlive', name: 'DLive', urlTemplate: 'https://dlive.tv/{identifier}', placeholder: 'Enter channel name' },
   { key: 'goodgame', name: 'GoodGame', urlTemplate: 'https://goodgame.ru/{identifier}', placeholder: 'Enter channel name' },
@@ -38,7 +38,7 @@ const constructStreamUrl = (platformKey: string, identifier: string): string => 
 };
 
 export function AddScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [identifier, setIdentifier] = useState('');
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
@@ -242,6 +242,7 @@ export function AddScreen() {
             onPress={() => navigation.navigate('Player', { streamData: previewData })}
             category={previewData.category}
             platform={previewData.platform}
+            isCached={previewData._cached}
           />
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>

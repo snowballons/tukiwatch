@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "scheme": "streamwatch",
     "splash": {
       "image": "./assets/logo.png",
@@ -19,7 +18,6 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0A0A0A"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.streamwatch.app",
       "intentFilters": [

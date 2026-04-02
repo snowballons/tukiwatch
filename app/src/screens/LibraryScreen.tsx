@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
 import { StreamCard } from '../components/StreamCard';
@@ -14,9 +14,11 @@ export function LibraryScreen() {
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPlatform, setFilterPlatform] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const isResolvingRef = useRef(false);
 
   const platforms = useMemo(() => {
-    const unique = new Set(streams.map(s => s.platform).filter(Boolean));
+    const unique = new Set(streams.map(s => s.platform).filter((p): p is string => !!p));
     return ['all', ...Array.from(unique)];
   }, [streams]);
 
@@ -39,30 +41,40 @@ export function LibraryScreen() {
     return result;
   }, [streams, searchQuery, filterPlatform]);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshStreams(true);
+    setRefreshing(false);
+  };
+
   const handleStreamPress = async (stream: any) => {
-    // If stream is already known to be online, resolve and play directly
-    if (stream.status === 'online') {
-      const data = await resolve(stream.url);
-      if (data && data.status === 'online') {
-        navigation.navigate('Player', { streamData: data });
-        // Refresh streams after successful play to update status
-        await refreshStreams();
+    if (isResolvingRef.current) return;
+    isResolvingRef.current = true;
+    try {
+      if (stream.status === 'online') {
+        // Online streams need a resolve call to get playback URLs
+        const data = await resolve(stream.url);
+        if (data && data.status === 'online') {
+          navigation.navigate('Player', { streamData: data });
+          await refreshStreams();
+        } else {
+          Alert.alert("Stream Unavailable", "Stream went offline. Refreshing library...");
+          await refreshStreams();
+        }
+      } else if (stream.status === 'error') {
+        // Error streams — show the stored error, no need to re-resolve
+        const detail = stream.error_details;
+        if (detail?.alternative) {
+          Alert.alert(detail.error || "Stream Error", detail.alternative);
+        } else {
+          Alert.alert("Stream Error", stream.error || "This stream could not be checked.");
+        }
       } else {
-        Alert.alert("Stream Unavailable", "Stream went offline. Refreshing library...");
-        await refreshStreams();
+        // Offline streams — no need to re-resolve, tell user to refresh
+        Alert.alert("Offline", "This stream is currently offline. Pull down to refresh and check again.");
       }
-    } else {
-      // For offline streams, check if they're now online
-      const data = await resolve(stream.url);
-      if (data && data.status === 'online') {
-        navigation.navigate('Player', { streamData: data });
-        // Refresh streams after successful play to update status
-        await refreshStreams();
-      } else if (data) {
-        Alert.alert("Offline", data.error || "Stream is not live.");
-      } else {
-        Alert.alert("Error", "Could not connect to engine.");
-      }
+    } finally {
+      isResolvingRef.current = false;
     }
   };
 
@@ -178,6 +190,9 @@ export function LibraryScreen() {
         data={filteredStreams}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Palette.primary} />
+        }
         renderItem={({ item }) => (
           <StreamCard
             title={item.streamer_name || item.title}
@@ -191,6 +206,7 @@ export function LibraryScreen() {
             showDelete={true}
             onDelete={() => handleDeleteStream(item.id, item.streamer_name || item.title)}
             isCached={item._cached}
+            fetchedAt={item._fetchedAt}
           />
         )}
         ListEmptyComponent={

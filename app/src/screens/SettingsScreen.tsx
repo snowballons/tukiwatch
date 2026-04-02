@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
+import { getCacheStats, getRateLimitInfo, RateLimitInfo } from '../services/engine';
+import { useStreams } from '../context/StreamContext';
 import { Palette, Spacing } from '../theme/Theme';
-import { ChevronRight, User } from 'lucide-react-native';
+import { ChevronRight, User, Wifi, WifiOff, Database } from 'lucide-react-native';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <View style={styles.section}>
@@ -27,7 +29,20 @@ const ListItem: React.FC<{ label: string; value?: string; onPress?: () => void, 
 export function SettingsScreen({ navigation }: any) {
   const appVersion = "1.0.0";
   const { profile } = useProfile();
+  const { isBackendReachable } = useStreams();
   const [showAbout, setShowAbout] = useState(false);
+  const [cacheStats, setCacheStats] = useState<any>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const stats = await getCacheStats();
+      if (stats) setCacheStats(stats);
+      setRateLimitInfo(getRateLimitInfo());
+    };
+    fetchStats();
+  }, []);
 
   const handleCopyrightPress = () => {
     Linking.openURL('https://snowballons.com');
@@ -49,6 +64,49 @@ export function SettingsScreen({ navigation }: any) {
           </View>
         </Section>
       )}
+
+      <Section title="Connection">
+        <ListItem
+          label="Backend Status"
+          value={isBackendReachable ? 'Connected' : 'Disconnected'}
+          onPress={() => setShowDebug(!showDebug)}
+        />
+        {showDebug && (
+          <View style={styles.debugContainer}>
+            <View style={styles.debugRow}>
+              {isBackendReachable
+                ? <Wifi color={Palette.live} size={16} />
+                : <WifiOff color="#EF4444" size={16} />
+              }
+              <Text style={[styles.debugText, { color: isBackendReachable ? Palette.live : '#EF4444' }]}>
+                {isBackendReachable ? 'API server is reachable' : 'Cannot reach API server'}
+              </Text>
+            </View>
+            {cacheStats && (
+              <>
+                <View style={styles.debugRow}>
+                  <Database color={Palette.textMuted} size={16} />
+                  <Text style={styles.debugText}>
+                    Cache: {cacheStats.cache?.type || 'Unknown'}
+                    {cacheStats.cache?.connected_to ? ` (${cacheStats.cache.connected_to})` : ''}
+                  </Text>
+                </View>
+                {cacheStats.cache?.keys !== undefined && (
+                  <Text style={styles.debugSubtext}>
+                    {cacheStats.cache.keys} cached keys
+                    {cacheStats.cache?.used_memory_human ? ` · ${cacheStats.cache.used_memory_human} memory` : ''}
+                  </Text>
+                )}
+              </>
+            )}
+            {rateLimitInfo && (
+              <Text style={styles.debugSubtext}>
+                Rate limit: {rateLimitInfo.remaining}/{rateLimitInfo.limit} remaining
+              </Text>
+            )}
+          </View>
+        )}
+      </Section>
 
       <Section title="About">
         <ListItem label="About StreamWatch" onPress={() => setShowAbout(!showAbout)} />
@@ -154,5 +212,26 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     color: '#EF4444',
+  },
+  debugContainer: {
+    padding: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Palette.border,
+    gap: 8,
+  },
+  debugRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  debugText: {
+    color: Palette.textMuted,
+    fontSize: 13,
+  },
+  debugSubtext: {
+    color: Palette.textMuted,
+    fontSize: 12,
+    marginLeft: 24,
+    opacity: 0.7,
   },
 });
