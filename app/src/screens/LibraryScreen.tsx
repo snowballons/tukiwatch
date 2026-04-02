@@ -55,7 +55,7 @@ export function LibraryScreen() {
         // Online streams need a resolve call to get playback URLs
         const data = await resolve(stream.url);
         if (data && data.status === 'online') {
-          navigation.navigate('Player', { streamData: data });
+          navigation.navigate('Player', { streamData: data, url: stream.url });
           await refreshStreams();
         } else {
           Alert.alert("Stream Unavailable", "Stream went offline. Refreshing library...");

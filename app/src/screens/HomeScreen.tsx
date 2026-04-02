@@ -52,7 +52,7 @@ export function HomeScreen() {
     try {
       const data = await resolve(stream.url);
       if (data && data.status === 'online') {
-        navigation.navigate('Player', { streamData: data });
+        navigation.navigate('Player', { streamData: data, url: stream.url });
       } else if (data) {
         Alert.alert("Offline", data.error || "Stream is not live.");
       } else {

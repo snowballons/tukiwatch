@@ -239,7 +239,7 @@ export function AddScreen() {
             thumbnail={previewData.thumbnail}
             isLive={true}
             url={constructedUrl}
-            onPress={() => navigation.navigate('Player', { streamData: previewData })}
+            onPress={() => navigation.navigate('Player', { streamData: previewData, url: constructedUrl })}
             category={previewData.category}
             platform={previewData.platform}
             isCached={previewData._cached}

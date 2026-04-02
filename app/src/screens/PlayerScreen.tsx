@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, ScrollView, Modal, FlatList } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Palette, Spacing } from '../theme/Theme';
-import { X, ChevronDown } from 'lucide-react-native';
+import { Palette, Spacing, PlatformColors } from '../theme/Theme';
+import { X, ChevronDown, ExternalLink, ChevronRight } from 'lucide-react-native';
+import { openInOfficialApp, getPlatformName } from '../utils/platformLinks';
 
 const { width } = Dimensions.get('window');
 
 export function PlayerScreen({ route, navigation }: any) {
   const { streamData, url } = route.params;
   const sources = streamData || { best_quality: url };
+  // Ensure original_url and platform are available for the "Open in App" button
+  const originalUrl = sources.original_url || url || '';
+  const platformKey = sources.platform || 'unknown';
   const [currentQuality, setCurrentQuality] = useState('best');
   const [isChanging, setIsChanging] = useState(false);
   const [showQualityPicker, setShowQualityPicker] = useState(false);
@@ -76,6 +80,23 @@ export function PlayerScreen({ route, navigation }: any) {
             </View>
           </TouchableOpacity>
         )}
+
+        {/* Open in Official App */}
+        {originalUrl ? (
+          <TouchableOpacity
+            style={styles.openAppButton}
+            onPress={() => openInOfficialApp(platformKey, originalUrl)}
+          >
+            <ExternalLink
+              color={PlatformColors[platformKey as keyof typeof PlatformColors] || PlatformColors.default}
+              size={20}
+            />
+            <Text style={styles.openAppLabel}>
+              Open in {getPlatformName(platformKey)}
+            </Text>
+            <ChevronRight color={Palette.textMuted} size={20} />
+          </TouchableOpacity>
+        ) : null}
 
         {/* Quality Picker Modal */}
         {sources.all_qualities && (
@@ -196,6 +217,23 @@ const styles = StyleSheet.create({
   },
   qualityOptionTextSelected: {
     color: Palette.primary,
+    fontWeight: '600',
+  },
+  openAppButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Palette.card,
+    padding: Spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Palette.border,
+    marginTop: 12,
+    gap: 12,
+  },
+  openAppLabel: {
+    flex: 1,
+    color: Palette.text,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

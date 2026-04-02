@@ -12,7 +12,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#0A0A0A"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
@@ -31,7 +30,66 @@
               "pathPrefix": "/auth"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "queries": [
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "twitch"
+            }
+          }
+        },
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "vnd.youtube"
+            }
+          }
+        },
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "instagram"
+            }
+          }
+        },
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "fb"
+            }
+          }
+        },
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "tiktok"
+            }
+          }
+        },
+        {
+          "intent": {
+            "action": "VIEW",
+            "category": "BROWSABLE",
+            "data": {
+              "scheme": "vk"
+            }
+          }
         }
       ]
     },
@@ -43,6 +101,19 @@
         "projectId": "2879c1fe-24f0-415e-b606-b5ab7888d48b"
       }
     },
-    "owner": "lunderwood1967s-organization"
+    "owner": "lunderwood1967s-organization",
+    "ios": {
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "twitch",
+          "youtube",
+          "vnd.youtube",
+          "instagram",
+          "fb",
+          "tiktok",
+          "vk"
+        ]
+      }
+    }
   }
 }
