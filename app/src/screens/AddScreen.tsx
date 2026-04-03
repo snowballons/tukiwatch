@@ -10,7 +10,7 @@ import { Link, Plus, X, ChevronDown } from 'lucide-react-native';
 // Platform configuration based on backend supported domains
 const PLATFORMS = [
   { key: 'twitch', name: 'Twitch', urlTemplate: 'https://www.twitch.tv/{identifier}', placeholder: 'Enter channel name (e.g., ninja)' },
-  { key: 'youtube', name: 'YouTube', urlTemplate: 'https://www.youtube.com/{identifier}', placeholder: 'Enter channel/video ID (e.g., watch?v=... or channel/...)' },
+  { key: 'youtube', name: 'YouTube', urlTemplate: 'https://www.youtube.com/{identifier}', placeholder: 'Enter @username, channel ID, or video path' },
   { key: 'youtu-be', name: 'YouTube (youtu.be)', urlTemplate: 'https://youtu.be/{identifier}', placeholder: 'Enter video ID' },
   { key: 'facebook', name: 'Facebook', urlTemplate: 'https://www.facebook.com/{identifier}', placeholder: 'Enter page/video path (e.g., page/videos/...)' },
   { key: 'instagram', name: 'Instagram', urlTemplate: 'https://www.instagram.com/{identifier}', placeholder: 'Enter username or post path' },
@@ -34,7 +34,11 @@ const PLATFORMS = [
 const constructStreamUrl = (platformKey: string, identifier: string): string => {
   const platform = PLATFORMS.find(p => p.key === platformKey);
   if (!platform || !identifier.trim()) return '';
-  return platform.urlTemplate.replace('{identifier}', identifier.trim());
+  let cleanedIdentifier = identifier.trim();
+  if (platformKey === 'youtube' && !cleanedIdentifier.startsWith('@') && !cleanedIdentifier.includes('/') && !cleanedIdentifier.includes('?')) {
+    cleanedIdentifier = '@' + cleanedIdentifier;
+  }
+  return platform.urlTemplate.replace('{identifier}', cleanedIdentifier);
 };
 
 export function AddScreen() {
