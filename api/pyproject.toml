@@ -11,6 +11,7 @@ dependencies = [
     "uvicorn>=0.42.0",
     "gunicorn>=25.3.0",
     "python-dotenv>=1.2.2",
+    "redis>=5.0.0",
 ]
 
 [dependency-groups]

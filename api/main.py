@@ -40,7 +40,7 @@ def health_check():
 def cache_stats():
     from app.cache import cache
 
-    return {"cache_size": cache.size(), "service": "streamlink-api"}
+    return {"cache": cache.get_stats(), "service": "streamlink-api"}
 
 
 @app.get("/rate-limit/stats")
