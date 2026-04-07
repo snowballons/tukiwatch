@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, 
 import { useNavigation } from '@react-navigation/native';
 import { useStreams } from '../context/StreamContext';
 import { StreamCard } from '../components/StreamCard';
+import { ShareStreamModal } from '../components/ShareStreamModal';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
@@ -16,6 +17,8 @@ export function LibraryScreen() {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const isResolvingRef = useRef(false);
+  const [streamToShare, setStreamToShare] = useState<{ original_url: string; streamer_name: string } | null>(null);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const platforms = useMemo(() => {
     const unique = new Set(streams.map(s => s.platform).filter((p): p is string => !!p));
@@ -205,6 +208,11 @@ export function LibraryScreen() {
             platform={item.platform}
             showDelete={true}
             onDelete={() => handleDeleteStream(item.id, item.streamer_name || item.title)}
+            showShare={true}
+            onShare={() => {
+              setStreamToShare({ original_url: item.url, streamer_name: item.streamer_name || item.title });
+              setShareModalVisible(true);
+            }}
             isCached={item._cached}
             fetchedAt={item._fetchedAt}
           />
@@ -223,6 +231,19 @@ export function LibraryScreen() {
           <Text style={styles.overlayText}>Loading stream...</Text>
         </View>
       )}
+
+      <ShareStreamModal
+        visible={shareModalVisible}
+        stream={streamToShare}
+        onClose={() => {
+          setShareModalVisible(false);
+          setStreamToShare(null);
+        }}
+        onShared={() => {
+          setShareModalVisible(false);
+          setStreamToShare(null);
+        }}
+      />
     </View>
   );
 }

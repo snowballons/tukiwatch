@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Palette, Spacing, PlatformColors } from '../theme/Theme';
-import { Play, Trash2 } from 'lucide-react-native';
+import { Play, Trash2, Share2 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -12,15 +12,16 @@ interface StreamCardProps {
   isLive: boolean;
   url: string;
   onPress?: () => void;
-  // Enhanced metadata props
   category?: string;
   platform?: string;
-  // Delete functionality
   onDelete?: () => void;
   showDelete?: boolean;
-  // Cache indicator
   isCached?: boolean;
   fetchedAt?: number;
+  sharedBy?: string;
+  sharedAt?: string;
+  onShare?: () => void;
+  showShare?: boolean;
 }
 
 function formatCacheAge(fetchedAt: number): string {
@@ -32,7 +33,7 @@ function formatCacheAge(fetchedAt: number): string {
   return `${Math.floor(minutes / 60)}h`;
 }
 
-export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt }: StreamCardProps) {
+export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt, sharedBy, sharedAt, onShare, showShare }: StreamCardProps) {
   const [imageError, setImageError] = useState(false);
   
   const handlePress = () => {
@@ -83,6 +84,9 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
         <View style={styles.textContainer}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
           <Text style={styles.streamer}>{streamer}</Text>
+          {sharedBy && (
+            <Text style={styles.sharedBy}>@{sharedBy}{sharedAt ? ` · ${sharedAt}` : ''}</Text>
+          )}
           {category && (
             <Text style={styles.category}>{category}</Text>
           )}
@@ -92,6 +96,11 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
             <View style={styles.playIcon}>
               <Play color="#fff" size={16} fill="#fff" />
             </View>
+          )}
+          {showShare && onShare && (
+            <TouchableOpacity style={styles.shareIcon} onPress={onShare}>
+              <Share2 color={Palette.accent} size={16} />
+            </TouchableOpacity>
           )}
           {showDelete && onDelete && (
             <TouchableOpacity style={styles.deleteIcon} onPress={onDelete}>
@@ -117,8 +126,10 @@ const styles = StyleSheet.create({
   textContainer: { flex: 1, marginRight: 10 },
   title: { color: Palette.text, fontSize: 16, fontWeight: '600' },
   streamer: { color: Palette.textMuted, fontSize: 13, marginTop: 2 },
+  sharedBy: { color: Palette.textMuted, fontSize: 11, marginTop: 2 },
   category: { color: Palette.accent, fontSize: 11, marginTop: 2, fontWeight: '500' },
   actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   playIcon: { backgroundColor: Palette.primary, padding: 8, borderRadius: 12 },
+  shareIcon: { backgroundColor: Palette.accent + '20', padding: 8, borderRadius: 12 },
   deleteIcon: { backgroundColor: 'rgba(255, 68, 68, 0.1)', padding: 8, borderRadius: 12 },
 });

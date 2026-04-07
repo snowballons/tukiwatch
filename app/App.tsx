@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet, Linking } from 'react-native';
+import { View, StyleSheet, Linking, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Library, PlusCircle, Settings } from 'lucide-react-native';
+import { Home, Library, PlusCircle, Settings, Users } from 'lucide-react-native';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -17,7 +17,9 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
 import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
 import { ResetPasswordScreen } from './src/screens/ResetPasswordScreen';
+import { CommunityScreen } from './src/screens/CommunityScreen';
 import { StreamProvider } from './src/context/StreamContext';
+import { CommunityProvider } from './src/context/CommunityContext';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { Palette } from './src/theme/Theme';
 
@@ -37,6 +39,7 @@ const linking: LinkingOptions<any> = {
           Home: 'home',
           'My List': 'library',
           Add: 'add',
+          Community: 'community',
           Settings: 'settings',
         },
       },
@@ -62,7 +65,15 @@ function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: ({ color }) => <Home color={color} size={24} /> }} />
       <Tab.Screen name="My List" component={LibraryScreen} options={{ tabBarIcon: ({ color }) => <Library color={color} size={24} /> }} />
-      <Tab.Screen name="Add" component={AddScreen} options={{ tabBarIcon: ({ color }) => <PlusCircle color={color} size={24} /> }} />
+      <Tab.Screen name="Add" component={AddScreen} options={{
+        tabBarIcon: ({ color }) => (
+          <View style={styles.addButton}>
+            <PlusCircle color="#fff" size={26} />
+          </View>
+        ),
+        tabBarLabel: () => null,
+      }} />
+      <Tab.Screen name="Community" component={CommunityScreen} options={{ tabBarIcon: ({ color, focused }) => <Users color={focused ? Palette.accent : color} size={24} /> }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarIcon: ({ color }) => <Settings color={color} size={24} /> }} />
     </Tab.Navigator>
   );
@@ -141,14 +152,16 @@ export default function App() {
 
   return (
     <StreamProvider>
-      <View style={styles.container} onLayout={onLayoutRootView}>
-        <NavigationContainer linking={linking}>
-          <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
-            <Stack.Screen name="MainTabs" component={TabNavigator} />
-            <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </View>
+      <CommunityProvider>
+        <View style={styles.container} onLayout={onLayoutRootView}>
+          <NavigationContainer linking={linking}>
+            <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
+              <Stack.Screen name="MainTabs" component={TabNavigator} />
+              <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </View>
+      </CommunityProvider>
     </StreamProvider>
   );
 }
@@ -157,5 +170,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Palette.background,
+  },
+  addButton: {
+    backgroundColor: Palette.primary,
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 4,
   },
 });
