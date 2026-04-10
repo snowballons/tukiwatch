@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useCommunity } from '../context/CommunityContext';
-import { useStreamResolver } from '../hooks/useStreamResolver';
 import { StreamCard } from '../components/StreamCard';
+import { CommunityPreviewModal } from '../components/CommunityPreviewModal';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
 import { Search, X, Users } from 'lucide-react-native';
@@ -30,13 +29,12 @@ const FILTER_OPTIONS: { key: 'platform' | 'category' | 'country'; label: string 
 ];
 
 export function CommunityScreen() {
-  const { streams, loading, filters, setFilters, refresh } = useCommunity();
-  const { resolve, resolving } = useStreamResolver();
-  const navigation = useNavigation<any>();
+  const { streams, loading, filters, setFilters, refresh, refreshLiveness, isCheckingLiveness } = useCommunity();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'platform' | 'category' | 'country' | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const isResolvingRef = useRef(false);
+  const [previewStream, setPreviewStream] = useState<CommunityStream | null>(null);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   useEffect(() => {
     refresh({ search: searchQuery });
@@ -44,73 +42,43 @@ export function CommunityScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refresh({ ...filters, search: searchQuery });
+    await Promise.all([
+      refresh({ ...filters, search: searchQuery }),
+      refreshLiveness(),
+    ]);
     setRefreshing(false);
   };
 
-  const handleStreamPress = async (stream: CommunityStream) => {
-    if (isResolvingRef.current) return;
-    isResolvingRef.current = true;
-    try {
-      const data = await resolve(stream.original_url);
-      if (data && data.status === 'online') {
-        navigation.navigate('Player', { streamData: data, url: stream.original_url });
-      } else {
-        Alert.alert("Unavailable", "This stream is currently offline.");
-      }
-    } catch (error) {
-      Alert.alert("Error", "Could not load this stream.");
-    } finally {
-      isResolvingRef.current = false;
-    }
+  const handleStreamPress = (stream: CommunityStream) => {
+    setPreviewStream(stream);
+    setPreviewVisible(true);
   };
 
-  const handleLongPress = async (stream: CommunityStream) => {
-    Alert.alert(
-      'Add to My List',
-      `Add "${stream.streamer_name}" to your library?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Add',
-          onPress: async () => {
-            try {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user) {
-                Alert.alert('Error', 'Please sign in first.');
-                return;
-              }
+  const handleAddToLibrary = async (stream: CommunityStream) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { Alert.alert('Error', 'Please sign in first.'); return; }
 
-              const { data: existing } = await supabase
-                .from('favorites')
-                .select('id')
-                .eq('user_id', user.id)
-                .eq('original_url', stream.original_url)
-                .maybeSingle();
+      const { data: existing } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('original_url', stream.original_url)
+        .maybeSingle();
 
-              if (existing) {
-                Alert.alert('Already Added', 'This stream is already in your library.');
-                return;
-              }
+      if (existing) { Alert.alert('Already in Library', 'This stream is already in your library.'); return; }
 
-              const { error } = await supabase.from('favorites').insert([{
-                user_id: user.id,
-                streamer_name: stream.streamer_name,
-                original_url: stream.original_url,
-              }]);
+      const { error } = await supabase.from('favorites').insert([{
+        user_id: user.id,
+        streamer_name: stream.streamer_name,
+        original_url: stream.original_url,
+      }]);
 
-              if (!error) {
-                Alert.alert('Added!', 'Stream added to your library.');
-              } else {
-                Alert.alert('Error', 'Failed to add stream.');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Failed to add stream.');
-            }
-          },
-        },
-      ]
-    );
+      if (!error) Alert.alert('Added!', `"${stream.streamer_name}" added to your library.`);
+      else Alert.alert('Error', 'Failed to add stream.');
+    } catch {
+      Alert.alert('Error', 'Failed to add stream.');
+    }
   };
 
   const applyFilter = (type: 'platform' | 'category' | 'country', value: string) => {
@@ -223,23 +191,20 @@ export function CommunityScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Palette.primary} />
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
+          <StreamCard
+            title={item.streamer_name}
+            streamer={item.streamer_name}
+            thumbnail={undefined}
+            isLive={item.is_online ?? true}
+            url={item.original_url}
             onPress={() => handleStreamPress(item)}
-            onLongPress={() => handleLongPress(item)}
-            delayLongPress={500}
-          >
-            <StreamCard
-              title={item.streamer_name}
-              streamer={item.streamer_name}
-              thumbnail={undefined}
-              isLive={true}
-              url={item.original_url}
-              category={item.category}
-              platform={item.platform}
-              sharedBy={item.username}
-              sharedAt={formatRelativeTime(item.created_at)}
-            />
-          </TouchableOpacity>
+            category={item.category}
+            platform={item.platform}
+            sharedBy={item.username}
+            sharedAt={formatRelativeTime(item.created_at)}
+            showAddButton={true}
+            onAddToLibrary={() => handleAddToLibrary(item)}
+          />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -250,12 +215,16 @@ export function CommunityScreen() {
         }
       />
 
-      {resolving && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={Palette.primary} />
-          <Text style={styles.overlayText}>Loading stream...</Text>
-        </View>
+      {isCheckingLiveness && (
+        <Text style={styles.livenessText}>Checking stream status...</Text>
       )}
+
+      <CommunityPreviewModal
+        visible={previewVisible}
+        stream={previewStream}
+        onClose={() => { setPreviewVisible(false); setPreviewStream(null); }}
+        onAdded={() => { setPreviewVisible(false); setPreviewStream(null); }}
+      />
     </View>
   );
 }
@@ -357,6 +326,12 @@ const styles = StyleSheet.create({
     color: Palette.textMuted,
     marginTop: Spacing.md,
   },
+  livenessText: {
+    color: Palette.textMuted,
+    fontSize: 11,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
   emptyContainer: {
     marginTop: 100,
     alignItems: 'center',
@@ -370,20 +345,5 @@ const styles = StyleSheet.create({
   emptySubtext: {
     color: Palette.textMuted,
     fontSize: 14,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overlayText: {
-    color: '#fff',
-    marginTop: Spacing.md,
-    fontSize: 16,
   },
 });

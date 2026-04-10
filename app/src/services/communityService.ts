@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import { CommunityStream } from '../types';
+import { streamService } from './engine';
 
 export interface CommunityFilters {
   platform?: string;
@@ -65,4 +66,26 @@ export async function isAlreadyShared(userId: string, url: string): Promise<bool
     .eq('original_url', url)
     .maybeSingle();
   return !!data;
+}
+
+export async function checkStreamLiveness(streams: { id: string; original_url: string }[]): Promise<Record<string, boolean>> {
+  if (streams.length === 0) return {};
+
+  const statusMap: Record<string, boolean> = {};
+
+  // Chunk into batches of 20 (backend limit)
+  const CHUNK_SIZE = 20;
+  for (let i = 0; i < streams.length; i += CHUNK_SIZE) {
+    const chunk = streams.slice(i, i + CHUNK_SIZE);
+    try {
+      const results = await streamService.checkBatchStatus(chunk.map(s => s.original_url));
+      results.forEach((result, index) => {
+        statusMap[chunk[index].id] = result.status === 'online';
+      });
+    } catch (e) {
+      console.error('Liveness chunk check failed:', e);
+    }
+  }
+
+  return statusMap;
 }

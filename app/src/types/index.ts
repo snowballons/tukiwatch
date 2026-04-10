@@ -74,6 +74,8 @@ export interface CommunityStream {
   country: string;
   language: string;
   created_at: string;
+  is_online?: boolean;
+  last_checked?: string;
 }
 
 export interface CommunityFilters {

@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { streamService, checkHealth } from '../services/engine';
 import { Favorite, LiveStream } from '../types';
 
-const AUTO_REFRESH_INTERVAL = 120_000; // 2 minutes — matches backend status TTL
+const AUTO_REFRESH_INTERVAL = 300_000; // 5 minutes — matches backend status TTL
 
 interface StreamContextType {
   streams: LiveStream[];

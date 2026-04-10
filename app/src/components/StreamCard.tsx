@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Palette, Spacing, PlatformColors } from '../theme/Theme';
-import { Play, Trash2, Share2 } from 'lucide-react-native';
+import { Play, Trash2, Share2, Plus } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -22,6 +22,8 @@ interface StreamCardProps {
   sharedAt?: string;
   onShare?: () => void;
   showShare?: boolean;
+  onAddToLibrary?: () => void;
+  showAddButton?: boolean;
 }
 
 function formatCacheAge(fetchedAt: number): string {
@@ -33,7 +35,7 @@ function formatCacheAge(fetchedAt: number): string {
   return `${Math.floor(minutes / 60)}h`;
 }
 
-export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt, sharedBy, sharedAt, onShare, showShare }: StreamCardProps) {
+export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt, sharedBy, sharedAt, onShare, showShare, onAddToLibrary, showAddButton }: StreamCardProps) {
   const [imageError, setImageError] = useState(false);
   
   const handlePress = () => {
@@ -97,6 +99,11 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
               <Play color="#fff" size={16} fill="#fff" />
             </View>
           )}
+          {showAddButton && onAddToLibrary && (
+            <TouchableOpacity style={styles.addIcon} onPress={onAddToLibrary}>
+              <Plus color={Palette.live} size={16} />
+            </TouchableOpacity>
+          )}
           {showShare && onShare && (
             <TouchableOpacity style={styles.shareIcon} onPress={onShare}>
               <Share2 color={Palette.accent} size={16} />
@@ -130,6 +137,7 @@ const styles = StyleSheet.create({
   category: { color: Palette.accent, fontSize: 11, marginTop: 2, fontWeight: '500' },
   actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   playIcon: { backgroundColor: Palette.primary, padding: 8, borderRadius: 12 },
+  addIcon: { backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: 8, borderRadius: 12 },
   shareIcon: { backgroundColor: Palette.accent + '20', padding: 8, borderRadius: 12 },
   deleteIcon: { backgroundColor: 'rgba(255, 68, 68, 0.1)', padding: 8, borderRadius: 12 },
 });
