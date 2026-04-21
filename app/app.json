@@ -27,7 +27,7 @@
             {
               "scheme": "https",
               "host": "streamwatch.snowballons.com",
-              "pathPrefix": "/reset-password"
+              "pathPrefix": "/auth/reset-password"
             },
             {
               "scheme": "https",

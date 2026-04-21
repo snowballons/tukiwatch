@@ -33,7 +33,8 @@ const linking: LinkingOptions<any> = {
   config: {
     screens: {
       Auth: 'auth',
-      ResetPassword: 'reset-password',
+      ForgotPassword: 'forgot-password',
+      ResetPassword: 'auth/reset-password',
       MainTabs: {
         screens: {
           Home: 'home',
@@ -175,6 +176,7 @@ export default function App() {
             <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
               <Stack.Screen name="MainTabs" component={TabNavigator} />
               <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </View>
