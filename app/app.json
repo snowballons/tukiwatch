@@ -26,6 +26,11 @@
           "data": [
             {
               "scheme": "https",
+              "host": "streamwatch.snowballons.com",
+              "pathPrefix": "/reset-password"
+            },
+            {
+              "scheme": "https",
               "host": "lnuxpkwnbesqrqsxyiek.supabase.co",
               "pathPrefix": "/auth"
             }

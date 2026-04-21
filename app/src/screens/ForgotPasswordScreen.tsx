@@ -17,7 +17,7 @@ export function ForgotPasswordScreen({ navigation }: any) {
 
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'streamwatch://reset-password',
+      redirectTo: 'https://streamwatch.snowballons.com/reset-password',
     });
 
     setLoading(false);

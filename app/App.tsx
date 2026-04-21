@@ -29,7 +29,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const linking: LinkingOptions<any> = {
-  prefixes: ['streamwatch://', 'https://lnuxpkwnbesqrqsxyiek.supabase.co'],
+  prefixes: ['streamwatch://', 'https://streamwatch.snowballons.com', 'https://lnuxpkwnbesqrqsxyiek.supabase.co'],
   config: {
     screens: {
       Auth: 'auth',
@@ -93,9 +93,19 @@ export default function App() {
           setSession(session);
         }
 
-        supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+        });
+
+        // Handle initial URL
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl) {
+          handleDeepLink(initialUrl);
+        }
 
         await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        return () => subscription.unsubscribe();
       } catch (e) {
         console.error('Network error:', e);
       } finally {
@@ -106,15 +116,22 @@ export default function App() {
     prepare();
   }, []);
 
-  useEffect(() => {
-    const handleDeepLink = async (event: { url: string }) => {
-      const url = event.url;
-      if (url.includes('reset-password') || url.includes('type=recovery')) {
-        // Deep link will be handled by NavigationContainer
-      }
-    };
+  const handleDeepLink = async (url: string) => {
+    if (!url) return;
+    
+    // Check if URL contains session info (access_token or type=recovery)
+    if (url.includes('access_token=') || url.includes('type=recovery')) {
+      // Supabase's setSession or getSession will pick up the hash fragment automatically
+      // if detectSessionInUrl is true, but we can manually refresh here
+      const { data } = await supabase.auth.getSession();
+      if (data.session) setSession(data.session);
+    }
+  };
 
-    const subscription = Linking.addEventListener('url', handleDeepLink);
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', (event) => {
+      handleDeepLink(event.url);
+    });
     return () => subscription.remove();
   }, []);
 
