@@ -73,10 +73,7 @@ def validate_batch_request(urls: list) -> list:
             validated_urls.append(validate_url(url))
         except HTTPException:
             # For batch requests, we'll be more lenient and skip invalid URLs
-            # but still validate the format
-            if not url or not url.strip():
-                continue
-            validated_urls.append(url.strip())
+            continue
 
     if not validated_urls:
         raise HTTPException(status_code=400, detail="No valid URLs provided")

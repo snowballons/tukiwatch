@@ -225,7 +225,8 @@ class TestCustomRateLimitMiddleware:
 
         assert response.status_code == 429
         body = response.json()
-        assert "retry_after" in body["detail"] or "retry_after" in body
+        # The middleware returns the 'detail' dict directly as the JSON body
+        assert "retry_after" in body or ("detail" in body and "retry_after" in body["detail"])
 
     # -----------------------------------------------------------------------
     # Unit tests for internal helpers

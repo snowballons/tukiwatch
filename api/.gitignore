@@ -33,8 +33,6 @@ streamwatch-back
 .coverage
 htmlcov/
 .tox/
-test_*.py
-*_test.py
 
 # =========================
 # Editor / IDE
