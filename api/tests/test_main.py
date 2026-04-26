@@ -10,9 +10,8 @@ Covers:
 - App initialisation: middleware stack, router registration
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 
 from tests.conftest import TEST_API_KEY
 

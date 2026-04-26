@@ -11,7 +11,7 @@ Covers:
 """
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 from streamlink.exceptions import NoPluginError, NoStreamsError, PluginError
@@ -327,7 +327,7 @@ class TestCheckSingleStream:
                 check_single_stream(TWITCH_URL)
             )
 
-        _, kwargs_or_args = (
+        _, _kwargs_or_args = (
             mock_cache.set.call_args[0],
             mock_cache.set.call_args,
         )

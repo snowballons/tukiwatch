@@ -1,8 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
 from app.services.stream_service import _resolve_stream_sync, resolve_stream_details
 from app.models import StreamStatus
-from streamlink.exceptions import NoPluginError, NoStreamsError
+from streamlink.exceptions import NoPluginError
 
 @patch("app.services.stream_service.session_pool")
 @patch("app.services.stream_service.extract_platform_from_url")

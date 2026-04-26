@@ -10,11 +10,8 @@ Covers:
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse
 
 from app.middleware import APIKeyMiddleware, CustomRateLimitMiddleware
 
@@ -197,7 +194,6 @@ class TestCustomRateLimitMiddleware:
 
     def test_different_endpoints_have_different_limits(self):
         """The X-RateLimit-Limit header must reflect per-endpoint configuration."""
-        from app.rate_limit import RateLimitConfig
 
         app = _make_app_with_rate_limit_middleware()
         with TestClient(app, raise_server_exceptions=False) as client:

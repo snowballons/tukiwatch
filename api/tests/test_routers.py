@@ -9,9 +9,8 @@ Covers:
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
-from tests.conftest import TEST_API_KEY, VALID_URLS
+from tests.conftest import TEST_API_KEY
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -119,7 +118,6 @@ class TestResolveEndpoint:
 
     def test_service_exception_returns_error(self, client):
         """Unhandled service exceptions must surface as 500 responses."""
-        from fastapi import HTTPException
 
         with patch(
             "app.routers.streams.stream_service.resolve_stream_details",
