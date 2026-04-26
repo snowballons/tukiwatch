@@ -32,7 +32,10 @@ export function getRateLimitInfo(): RateLimitInfo | null {
 }
 
 const getRequestHeaders = async () => {
-  return {};
+  return {
+    'X-API-Key': process.env.EXPO_PUBLIC_BACKEND_API_KEY || '',
+    'Content-Type': 'application/json'
+  };
 };
 
 export const checkHealth = async (): Promise<boolean> => {
@@ -59,9 +62,16 @@ export const resolveStream = async (url: string, bypassCache: boolean = false) =
   if (bypassCache) {
     params.append('bypass_cache', 'true');
   }
-  const response = await axios.get(`${PYTHON_API_URL}/resolve?${params}`, { headers });
-  updateRateLimitInfo(response.headers);
-  return response.data;
+  try {
+    const response = await axios.get(`${PYTHON_API_URL}/api/resolve?${params}`, { headers });
+    updateRateLimitInfo(response.headers);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      console.error('Unauthorized: Invalid API key during resolveStream');
+    }
+    throw error;
+  }
 };
 
 export const streamService = {
@@ -69,7 +79,7 @@ export const streamService = {
     try {
       const headers = await getRequestHeaders();
       const params = bypassCache ? '?bypass_cache=true' : '';
-      const response = await axios.post(`${PYTHON_API_URL}/status-batch${params}`, { urls }, { headers });
+      const response = await axios.post(`${PYTHON_API_URL}/api/status-batch${params}`, { urls }, { headers });
       updateRateLimitInfo(response.headers);
       return response.data.results.map((result: any, index: number) => ({
         id: index,
@@ -94,7 +104,10 @@ export const streamService = {
 
       // Enhanced error handling based on HTTP status codes
       let errorMessage = 'Status check failed';
-      if (error.response?.status === 400) {
+      if (error.response?.status === 401) {
+        errorMessage = 'Unauthorized: Invalid API key';
+        console.error(errorMessage);
+      } else if (error.response?.status === 400) {
         errorMessage = error.response.data.detail || 'Invalid batch request';
         console.error('Invalid batch request:', errorMessage);
       } else if (error.response?.status === 429) {

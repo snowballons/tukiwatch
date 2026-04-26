@@ -9,6 +9,8 @@ import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 // Screen Imports
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
@@ -83,6 +85,13 @@ function TabNavigator() {
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [appIsReady, setAppIsReady] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('onboarding_complete')
+      .then(val => setOnboardingComplete(val === 'true'))
+      .catch(() => setOnboardingComplete(true)); // on error, skip onboarding
+  }, []);
 
   useEffect(() => {
     async function prepare() {
@@ -120,10 +129,36 @@ export default function App() {
   const handleDeepLink = async (url: string) => {
     if (!url) return;
     
-    // Check if URL contains session info (access_token or type=recovery)
-    if (url.includes('access_token=') || url.includes('type=recovery')) {
-      // Supabase's setSession or getSession will pick up the hash fragment automatically
-      // if detectSessionInUrl is true, but we can manually refresh here
+    const urlObj = new URL(url);
+    
+    // 1. Handle Implicit Flow (hash fragment #access_token=...)
+    // React Native's URL polyfill handles hash in .hash or sometimes as part of .href
+    const hash = url.split('#')[1];
+    if (hash && hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash);
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      
+      if (access_token && refresh_token) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+        if (data.session) setSession(data.session);
+        return;
+      }
+    }
+
+    // 2. Handle PKCE Flow (query param ?code=...)
+    const code = urlObj.searchParams.get('code');
+    if (code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (data.session) setSession(data.session);
+      return;
+    }
+
+    // 3. Handle specific recovery token (if using older or custom flow)
+    if (url.includes('type=recovery')) {
       const { data } = await supabase.auth.getSession();
       if (data.session) setSession(data.session);
     }
@@ -146,10 +181,18 @@ export default function App() {
     SplashScreen.hideAsync();
   }, []);
 
-  if (!appIsReady) {
+  if (!appIsReady || onboardingComplete === null) {
     return (
       <View style={styles.container}>
         <CustomSplashScreen />
+      </View>
+    );
+  }
+
+  if (!onboardingComplete) {
+    return (
+      <View style={styles.container} onLayout={onLayoutRootView}>
+        <OnboardingScreen onComplete={() => setOnboardingComplete(true)} />
       </View>
     );
   }

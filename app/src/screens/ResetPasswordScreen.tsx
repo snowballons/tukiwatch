@@ -12,6 +12,14 @@ export function ResetPasswordScreen({ navigation }: any) {
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
 
   const handleUpdatePassword = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      Alert.alert('Session Missing', 'Your reset session has expired or is invalid. Please request a new password reset link.', [
+        { text: 'Go Back', onPress: () => navigation.navigate('Auth') }
+      ]);
+      return;
+    }
+    
     if (!password.trim() || !confirmPassword.trim()) {
       Alert.alert('Required', 'Please fill in all fields.');
       return;

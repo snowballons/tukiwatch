@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
-import { getCacheStats, getRateLimitInfo, RateLimitInfo } from '../services/engine';
-import { useStreams } from '../context/StreamContext';
 import { Palette, Spacing } from '../theme/Theme';
-import { ChevronRight, User, Wifi, WifiOff, Database } from 'lucide-react-native';
+import { ChevronRight, User } from 'lucide-react-native';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <View style={styles.section}>
@@ -26,23 +24,66 @@ const ListItem: React.FC<{ label: string; value?: string; onPress?: () => void, 
   </TouchableOpacity>
 );
 
+const appVersion = "1.0.0";
+
+const isNewerVersion = (current: string, latest: string) => {
+  const currentParts = current.replace('v', '').split('.').map(Number);
+  const latestParts = latest.replace('v', '').split('.').map(Number);
+  for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
+    const curr = currentParts[i] || 0;
+    const lat = latestParts[i] || 0;
+    if (lat > curr) return true;
+    if (lat < curr) return false;
+  }
+  return false;
+};
+
 export function SettingsScreen({ navigation }: any) {
-  const appVersion = "1.0.0";
   const { profile } = useProfile();
-  const { isBackendReachable } = useStreams();
   const [showAbout, setShowAbout] = useState(false);
-  const [cacheStats, setCacheStats] = useState<any>(null);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const stats = await getCacheStats();
-      if (stats) setCacheStats(stats);
-      setRateLimitInfo(getRateLimitInfo());
-    };
-    fetchStats();
+    // Silently check for updates on mount
+    checkForUpdates(false);
   }, []);
+
+  const checkForUpdates = async (isManual: boolean = false) => {
+    if (isManual) setCheckingUpdate(true);
+    try {
+      const response = await fetch('https://api.github.com/repos/snowballons/streamwatch-api/releases/latest');
+      const data = await response.json();
+      
+      if (data.tag_name) {
+        const latestVersion = data.tag_name.replace('v', '');
+        
+        if (isNewerVersion(appVersion, latestVersion)) {
+          // Look for an APK file in the release assets, fallback to html release page
+          const apkAsset = data.assets?.find((a: any) => a.name.endsWith('.apk'));
+          const downloadUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
+          
+          Alert.alert(
+            "Update Available",
+            `Version ${latestVersion} of StreamWatch is ready. Would you like to download it now?`,
+            [
+              { text: "Later", style: "cancel" },
+              { text: "Download", onPress: () => Linking.openURL(downloadUrl) }
+            ]
+          );
+        } else if (isManual) {
+          Alert.alert("Up to Date", `You are running the latest version (${appVersion}).`);
+        }
+      } else if (isManual) {
+        Alert.alert("Notice", "Could not verify the latest version at this time.");
+      }
+    } catch (error) {
+      if (isManual) {
+        Alert.alert("Error", "Failed to check for updates. Please check your internet connection.");
+      }
+    } finally {
+      if (isManual) setCheckingUpdate(false);
+    }
+  };
 
   const handleCopyrightPress = () => {
     Linking.openURL('https://snowballons.com');
@@ -65,49 +106,6 @@ export function SettingsScreen({ navigation }: any) {
         </Section>
       )}
 
-      <Section title="Connection">
-        <ListItem
-          label="Backend Status"
-          value={isBackendReachable ? 'Connected' : 'Disconnected'}
-          onPress={() => setShowDebug(!showDebug)}
-        />
-        {showDebug && (
-          <View style={styles.debugContainer}>
-            <View style={styles.debugRow}>
-              {isBackendReachable
-                ? <Wifi color={Palette.live} size={16} />
-                : <WifiOff color="#EF4444" size={16} />
-              }
-              <Text style={[styles.debugText, { color: isBackendReachable ? Palette.live : '#EF4444' }]}>
-                {isBackendReachable ? 'API server is reachable' : 'Cannot reach API server'}
-              </Text>
-            </View>
-            {cacheStats && (
-              <>
-                <View style={styles.debugRow}>
-                  <Database color={Palette.textMuted} size={16} />
-                  <Text style={styles.debugText}>
-                    Cache: {cacheStats.cache?.type || 'Unknown'}
-                    {cacheStats.cache?.connected_to ? ` (${cacheStats.cache.connected_to})` : ''}
-                  </Text>
-                </View>
-                {cacheStats.cache?.keys !== undefined && (
-                  <Text style={styles.debugSubtext}>
-                    {cacheStats.cache.keys} cached keys
-                    {cacheStats.cache?.used_memory_human ? ` · ${cacheStats.cache.used_memory_human} memory` : ''}
-                  </Text>
-                )}
-              </>
-            )}
-            {rateLimitInfo && (
-              <Text style={styles.debugSubtext}>
-                Rate limit: {rateLimitInfo.remaining}/{rateLimitInfo.limit} remaining
-              </Text>
-            )}
-          </View>
-        )}
-      </Section>
-
       <Section title="About">
         <ListItem label="About StreamWatch" onPress={() => setShowAbout(!showAbout)} />
         {showAbout && (
@@ -118,7 +116,19 @@ export function SettingsScreen({ navigation }: any) {
       </Section>
 
       <Section title="Information">
-        <ListItem label="Version" value={appVersion} />
+        <TouchableOpacity onPress={() => checkForUpdates(true)} style={styles.listItem} disabled={checkingUpdate}>
+          <Text style={styles.listItemLabel}>Check for Updates</Text>
+          <View style={styles.listItemValueContainer}>
+            {checkingUpdate ? (
+              <ActivityIndicator size="small" color={Palette.textMuted} />
+            ) : (
+              <>
+                <Text style={styles.listItemValue}>v{appVersion}</Text>
+                <ChevronRight color={Palette.textMuted} size={18} />
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
         <ListItem label="© 2026 snowballons" onPress={handleCopyrightPress} />
       </Section>
 
@@ -204,34 +214,13 @@ const styles = StyleSheet.create({
   listItemValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   listItemValue: {
     color: Palette.textMuted,
     fontSize: 16,
-    marginRight: Spacing.sm,
   },
   destructiveText: {
     color: '#EF4444',
-  },
-  debugContainer: {
-    padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Palette.border,
-    gap: 8,
-  },
-  debugRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  debugText: {
-    color: Palette.textMuted,
-    fontSize: 13,
-  },
-  debugSubtext: {
-    color: Palette.textMuted,
-    fontSize: 12,
-    marginLeft: 24,
-    opacity: 0.7,
   },
 });

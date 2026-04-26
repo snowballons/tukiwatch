@@ -22,44 +22,8 @@ export function AuthScreen({ navigation }: any) {
     if (!email || !password) return Alert.alert("Required", "Please fill in all fields.");
     setLoading(true);
     
-    let loginEmail = email.trim();
-    
-    // Check if input is username (no @ symbol) or email
-    if (!email.includes('@')) {
-      // It's a username, look up the email
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', email.trim())
-        .single();
-      
-      if (profileError || !profiles) {
-        setLoading(false);
-        return Alert.alert("Error", "Username not found.");
-      }
-      
-      // Get the email from auth.users
-      const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profiles.id);
-      
-      if (userError || !user?.email) {
-        // Fallback: try to get email from user metadata or use RPC
-        const { data: userEmail, error: rpcError } = await supabase.rpc('get_user_email_by_username', {
-          username_input: email.trim()
-        });
-        
-        if (rpcError || !userEmail) {
-          setLoading(false);
-          return Alert.alert("Error", "Could not find account. Please use your email to sign in.");
-        }
-        
-        loginEmail = userEmail;
-      } else {
-        loginEmail = user.email;
-      }
-    }
-    
     const { error } = await supabase.auth.signInWithPassword({ 
-      email: loginEmail, 
+      email: email.trim(), 
       password 
     });
     
@@ -114,12 +78,12 @@ export function AuthScreen({ navigation }: any) {
           <TextInput 
             ref={view === 'login' ? emailInputRef : undefined}
             style={styles.input} 
-            placeholder="Email or Username" 
+            placeholder="Email" 
             placeholderTextColor="#666" 
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
-            keyboardType="default"
+            keyboardType="email-address"
             autoFocus={view === 'login'}
             returnKeyType="next"
             onSubmitEditing={() => passwordInputRef.current?.focus()}
