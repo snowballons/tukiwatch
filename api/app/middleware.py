@@ -1,9 +1,49 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+import logging
+import os
 import time
 from typing import Dict, Tuple
 from app.rate_limit import RateLimitConfig, create_rate_limit_error
+
+logger = logging.getLogger(__name__)
+
+
+class APIKeyMiddleware(BaseHTTPMiddleware):
+    """Middleware that enforces API key authentication on /api/ routes."""
+
+    async def dispatch(self, request: Request, call_next):
+        # Only protect routes under /api/
+        if not request.url.path.startswith("/api/"):
+            return await call_next(request)
+
+        api_key = os.getenv("API_KEY", "")
+        provided_key = request.headers.get("X-API-Key")
+
+        if not provided_key:
+            logger.warning(
+                "Auth failure — missing API key | path=%s ip=%s",
+                request.url.path,
+                request.headers.get("X-Forwarded-For", getattr(request.client, "host", "unknown")),
+            )
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing API key"},
+            )
+
+        if provided_key != api_key:
+            logger.warning(
+                "Auth failure — invalid API key | path=%s ip=%s",
+                request.url.path,
+                request.headers.get("X-Forwarded-For", getattr(request.client, "host", "unknown")),
+            )
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid API key"},
+            )
+
+        return await call_next(request)
 
 
 class CustomRateLimitMiddleware(BaseHTTPMiddleware):

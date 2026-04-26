@@ -8,6 +8,9 @@ load_dotenv()
 class Config:
     ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 
+    # API key for authenticating incoming requests
+    API_KEY = os.getenv("API_KEY", "")
+
     # Twitch-specific configuration (optional)
     TWITCH_OAUTH_TOKEN = os.getenv(
         "TWITCH_OAUTH_TOKEN", ""
