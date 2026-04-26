@@ -1,4 +1,3 @@
-
 """
 Shared pytest fixtures for the streamwatch-api test suite.
 
@@ -191,4 +190,3 @@ SAMPLE_OFFLINE_RESPONSE = {
 }
 
 >>>>>>> main
-
