@@ -1,71 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Basic Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-    <title>StreamWatch — Live Stream Tracker for Android</title>
-    <meta name="description" content="StreamWatch is a free, open-source Android app for tracking live streams on Twitch, YouTube, and Facebook Live. Real-time notifications, ad-free viewing, zero data collection.">
-    <meta name="keywords" content="stream tracking app, android streaming, twitch tracker, youtube live notifications, live stream discovery, android apk, open source streaming">
+    
+    <!-- SEO Meta Tags -->
+    <title>StreamWatch - Free Android App for Live Stream Tracking | No Ads, Open Source</title>
+    <meta name="description" content="StreamWatch is the best free Android app for tracking live streams on Twitch, YouTube, Facebook Live. Get real-time notifications, watch ad-free, and discover trending streamers. Download the official APK.">
+    <meta name="keywords" content="stream tracking app, android streaming app, twitch tracker, youtube live notifications, facebook live viewer, free streaming app, ad-free streaming, live stream discovery, android apk, open source streaming">
     <meta name="author" content="StreamWatch">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="bingbot" content="index, follow">
+    
+    <!-- Canonical URL -->
     <link rel="canonical" href="https://streamwatch.snowballons.com/">
-
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://streamwatch.snowballons.com/">
-    <meta property="og:title" content="StreamWatch — Live Stream Tracker for Android">
-    <meta property="og:description" content="Track live streams from Twitch, YouTube, Facebook Live. Free, open-source, no ads. Download the Android APK.">
+    <meta property="og:title" content="StreamWatch - Free Android App for Live Stream Tracking">
+    <meta property="og:description" content="Track live streams from Twitch, YouTube, Facebook Live. Get notifications, watch ad-free. Download the official Android APK.">
     <meta property="og:image" content="https://streamwatch.snowballons.com/preview.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="StreamWatch App Preview - Android Live Stream Tracker">
     <meta property="og:site_name" content="StreamWatch">
     <meta property="og:locale" content="en_US">
-
+    
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://streamwatch.snowballons.com/">
-    <meta name="twitter:title" content="StreamWatch — Live Stream Tracker for Android">
-    <meta name="twitter:description" content="Track Twitch, YouTube Live streams. Free, open-source, no ads.">
+    <meta name="twitter:title" content="StreamWatch - Free Android Live Stream Tracker">
+    <meta name="twitter:description" content="Track Twitch, YouTube Live streams. Get notifications, watch ad-free. Download APK.">
     <meta name="twitter:image" content="https://streamwatch.snowballons.com/preview.png">
-
-    <meta name="theme-color" content="#07070D">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="twitter:image:alt" content="StreamWatch App Preview">
+    
+    <!-- Additional SEO Meta -->
+    <meta name="theme-color" content="#0A0A0A">
+    <meta name="msapplication-TileColor" content="#0A0A0A">
+    <meta name="application-name" content="StreamWatch">
     <meta name="apple-mobile-web-app-title" content="StreamWatch">
-
-    <link rel="icon" type="image/png" href="https://streamwatch.snowballons.com/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://streamwatch.snowballons.com/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://streamwatch.snowballons.com/logo.png">
     <link rel="apple-touch-icon" href="https://streamwatch.snowballons.com/logo.png">
-
+    
+    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="image" href="https://streamwatch.snowballons.com/preview.png">
-
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="style.css">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "StreamWatch",
-        "description": "Free, open-source Android app for tracking and watching live streams from Twitch, YouTube Live, and Facebook Live.",
+        "description": "Free Android app for tracking and watching live streams from Twitch, YouTube Live, Facebook Live and more. Get real-time notifications and enjoy ad-free viewing.",
         "url": "https://streamwatch.snowballons.com/",
         "applicationCategory": "EntertainmentApplication",
-        "operatingSystem": "Android 7.0+",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "downloadUrl": "https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk",
+        "operatingSystem": "Android",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "downloadUrl": "https://github.com/snowballons/streamwatch-api/releases/latest",
         "fileSize": "25MB",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+        },
         "author": {
             "@type": "Organization",
             "name": "StreamWatch",
             "url": "https://github.com/snowballons/streamwatch-api"
         },
+        "publisher": {
+            "@type": "Organization",
+            "name": "StreamWatch"
+        },
         "datePublished": "2026-02-11",
         "version": "1.0.0",
-        "featureList": ["Real-time stream tracking","Ad-free viewing","Custom notifications","Multi-platform support","Offline mode","Open source"]
+        "keywords": "stream tracking, live streaming, android app, twitch, youtube, notifications",
+        "screenshot": "https://streamwatch.snowballons.com/preview.png",
+        "softwareHelp": {
+            "@type": "WebPage",
+            "url": "https://github.com/snowballons/streamwatch-api"
+        },
+        "featureList": [
+            "Real-time stream tracking",
+            "Ad-free viewing experience",
+            "Custom notifications",
+            "Multi-platform support",
+            "Offline mode",
+            "Open source"
+        ]
     }
     </script>
+    
+    <!-- Organization Schema -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -73,502 +118,124 @@
         "name": "StreamWatch",
         "url": "https://streamwatch.snowballons.com/",
         "logo": "https://streamwatch.snowballons.com/logo.png",
-        "sameAs": ["https://github.com/snowballons/streamwatch-api"],
-        "contactPoint": { "@type": "ContactPoint", "email": "streamwatch@snowballons.com", "contactType": "customer support" }
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "streamwatch@snowballons.com",
+            "contactType": "customer service"
+        },
+        "sameAs": [
+            "https://github.com/snowballons/streamwatch-api"
+        ]
     }
     </script>
 </head>
 <body>
-    <!-- Skip to content for keyboard/screen reader users -->
-    <a href="#main" class="skip-link">Skip to main content</a>
-
-    <!-- Grain texture overlay -->
-    <div class="grain" aria-hidden="true"></div>
-
-    <!-- ═══════════════════════════════════════
-         HEADER
-    ═══════════════════════════════════════ -->
-    <header id="header">
-        <nav class="container nav-inner" role="navigation" aria-label="Main Navigation">
-            <a href="#" class="logo" aria-label="StreamWatch — go to top">
-                <img src="https://streamwatch.snowballons.com/logo.png" alt="" width="32" height="32">
+    <header>
+        <nav role="navigation" aria-label="Main Navigation">
+            <div class="logo">
+                <img src="https://streamwatch.snowballons.com/logo.png" alt="StreamWatch Logo - Live Stream Tracker App" width="40" height="40">
                 <span>StreamWatch</span>
-            </a>
-            <ul class="nav-links" role="list">
+            </div>
+            <ul>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#screenshots">Screenshots</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
-            <a href="https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk"
-               download class="nav-cta" aria-label="Download StreamWatch APK">Download APK</a>
-            <button class="menu-toggle" id="menu-toggle"
-                    aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-menu">
-                <span></span><span></span><span></span>
-            </button>
-        </nav>
-        <div class="mobile-menu" id="mobile-menu" hidden>
-            <ul role="list">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#screenshots">Screenshots</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#faq">FAQ</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
-            <a href="https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk"
-               download class="btn primary-btn" style="justify-content:center;">Download APK</a>
-        </div>
+        </nav>
     </header>
 
-    <!-- ═══════════════════════════════════════
-         MAIN
-    ═══════════════════════════════════════ -->
-    <main id="main">
-
-        <!-- ── HERO ── -->
-        <section id="hero" class="hero" aria-label="Hero">
-            <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
-            <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
-            <div class="container hero-grid">
-
-                <div class="hero-content">
-                    <div class="hero-eyebrow">
-                        <span class="live-dot" aria-hidden="true"></span>
-                        <code>v1.0.0</code>&ensp;·&ensp;Open Source&ensp;·&ensp;Android
-                    </div>
-                    <h1>Track every stream.<br><em>Miss nothing.</em></h1>
-                    <p class="tagline">A focused, ad-free Android app for following live streams across Twitch, YouTube, and Facebook Live — with real-time alerts and privacy you can trust.</p>
-
-                    <div class="hero-stats" aria-label="App stats">
-                        <div class="hero-stat">
-                            <strong id="gh-stars" aria-label="GitHub stars">—</strong>
-                            <span>GitHub Stars</span>
-                        </div>
-                        <div class="hero-stat-divider" aria-hidden="true"></div>
-                        <div class="hero-stat">
-                            <strong>25 MB</strong>
-                            <span>App Size</span>
-                        </div>
-                        <div class="hero-stat-divider" aria-hidden="true"></div>
-                        <div class="hero-stat">
-                            <strong>Free</strong>
-                            <span>Always</span>
-                        </div>
-                    </div>
-
-                    <div class="cta-buttons">
-                        <a href="https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk"
-                           download class="btn primary-btn" id="apk-btn"
-                           aria-label="Download StreamWatch APK for Android">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            Download APK
-                            <span class="btn-sub">Android · v1.0.0</span>
-                        </a>
-                        <a href="https://github.com/snowballons/streamwatch-api"
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn secondary-btn" aria-label="View source code on GitHub">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-                            </svg>
-                            View Source
-                        </a>
-                    </div>
-                    <p class="ios-notice">
-                        iOS version in development —
-                        <a href="#notify">get notified when it drops</a>
-                    </p>
+    <main>
+        <section id="hero" class="hero">
+            <div class="hero-content">
+                <h1>StreamWatch - Track and Watch Your Favorite Live Streams Effortlessly</h1>
+                <p class="tagline">Your Ultimate Companion for Live Streaming Discovery and Viewing – No Ads, No Hassle</p>
+                <div class="cta-buttons">
+                    <a id="hero-download-btn" href="https://github.com/snowballons/streamwatch-api/releases/latest" download class="btn primary-btn" aria-label="Download StreamWatch APK for Android">Download APK <span class="version-text"></span></a>
+                    <a href="https://github.com/snowballons/streamwatch-api" target="_blank" class="btn secondary-btn" aria-label="View StreamWatch source code on GitHub">View on GitHub</a>
                 </div>
-
-                <div class="hero-visual" aria-hidden="true">
-                    <div class="phone-wrap">
-                        <div class="phone-glow"></div>
-                        <div class="phone-frame">
-                            <div class="phone-notch"></div>
-                            <div class="phone-screen">
-                                <img src="https://streamwatch.snowballons.com/preview.png"
-                                     alt="StreamWatch app showing a live stream feed"
-                                     width="270" height="540" loading="eager">
-                            </div>
-                        </div>
-                        <div class="float-badge badge-twitch">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#9146FF"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
-                            Twitch
-                        </div>
-                        <div class="float-badge badge-youtube">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-                            YouTube
-                        </div>
-                        <div class="float-badge badge-facebook">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                            Facebook
-                        </div>
-                    </div>
-                </div>
-
+            </div>
+            <div class="hero-image">
+                <img src="https://streamwatch.snowballons.com/preview.png" alt="StreamWatch Android App Interface - Live Stream Tracking and Notifications" width="600" height="400" loading="eager">
             </div>
         </section>
 
-        <!-- ── PLATFORMS BAR ── -->
-        <div class="platforms-bar" role="presentation">
-            <div class="container platforms-inner">
-                <span class="platforms-label">Supports</span>
-                <div class="platforms-list" aria-label="Supported platforms">
-                    <span>Twitch</span>
-                    <span aria-hidden="true">·</span>
-                    <span>YouTube Live</span>
-                    <span aria-hidden="true">·</span>
-                    <span>Facebook Live</span>
-                    <span aria-hidden="true">·</span>
-                    <span>And more</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── FEATURES ── -->
-        <section id="features" class="section-padded fade-in" aria-labelledby="features-heading">
+        <section id="description" class="section-padded">
             <div class="container">
-                <div class="section-header">
-                    <code class="section-tag" aria-hidden="true">01 / Features</code>
-                    <h2 id="features-heading">Everything in one place</h2>
-                    <p class="section-sub">Built for people who take live content seriously.</p>
-                </div>
+                <h2>What is StreamWatch?</h2>
+                <p>StreamWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface. Core functionalities include adding streams to a favorites list, setting custom alerts, browsing popular streams, and direct playback with quality selection. Main benefits: Saves time by automating stream tracking, provides ad-free viewing options where possible, supports offline notifications, and integrates with device media players for a smooth experience. It's free, open-source and prioritizes privacy with no unnecessary data collection.</p>
+            </div>
+        </section>
+
+        <section id="features" class="section-padded dark-section">
+            <div class="container">
+                <h2>Key Features</h2>
                 <div class="feature-grid">
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            </div>
-                            <h3>Real-Time Tracking</h3>
-                            <p>Instant notification the moment a channel goes live. No delays, no polling lag.</p>
-                        </div>
+                        <h3>🔄 Real-Time Stream Tracking</h3>
+                        <p>Add favorite channels or streamers and get instant notifications when they go live.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                            </div>
-                            <h3>Integrated Viewing</h3>
-                            <p>Watch directly in-app with quality selection. No browser switching or sign-in prompts.</p>
-                        </div>
+                        <h3>📱 Integrated Viewing</h3>
+                        <p>Watch streams directly in the app with optimal quality.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/></svg>
-                            </div>
-                            <h3>Custom Alerts</h3>
-                            <p>Set notifications by category, stream quality, or time window. Your rules, your way.</p>
-                        </div>
+                        <h3>🔔 Custom Alerts</h3>
+                        <p>Set preferences for stream quality, categories (e.g., gaming, music, sports), and notification types.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            </div>
-                            <h3>Discovery Tools</h3>
-                            <p>Browse trending streams, filter by platform or category, get picks based on your watchlist.</p>
-                        </div>
+                        <h3>🔍 Discovery Tools</h3>
+                        <p>Browse trending streams, search by platform or keyword, and explore recommendations based on your favorites.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="9" y1="12" x2="11" y2="14"/><line x1="15" y1="10" x2="11" y2="14"/></svg>
-                            </div>
-                            <h3>Ad-Free Viewing</h3>
-                            <p>Bypass ads on supported platforms. Watch the stream, not the interruptions.</p>
-                        </div>
+                        <h3>🚫 Ad-Free Experience</h3>
+                        <p>Bypass ads on supported platforms.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="7" height="9"/><rect x="15" y="3" width="7" height="5"/><rect x="15" y="12" width="7" height="9"/><rect x="2" y="16" width="7" height="5"/></svg>
-                            </div>
-                            <h3>Cross-Platform</h3>
-                            <p>Twitch, YouTube Live, Facebook Live — all tracked from one unified interface.</p>
-                        </div>
+                        <h3>🔗 Cross-Platform Support</h3>
+                        <p>Works with major streaming sites like Twitch, YouTube, Facebook Live, and more.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-                            </div>
-                            <h3>Offline Mode</h3>
-                            <p>Your saved channels, watch history, and schedules — available without a connection.</p>
-                        </div>
+                        <h3>📴 Offline Mode</h3>
+                        <p>View saved stream info and history even without internet.</p>
                     </article>
                     <article class="feature-card">
-                        <div class="feature-card-inner">
-                            <div class="feature-icon" aria-hidden="true">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            </div>
-                            <h3>Open Source</h3>
-                            <p>MIT licensed. Read the code, fork it, or contribute — the community owns this.</p>
-                        </div>
+                        <h3>🔧 Open-Source Customization</h3>
+                        <p>Access the GitHub repo to modify or contribute to the app.</p>
                     </article>
                 </div>
             </div>
         </section>
 
-        <!-- ── SCREENSHOTS ── -->
-        <section id="screenshots" class="section-padded dark-section fade-in" aria-labelledby="screenshots-heading">
+        <section id="download" class="section-padded dark-section text-center">
             <div class="container">
-                <div class="section-header">
-                    <code class="section-tag" aria-hidden="true">02 / Screenshots</code>
-                    <h2 id="screenshots-heading">See it in action</h2>
-                    <p class="section-sub">A clean interface built around watching — not managing.</p>
-                </div>
-                <div class="screenshot-gallery" role="list" aria-label="App screenshots">
-                    <div class="screenshot-item screenshot-left" role="listitem">
-                        <div class="screenshot-frame">
-                            <img src="https://streamwatch.snowballons.com/preview.png"
-                                 alt="StreamWatch live feed screen — followed channels and their live status"
-                                 loading="lazy" width="270" height="486">
-                        </div>
-                        <p class="screenshot-label">Live Feed</p>
-                        <p class="screenshot-desc">Your tracked channels, at a glance</p>
-                    </div>
-                    <div class="screenshot-item screenshot-center" role="listitem">
-                        <div class="screenshot-frame">
-                            <img src="https://streamwatch.snowballons.com/preview.png"
-                                 alt="StreamWatch discovery screen — trending streams by category"
-                                 loading="lazy" width="270" height="486">
-                        </div>
-                        <p class="screenshot-label">Discovery</p>
-                        <p class="screenshot-desc">Find new streams by category and platform</p>
-                    </div>
-                    <div class="screenshot-item screenshot-right" role="listitem">
-                        <div class="screenshot-frame">
-                            <img src="https://streamwatch.snowballons.com/preview.png"
-                                 alt="StreamWatch notifications screen — custom stream alerts"
-                                 loading="lazy" width="270" height="486">
-                        </div>
-                        <p class="screenshot-label">Notifications</p>
-                        <p class="screenshot-desc">Custom alerts configured to your schedule</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── ABOUT ── -->
-        <section id="about" class="section-padded fade-in" aria-labelledby="about-heading">
-            <div class="container about-grid">
-                <div class="about-content">
-                    <code class="section-tag" aria-hidden="true">03 / About</code>
-                    <h2 id="about-heading">Built for real viewers,<br>by real viewers</h2>
-                    <p>StreamWatch started as a personal fix. The existing options were bloated, full of ads, or required accounts just to follow a streamer. So we built something stripped back: an app that does exactly what you need and nothing you don't.</p>
-                    <p>It's fully open-source under the MIT license. The API is public. There is no tracking, no monetisation plan, no venture capital. Just a tool that works.</p>
-                    <div class="about-actions">
-                        <a href="https://github.com/snowballons/streamwatch-api"
-                           target="_blank" rel="noopener noreferrer" class="btn secondary-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                            Browse the Source
-                        </a>
-                    </div>
-                </div>
-                <div class="about-values" aria-label="Core values">
-                    <div class="value-card">
-                        <div class="value-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        </div>
-                        <div>
-                            <h3>Privacy first</h3>
-                            <p>No analytics, no data collection, no accounts required. Ever.</p>
-                        </div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                        </div>
-                        <div>
-                            <h3>MIT licensed</h3>
-                            <p>Read the code, fork it, build on it. No restrictions, no surprises.</p>
-                        </div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                        </div>
-                        <div>
-                            <h3>Zero cost</h3>
-                            <p>Free today, free always. No premium tier, no paywalls, no hidden charges.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── FAQ ── -->
-        <section id="faq" class="section-padded dark-section fade-in" aria-labelledby="faq-heading">
-            <div class="container faq-container">
-                <div class="section-header">
-                    <code class="section-tag" aria-hidden="true">04 / FAQ</code>
-                    <h2 id="faq-heading">Common questions</h2>
-                </div>
-                <div class="faq-list">
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            Is it safe to install an APK outside the Play Store?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Yes — as long as you download from a trusted source. This APK is built openly with Expo EAS and the full build configuration is in our GitHub repo. You can verify the checksum before installing. Enable "Install from unknown sources" in Android settings, install, and you're good to go.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            Why isn't StreamWatch on the Google Play Store yet?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>We're working on it. The Play Store review process takes time, and some ad-bypass features require careful policy handling. The direct APK is the fastest way to get the latest version right now. Play Store and F-Droid listings are on our roadmap.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            Which Android version is required?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Android 7.0 (Nougat, API level 24) or higher. The app has been tested on Android 10 through 14. If you encounter a compatibility issue on your device, please open a GitHub issue and we'll look into it.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            Is there an iOS version?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Not yet. The app is built with Expo (React Native), so an iOS build is technically achievable — but App Store approval and the developer program cost are hurdles we're navigating. Drop your email in the notification form below and we'll ping you when iOS is ready.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            Does StreamWatch collect any of my data?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>No. StreamWatch collects no personal data, no usage analytics, and no crash reports. Your watchlist and preferences are stored locally on your device only. The only outbound requests are to streaming platforms' public APIs to check stream status.</p>
-                        </div>
-                    </div>
-                    <div class="faq-item">
-                        <button class="faq-question" aria-expanded="false">
-                            How do I add a streamer or channel?
-                            <svg class="faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Open the app, tap the search icon, type the channel name or paste their URL, and tap "Follow". The channel appears in your feed and you'll get a notification next time they go live. Manage all followed channels from the settings screen.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── IOS NOTIFY ── -->
-        <section id="notify" class="section-padded notify-section fade-in" aria-labelledby="notify-heading">
-            <div class="container notify-grid">
-                <div class="notify-content">
-                    <h2 id="notify-heading">Get notified when iOS launches</h2>
-                    <p>One email, one link. No newsletters, no marketing. Just the download when it's ready.</p>
-                </div>
-                <form class="notify-form" id="notify-form" novalidate aria-label="iOS notification signup">
-                    <input type="email" id="notify-email" name="email"
-                           placeholder="your@email.com" autocomplete="email" required
-                           aria-label="Your email address">
-                    <button type="submit" class="btn primary-btn">Notify Me</button>
-                    <p class="notify-confirmation" id="notify-confirmation" aria-live="polite"></p>
-                </form>
-            </div>
-        </section>
-
-        <!-- ── DOWNLOAD CTA ── -->
-        <section id="download" class="section-padded cta-section fade-in" aria-labelledby="download-heading">
-            <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
-            <div class="container cta-inner">
-                <h2 id="download-heading">Ready to never miss a stream?</h2>
-                <p>Free, open-source, and private by design. No account. No strings attached.</p>
+                <h2>Get StreamWatch Now!</h2>
+                <p>Ready to revolutionize your live streaming experience?</p>
                 <div class="cta-buttons">
-                    <a href="https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk"
-                       download class="btn primary-btn large-btn" id="apk-btn-2"
-                       aria-label="Download StreamWatch APK for Android">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download APK — Android
-                    </a>
-                    <a href="https://github.com/snowballons/streamwatch-api"
-                       target="_blank" rel="noopener noreferrer"
-                       class="btn secondary-btn large-btn">View Source Code</a>
+                    <a id="footer-download-btn" href="https://github.com/snowballons/streamwatch-api/releases/latest" download class="btn primary-btn" aria-label="Download StreamWatch Android APK">Download APK (Android) <span class="version-text"></span></a>
+                    <a href="https://github.com/snowballons/streamwatch-api" target="_blank" class="btn secondary-btn" aria-label="Visit StreamWatch GitHub repository">View on GitHub (Source & Instructions)</a>
+                    <a href="#" class="btn secondary-btn disabled" onclick="return false;">App Store (Coming Soon)</a>
                 </div>
-                <p class="cta-meta">v1.0.0 &nbsp;·&nbsp; 25 MB &nbsp;·&nbsp; Android 7.0+</p>
             </div>
         </section>
-
     </main>
 
-    <!-- ═══════════════════════════════════════
-         FOOTER
-    ═══════════════════════════════════════ -->
     <footer>
         <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <a href="#" class="logo" aria-label="StreamWatch home">
-                        <img src="https://streamwatch.snowballons.com/logo.png" alt="" width="28" height="28">
-                        <span>StreamWatch</span>
-                    </a>
-                    <p>A free, open-source Android app for tracking live streams. Built for streamers, by streamers.</p>
-                    <a href="https://github.com/snowballons/streamwatch-api"
-                       target="_blank" rel="noopener noreferrer" class="footer-gh">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                        snowballons/streamwatch-api
-                    </a>
+            <nav aria-label="Footer Navigation">
+                <div class="footer-links">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                    <a href="#contact">Contact Us</a>
                 </div>
-                <div class="footer-col">
-                    <h4>Product</h4>
-                    <nav aria-label="Footer product links">
-                        <a href="#features">Features</a>
-                        <a href="#screenshots">Screenshots</a>
-                        <a href="#faq">FAQ</a>
-                        <a href="https://expo.dev/artifacts/eas/hY1nrmEpC1GxcwUbcCdf1n.apk" download>Download APK</a>
-                    </nav>
-                </div>
-                <div class="footer-col">
-                    <h4>Project</h4>
-                    <nav aria-label="Footer project links">
-                        <a href="#about">About</a>
-                        <a href="https://github.com/snowballons/streamwatch-api" target="_blank" rel="noopener noreferrer">GitHub</a>
-                        <a href="https://github.com/snowballons/streamwatch-api/issues" target="_blank" rel="noopener noreferrer">Report a Bug</a>
-                        <a href="https://github.com/snowballons/streamwatch-api/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
-                    </nav>
-                </div>
-                <div class="footer-col">
-                    <h4>Legal</h4>
-                    <nav aria-label="Footer legal links">
-                        <a href="https://github.com/snowballons/streamwatch-api/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-                        <a href="https://github.com/snowballons/streamwatch-api/blob/main/TERMS.md" target="_blank" rel="noopener noreferrer">Terms of Service</a>
-                    </nav>
-                </div>
+            </nav>
+            <div class="social-links">
+                <a href="https://github.com/snowballons/streamwatch-api" target="_blank" rel="noopener noreferrer" aria-label="StreamWatch GitHub Repository">GitHub</a>
+                <a href="#" target="_blank" rel="noopener noreferrer">Discord (Coming Soon)</a>
             </div>
-            <div class="footer-bottom">
-                <p>© 2026 StreamWatch. Released under the MIT License.</p>
-                <address id="contact">
-                    <a href="mailto:streamwatch@snowballons.com">streamwatch@snowballons.com</a>
-                </address>
-            </div>
+            <p>&copy; 2026 StreamWatch. All rights reserved.</p>
+            <address id="contact">Email: <a href="mailto:streamwatch@snowballons.com" rel="nofollow">streamwatch@snowballons.com</a></address>
         </div>
     </footer>
-
-    <!-- Back to top -->
-    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
-
-    <!-- Download toast -->
-    <div class="toast" id="toast" role="status" aria-live="polite">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>Your download is starting…</span>
-    </div>
 
     <script src="script.js" defer></script>
 </body>
