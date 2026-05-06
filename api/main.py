@@ -1,15 +1,47 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.routers import streams
 from app.middleware import APIKeyMiddleware, CustomRateLimitMiddleware
+from app.services.liveness_worker import check_community_liveness
 from config import config
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(message)s",
+)
 
 # Suppress Streamlink plugin warnings globally
 logging.getLogger("streamlink").setLevel(logging.ERROR)
 logging.getLogger("streamlink.session.plugins").setLevel(logging.CRITICAL)
 
-app = FastAPI(title="Streamlink API", version="1.0.0")
+# Initialize scheduler
+scheduler = AsyncIOScheduler()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Start the scheduler
+    logging.info("Starting background scheduler...")
+    scheduler.add_job(
+        check_community_liveness, "interval", hours=1, id="community_liveness"
+    )
+    scheduler.start()
+
+    # Optionally trigger an initial check on startup
+    # scheduler.add_job(check_community_liveness, id="initial_check")
+
+    yield
+
+    # Shutdown: Stop the scheduler
+    logging.info("Shutting down background scheduler...")
+    scheduler.shutdown()
+
+
+app = FastAPI(title="Streamlink API", version="1.0.0", lifespan=lifespan)
 
 # Add API key authentication middleware (outermost — runs first)
 app.add_middleware(APIKeyMiddleware)

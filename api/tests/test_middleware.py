@@ -93,9 +93,7 @@ class TestAPIKeyMiddleware:
         with patch.dict("os.environ", {"API_KEY": TEST_KEY}):
             app = _make_app_with_api_key_middleware()
             with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get(
-                    "/api/protected", headers={"X-API-Key": TEST_KEY}
-                )
+                response = client.get("/api/protected", headers={"X-API-Key": TEST_KEY})
 
         assert response.status_code == 200
         assert response.json() == {"ok": True}
@@ -222,7 +220,9 @@ class TestCustomRateLimitMiddleware:
         assert response.status_code == 429
         body = response.json()
         # The middleware returns the 'detail' dict directly as the JSON body
-        assert "retry_after" in body or ("detail" in body and "retry_after" in body["detail"])
+        assert "retry_after" in body or (
+            "detail" in body and "retry_after" in body["detail"]
+        )
 
     # -----------------------------------------------------------------------
     # Unit tests for internal helpers

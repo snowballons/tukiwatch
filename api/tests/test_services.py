@@ -36,16 +36,24 @@ YOUTUBE_URL = "https://www.youtube.com/watch?v=abc123"
 def _make_plugin_instance(streams=None, metadata=None):
     """Return a mock plugin instance with configurable streams/metadata."""
     plugin = MagicMock()
-    plugin.streams.return_value = streams if streams is not None else {
-        "best": MagicMock(url="https://cdn.example.com/stream.m3u8"),
-        "720p": MagicMock(url="https://cdn.example.com/720p.m3u8"),
-    }
-    plugin.get_metadata.return_value = metadata if metadata is not None else {
-        "title": "Test Stream",
-        "author": "testchannel",
-        "category": "Gaming",
-        "id": "99999",
-    }
+    plugin.streams.return_value = (
+        streams
+        if streams is not None
+        else {
+            "best": MagicMock(url="https://cdn.example.com/stream.m3u8"),
+            "720p": MagicMock(url="https://cdn.example.com/720p.m3u8"),
+        }
+    )
+    plugin.get_metadata.return_value = (
+        metadata
+        if metadata is not None
+        else {
+            "title": "Test Stream",
+            "author": "testchannel",
+            "category": "Gaming",
+            "id": "99999",
+        }
+    )
     return plugin
 
 
@@ -70,12 +78,15 @@ class TestResolveStreamDetails:
         plugin = _make_plugin_instance()
         session = _make_session(plugin)
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None  # cache miss
 
             from app.services.stream_service import resolve_stream_details
+
             result = resolve_stream_details(TWITCH_URL)
 
         assert result["status"] == "online"
@@ -90,12 +101,15 @@ class TestResolveStreamDetails:
         plugin = _make_plugin_instance(streams={})
         session = _make_session(plugin)
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             result = resolve_stream_details(TWITCH_URL)
 
         assert result["status"] == "offline"
@@ -105,11 +119,14 @@ class TestResolveStreamDetails:
         """When the cache contains a result it must be returned without calling Streamlink."""
         cached = {"status": "online", "title": "Cached", "platform": "twitch"}
 
-        with patch("app.services.stream_service.cache") as mock_cache, \
-             patch("app.services.stream_service.session_pool") as pool:
+        with (
+            patch("app.services.stream_service.cache") as mock_cache,
+            patch("app.services.stream_service.session_pool") as pool,
+        ):
             mock_cache.get.return_value = cached
 
             from app.services.stream_service import resolve_stream_details
+
             result = resolve_stream_details(TWITCH_URL)
 
         pool.get_session.assert_not_called()
@@ -123,6 +140,7 @@ class TestResolveStreamDetails:
             mock_cache.get.return_value = cached
 
             from app.services.stream_service import resolve_stream_details
+
             result = resolve_stream_details(TWITCH_URL)
 
         assert result.get("_cached") is True
@@ -132,12 +150,15 @@ class TestResolveStreamDetails:
         session = MagicMock()
         session.resolve_url.side_effect = NoPluginError()
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             with pytest.raises(NoPluginException):
                 resolve_stream_details(TWITCH_URL)
 
@@ -146,12 +167,15 @@ class TestResolveStreamDetails:
         session = MagicMock()
         session.resolve_url.side_effect = NoStreamsError()
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             with pytest.raises(NoStreamsException):
                 resolve_stream_details(TWITCH_URL)
 
@@ -162,12 +186,15 @@ class TestResolveStreamDetails:
             "chromium-based web browser is required"
         )
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             with pytest.raises(BrowserRequiredException):
                 resolve_stream_details(TWITCH_URL)
 
@@ -176,12 +203,15 @@ class TestResolveStreamDetails:
         session = MagicMock()
         session.resolve_url.side_effect = PluginError("some generic plugin error")
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             with pytest.raises(PluginException):
                 resolve_stream_details(TWITCH_URL)
 
@@ -190,12 +220,15 @@ class TestResolveStreamDetails:
         session = MagicMock()
         session.resolve_url.side_effect = NoPluginError()
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             with pytest.raises(NoPluginException):
                 resolve_stream_details(TWITCH_URL)
 
@@ -206,12 +239,15 @@ class TestResolveStreamDetails:
         plugin = _make_plugin_instance()
         session = _make_session(plugin)
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             resolve_stream_details(TWITCH_URL)
 
         mock_cache.set.assert_called_once()
@@ -223,12 +259,15 @@ class TestResolveStreamDetails:
         plugin = _make_plugin_instance()
         session = _make_session(plugin, url=TWITCH_URL, plugin_name="twitch")
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import resolve_stream_details
+
             resolve_stream_details(TWITCH_URL)
 
         # set_option must have been called at least once for Twitch options
@@ -248,12 +287,15 @@ class TestCheckSingleStream:
         plugin = _make_plugin_instance()
         session = _make_session(plugin)
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import check_single_stream
+
             result = asyncio.get_event_loop().run_until_complete(
                 check_single_stream(TWITCH_URL)
             )
@@ -263,15 +305,16 @@ class TestCheckSingleStream:
 
     def test_cache_hit_returns_cached_status(self):
         """A cached StreamStatus must be returned without calling Streamlink."""
-        cached_status = StreamStatus(
-            url=TWITCH_URL, status="online", platform="twitch"
-        )
+        cached_status = StreamStatus(url=TWITCH_URL, status="online", platform="twitch")
 
-        with patch("app.services.stream_service.cache") as mock_cache, \
-             patch("app.services.stream_service.session_pool") as pool:
+        with (
+            patch("app.services.stream_service.cache") as mock_cache,
+            patch("app.services.stream_service.session_pool") as pool,
+        ):
             mock_cache.get.return_value = cached_status
 
             from app.services.stream_service import check_single_stream
+
             result = asyncio.get_event_loop().run_until_complete(
                 check_single_stream(TWITCH_URL)
             )
@@ -281,13 +324,17 @@ class TestCheckSingleStream:
 
     def test_exception_returns_error_status(self):
         """If _resolve_stream_sync raises, check_single_stream must return status=error."""
-        with patch(
-            "app.services.stream_service._resolve_stream_sync",
-            side_effect=RuntimeError("network failure"),
-        ), patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch(
+                "app.services.stream_service._resolve_stream_sync",
+                side_effect=RuntimeError("network failure"),
+            ),
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             mock_cache.get.return_value = None
 
             from app.services.stream_service import check_single_stream
+
             result = asyncio.get_event_loop().run_until_complete(
                 check_single_stream(TWITCH_URL)
             )
@@ -300,15 +347,16 @@ class TestCheckSingleStream:
         plugin = _make_plugin_instance()
         session = _make_session(plugin)
 
-        with patch("app.services.stream_service.session_pool") as pool, \
-             patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch("app.services.stream_service.session_pool") as pool,
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             pool.get_session.return_value = session
             mock_cache.get.return_value = None
 
             from app.services.stream_service import check_single_stream
-            asyncio.get_event_loop().run_until_complete(
-                check_single_stream(TWITCH_URL)
-            )
+
+            asyncio.get_event_loop().run_until_complete(check_single_stream(TWITCH_URL))
 
         mock_cache.set.assert_called_once()
         cache_key = mock_cache.set.call_args[0][0]
@@ -316,16 +364,18 @@ class TestCheckSingleStream:
 
     def test_error_result_is_cached_with_short_ttl(self):
         """Errors must be cached with a shorter TTL (30 s) than successes."""
-        with patch(
-            "app.services.stream_service._resolve_stream_sync",
-            side_effect=RuntimeError("boom"),
-        ), patch("app.services.stream_service.cache") as mock_cache:
+        with (
+            patch(
+                "app.services.stream_service._resolve_stream_sync",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch("app.services.stream_service.cache") as mock_cache,
+        ):
             mock_cache.get.return_value = None
 
             from app.services.stream_service import check_single_stream
-            asyncio.get_event_loop().run_until_complete(
-                check_single_stream(TWITCH_URL)
-            )
+
+            asyncio.get_event_loop().run_until_complete(check_single_stream(TWITCH_URL))
 
         _, _kwargs_or_args = (
             mock_cache.set.call_args[0],

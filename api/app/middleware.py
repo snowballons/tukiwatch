@@ -25,7 +25,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             logger.warning(
                 "Auth failure — missing API key | path=%s ip=%s",
                 request.url.path,
-                request.headers.get("X-Forwarded-For", getattr(request.client, "host", "unknown")),
+                request.headers.get(
+                    "X-Forwarded-For", getattr(request.client, "host", "unknown")
+                ),
             )
             return JSONResponse(
                 status_code=401,
@@ -36,7 +38,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             logger.warning(
                 "Auth failure — invalid API key | path=%s ip=%s",
                 request.url.path,
-                request.headers.get("X-Forwarded-For", getattr(request.client, "host", "unknown")),
+                request.headers.get(
+                    "X-Forwarded-For", getattr(request.client, "host", "unknown")
+                ),
             )
             return JSONResponse(
                 status_code=401,

@@ -129,9 +129,7 @@ class TestValidateUrl:
 
     def test_url_with_special_characters_in_path(self):
         """URLs with query strings and fragments on valid domains must pass."""
-        result = validate_url(
-            "https://www.youtube.com/watch?v=abc123&t=42s&list=PLxxx"
-        )
+        result = validate_url("https://www.youtube.com/watch?v=abc123&t=42s&list=PLxxx")
         assert "youtube.com" in result
 
     def test_subdomain_of_supported_domain_passes(self):

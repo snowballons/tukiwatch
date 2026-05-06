@@ -243,7 +243,13 @@ class TestAppInitialisation:
     def test_utility_routes_are_registered(self, app):
         """The /, /health, /cache/stats, /rate-limit/stats, /session/stats routes must exist."""
         paths = [route.path for route in app.routes]
-        for expected in ["/", "/health", "/cache/stats", "/rate-limit/stats", "/session/stats"]:
+        for expected in [
+            "/",
+            "/health",
+            "/cache/stats",
+            "/rate-limit/stats",
+            "/session/stats",
+        ]:
             assert expected in paths, f"Route {expected!r} not found in {paths}"
 
     def test_middleware_stack_includes_api_key_middleware(self, app):

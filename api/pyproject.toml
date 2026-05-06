@@ -12,6 +12,8 @@ dependencies = [
     "gunicorn>=25.3.0",
     "python-dotenv>=1.2.2",
     "redis>=5.0.0",
+    "apscheduler>=3.11.0",
+    "supabase>=2.13.0",
 ]
 
 [dependency-groups]

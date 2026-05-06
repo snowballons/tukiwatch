@@ -48,12 +48,15 @@ class TestResolveEndpoint:
 
     def test_valid_url_returns_stream_details(self, client):
         """A valid, supported URL must return stream details from the service."""
-        with patch(
-            "app.routers.streams.stream_service.resolve_stream_details",
-            return_value=ONLINE_RESULT,
-        ), patch(
-            "app.routers.streams.validate_url",
-            return_value="https://www.twitch.tv/testchannel",
+        with (
+            patch(
+                "app.routers.streams.stream_service.resolve_stream_details",
+                return_value=ONLINE_RESULT,
+            ),
+            patch(
+                "app.routers.streams.validate_url",
+                return_value="https://www.twitch.tv/testchannel",
+            ),
         ):
             response = client.get(
                 "/api/resolve",
@@ -94,12 +97,16 @@ class TestResolveEndpoint:
 
     def test_cache_bypass_deletes_cache_entry(self, client):
         """When bypass_cache=true the cache entry for the URL must be deleted."""
-        with patch("app.routers.streams.cache") as mock_cache, patch(
-            "app.routers.streams.stream_service.resolve_stream_details",
-            return_value=ONLINE_RESULT,
-        ), patch(
-            "app.routers.streams.validate_url",
-            return_value="https://www.twitch.tv/testchannel",
+        with (
+            patch("app.routers.streams.cache") as mock_cache,
+            patch(
+                "app.routers.streams.stream_service.resolve_stream_details",
+                return_value=ONLINE_RESULT,
+            ),
+            patch(
+                "app.routers.streams.validate_url",
+                return_value="https://www.twitch.tv/testchannel",
+            ),
         ):
             mock_cache.delete = MagicMock()
             response = client.get(
@@ -119,12 +126,15 @@ class TestResolveEndpoint:
     def test_service_exception_returns_error(self, client):
         """Unhandled service exceptions must surface as 500 responses."""
 
-        with patch(
-            "app.routers.streams.stream_service.resolve_stream_details",
-            side_effect=Exception("boom"),
-        ), patch(
-            "app.routers.streams.validate_url",
-            return_value="https://www.twitch.tv/testchannel",
+        with (
+            patch(
+                "app.routers.streams.stream_service.resolve_stream_details",
+                side_effect=Exception("boom"),
+            ),
+            patch(
+                "app.routers.streams.validate_url",
+                return_value="https://www.twitch.tv/testchannel",
+            ),
         ):
             response = client.get(
                 "/api/resolve",
@@ -138,12 +148,15 @@ class TestResolveEndpoint:
         """StreamlinkAPIException subclasses must propagate with their HTTP code."""
         from app.exceptions import NoPluginException
 
-        with patch(
-            "app.routers.streams.stream_service.resolve_stream_details",
-            side_effect=NoPluginException("https://www.twitch.tv/testchannel"),
-        ), patch(
-            "app.routers.streams.validate_url",
-            return_value="https://www.twitch.tv/testchannel",
+        with (
+            patch(
+                "app.routers.streams.stream_service.resolve_stream_details",
+                side_effect=NoPluginException("https://www.twitch.tv/testchannel"),
+            ),
+            patch(
+                "app.routers.streams.validate_url",
+                return_value="https://www.twitch.tv/testchannel",
+            ),
         ):
             response = client.get(
                 "/api/resolve",
@@ -177,12 +190,15 @@ class TestStatusBatchEndpoint:
             platform="twitch",
         )
 
-        with patch(
-            "app.routers.streams.stream_service.check_single_stream",
-            new=AsyncMock(return_value=mock_status),
-        ), patch(
-            "app.routers.streams.validate_batch_request",
-            return_value=["https://www.twitch.tv/testchannel"],
+        with (
+            patch(
+                "app.routers.streams.stream_service.check_single_stream",
+                new=AsyncMock(return_value=mock_status),
+            ),
+            patch(
+                "app.routers.streams.validate_batch_request",
+                return_value=["https://www.twitch.tv/testchannel"],
+            ),
         ):
             response = client.post(
                 "/api/status-batch",
@@ -209,12 +225,15 @@ class TestStatusBatchEndpoint:
         def _make_status(url):
             return StreamStatus(url=url, status="online", platform="twitch")
 
-        with patch(
-            "app.routers.streams.stream_service.check_single_stream",
-            new=AsyncMock(side_effect=lambda u: _make_status(u)),
-        ), patch(
-            "app.routers.streams.validate_batch_request",
-            return_value=urls,
+        with (
+            patch(
+                "app.routers.streams.stream_service.check_single_stream",
+                new=AsyncMock(side_effect=lambda u: _make_status(u)),
+            ),
+            patch(
+                "app.routers.streams.validate_batch_request",
+                return_value=urls,
+            ),
         ):
             response = client.post(
                 "/api/status-batch",
@@ -244,15 +263,18 @@ class TestStatusBatchEndpoint:
                 raise RuntimeError("network failure")
             return good_status
 
-        with patch(
-            "app.routers.streams.stream_service.check_single_stream",
-            new=_side_effect,
-        ), patch(
-            "app.routers.streams.validate_batch_request",
-            return_value=[
-                "https://www.twitch.tv/bad",
-                "https://www.twitch.tv/good",
-            ],
+        with (
+            patch(
+                "app.routers.streams.stream_service.check_single_stream",
+                new=_side_effect,
+            ),
+            patch(
+                "app.routers.streams.validate_batch_request",
+                return_value=[
+                    "https://www.twitch.tv/bad",
+                    "https://www.twitch.tv/good",
+                ],
+            ),
         ):
             response = client.post(
                 "/api/status-batch",
@@ -306,16 +328,18 @@ class TestStatusBatchEndpoint:
             "https://www.twitch.tv/chan1",
             "https://www.twitch.tv/chan2",
         ]
-        mock_status = StreamStatus(
-            url=urls[0], status="online", platform="twitch"
-        )
+        mock_status = StreamStatus(url=urls[0], status="online", platform="twitch")
 
-        with patch("app.routers.streams.cache") as mock_cache, patch(
-            "app.routers.streams.stream_service.check_single_stream",
-            new=AsyncMock(return_value=mock_status),
-        ), patch(
-            "app.routers.streams.validate_batch_request",
-            return_value=urls,
+        with (
+            patch("app.routers.streams.cache") as mock_cache,
+            patch(
+                "app.routers.streams.stream_service.check_single_stream",
+                new=AsyncMock(return_value=mock_status),
+            ),
+            patch(
+                "app.routers.streams.validate_batch_request",
+                return_value=urls,
+            ),
         ):
             mock_cache.delete = MagicMock()
             client.post(

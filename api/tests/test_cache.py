@@ -30,6 +30,7 @@ class TestSimpleCache:
     @pytest.fixture()
     def cache(self):
         from app.cache import SimpleCache
+
         return SimpleCache()
 
     def test_set_and_get_returns_value(self, cache):
@@ -115,6 +116,7 @@ class TestSerializationHelpers:
     def test_serialize_dict_produces_json_string(self):
         """_serialize() on a dict must produce a valid JSON string."""
         from app.cache import _serialize
+
         raw = _serialize({"key": "value"})
         parsed = json.loads(raw)
         assert parsed["__type__"] == "dict"
@@ -123,6 +125,7 @@ class TestSerializationHelpers:
     def test_serialize_stream_status_encodes_type(self):
         """_serialize() on a StreamStatus must embed the type tag."""
         from app.cache import _serialize
+
         status = StreamStatus(url="https://twitch.tv/test", status="online")
         raw = _serialize(status)
         parsed = json.loads(raw)
@@ -131,6 +134,7 @@ class TestSerializationHelpers:
     def test_deserialize_dict_returns_dict(self):
         """_deserialize() on a dict envelope must return a plain dict."""
         from app.cache import _serialize, _deserialize
+
         original = {"hello": "world"}
         result = _deserialize(_serialize(original))
         assert result == original
@@ -138,6 +142,7 @@ class TestSerializationHelpers:
     def test_deserialize_stream_status_returns_model(self):
         """_deserialize() on a StreamStatus envelope must return a StreamStatus."""
         from app.cache import _serialize, _deserialize
+
         status = StreamStatus(url="https://twitch.tv/test", status="online")
         result = _deserialize(_serialize(status))
         assert isinstance(result, StreamStatus)
@@ -146,12 +151,14 @@ class TestSerializationHelpers:
     def test_deserialize_invalid_json_returns_raw(self):
         """_deserialize() on non-JSON input must return the raw string."""
         from app.cache import _deserialize
+
         result = _deserialize("not-json-at-all")
         assert result == "not-json-at-all"
 
     def test_round_trip_preserves_all_fields(self):
         """A full StreamStatus round-trip must preserve every field."""
         from app.cache import _serialize, _deserialize
+
         status = StreamStatus(
             url="https://twitch.tv/test",
             status="online",
@@ -180,9 +187,11 @@ class TestRedisCache:
         """Return a RedisCache instance wired to the mock Redis client."""
         from app.cache import RedisCache
 
-        with patch("redis.Redis.from_pool", return_value=mock_redis), \
-             patch("redis.ConnectionPool.from_url", return_value=MagicMock()), \
-             patch("app.cache.config") as mock_config:
+        with (
+            patch("redis.Redis.from_pool", return_value=mock_redis),
+            patch("redis.ConnectionPool.from_url", return_value=MagicMock()),
+            patch("app.cache.config") as mock_config,
+        ):
             mock_config.REDIS_URL = "redis://localhost:6379/0"
             mock_config.REDIS_HOST = "localhost"
             mock_config.REDIS_PORT = 6379
@@ -288,8 +297,10 @@ class TestCreateCacheFactory:
         """If Redis is unreachable, _create_cache() must fall back to SimpleCache."""
         from app.cache import SimpleCache, _create_cache
 
-        with patch("app.cache.config") as mock_config, \
-             patch("app.cache.RedisCache", side_effect=Exception("refused")):
+        with (
+            patch("app.cache.config") as mock_config,
+            patch("app.cache.RedisCache", side_effect=Exception("refused")),
+        ):
             mock_config.REDIS_URL = "redis://localhost:6379"
             mock_config.REDIS_HOST = "localhost"
             result = _create_cache()
@@ -302,8 +313,10 @@ class TestCreateCacheFactory:
 
         mock_redis_instance = MagicMock(spec=RedisCache)
 
-        with patch("app.cache.config") as mock_config, \
-             patch("app.cache.RedisCache", return_value=mock_redis_instance):
+        with (
+            patch("app.cache.config") as mock_config,
+            patch("app.cache.RedisCache", return_value=mock_redis_instance),
+        ):
             mock_config.REDIS_URL = "redis://localhost:6379"
             mock_config.REDIS_HOST = "localhost"
             result = _create_cache()
