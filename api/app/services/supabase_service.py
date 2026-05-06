@@ -8,9 +8,21 @@ logger = logging.getLogger(__name__)
 
 class SupabaseService:
     def __init__(self):
-        self.supabase: Client = create_client(
-            config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY
-        )
+        self._supabase: Client = None
+
+    @property
+    def supabase(self) -> Client:
+        if self._supabase is None:
+            if not config.SUPABASE_URL or not config.SUPABASE_SERVICE_KEY:
+                # In testing or local dev without config, this might be called.
+                # We raise a clear error only when actually accessed.
+                raise ValueError(
+                    "Supabase configuration missing (SUPABASE_URL or SUPABASE_SERVICE_KEY)"
+                )
+            self._supabase = create_client(
+                config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY
+            )
+        return self._supabase
 
     def get_community_streams(self):
         """Fetch all community streams that need liveness checks."""
