@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
   ActivityIndicator, Image, Alert,
@@ -6,7 +6,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { X, Play, Plus, WifiOff } from 'lucide-react-native';
 import { Palette, Spacing, PlatformColors } from '../theme/Theme';
-import { CommunityStream, StreamResolution } from '../types';
+import { CommunityStream } from '../types';
 import { resolveStream } from '../services/engine';
 import { supabase } from '../../lib/supabase';
 
@@ -22,24 +22,20 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1516280440614-37939bba
 export function CommunityPreviewModal({ visible, stream, onClose, onAdded }: CommunityPreviewModalProps) {
   const navigation = useNavigation<any>();
   const [resolving, setResolving] = useState(false);
-  const [resolution, setResolution] = useState<StreamResolution | null>(null);
   const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    if (visible && stream) {
-      setResolution(null);
-      setResolving(true);
-      resolveStream(stream.original_url)
-        .then((data) => setResolution(data as StreamResolution))
-        .catch(() => setResolution({ status: 'error' }))
-        .finally(() => setResolving(false));
+  const handlePlay = async () => {
+    if (!stream) return;
+    setResolving(true);
+    try {
+      const data = await resolveStream(stream.original_url);
+      onClose();
+      navigation.navigate('Player', { streamData: data, url: stream.original_url });
+    } catch {
+      Alert.alert('Error', 'Could not load stream.');
+    } finally {
+      setResolving(false);
     }
-  }, [visible, stream]);
-
-  const handlePlay = () => {
-    if (!resolution || !stream) return;
-    onClose();
-    navigation.navigate('Player', { streamData: resolution, url: stream.original_url });
   };
 
   const handleAddToLibrary = async () => {
@@ -80,7 +76,7 @@ export function CommunityPreviewModal({ visible, stream, onClose, onAdded }: Com
 
   if (!stream) return null;
 
-  const isOnline = resolution?.status === 'online';
+  const isOnline = stream.is_online;
   const platformColor = PlatformColors[stream.platform as keyof typeof PlatformColors] || PlatformColors.default;
 
   return (
@@ -99,56 +95,53 @@ export function CommunityPreviewModal({ visible, stream, onClose, onAdded }: Com
           {/* Thumbnail */}
           <View style={styles.thumbnailContainer}>
             <Image
-              source={{ uri: resolution?.thumbnail || FALLBACK_IMAGE }}
+              source={{ uri: FALLBACK_IMAGE }}
               style={styles.thumbnail}
             />
-            {!resolving && resolution && (
-              <View style={[styles.statusBadge, { backgroundColor: isOnline ? 'rgba(16,185,129,0.9)' : 'rgba(63,63,70,0.9)' }]}>
-                <Text style={styles.statusText}>{isOnline ? 'LIVE' : 'OFFLINE'}</Text>
-              </View>
-            )}
+            <View style={[styles.statusBadge, { backgroundColor: isOnline ? 'rgba(16,185,129,0.9)' : 'rgba(63,63,70,0.9)' }]}>
+              <Text style={styles.statusText}>{isOnline ? 'LIVE' : 'OFFLINE'}</Text>
+            </View>
             <View style={[styles.platformBadge, { backgroundColor: platformColor }]}>
               <Text style={styles.platformText}>{stream.platform.toUpperCase()}</Text>
             </View>
           </View>
 
-          {/* Loading */}
-          {resolving && (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={Palette.primary} size="small" />
-              <Text style={styles.loadingText}>Checking stream...</Text>
-            </View>
-          )}
-
           {/* Info */}
-          {!resolving && resolution && (
-            <View style={styles.info}>
-              <Text style={styles.streamTitle} numberOfLines={2}>
-                {resolution.title || stream.streamer_name}
-              </Text>
-              {resolution.author && <Text style={styles.author}>{resolution.author}</Text>}
-              {stream.category && <Text style={styles.category}>{stream.category}</Text>}
-              {!isOnline && (
-                <View style={styles.offlineRow}>
-                  <WifiOff color={Palette.textMuted} size={14} />
-                  <Text style={styles.offlineText}>Stream is currently offline</Text>
-                </View>
-              )}
-            </View>
-          )}
+          <View style={styles.info}>
+            <Text style={styles.streamTitle} numberOfLines={2}>
+              {stream.streamer_name}
+            </Text>
+            {stream.category && <Text style={styles.category}>{stream.category}</Text>}
+            {!isOnline && (
+              <View style={styles.offlineRow}>
+                <WifiOff color={Palette.textMuted} size={14} />
+                <Text style={styles.offlineText}>Stream is currently offline</Text>
+              </View>
+            )}
+          </View>
 
           {/* Actions */}
           <View style={styles.actions}>
             {isOnline && (
-              <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
-                <Play color="#fff" size={18} fill="#fff" />
-                <Text style={styles.playButtonText}>Play Now</Text>
+              <TouchableOpacity
+                style={[styles.playButton, resolving && { opacity: 0.6 }]}
+                onPress={handlePlay}
+                disabled={resolving}
+              >
+                {resolving ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Play color="#fff" size={18} fill="#fff" />
+                    <Text style={styles.playButtonText}>Play Now</Text>
+                  </>
+                )}
               </TouchableOpacity>
             )}
             <TouchableOpacity
               style={[styles.addButton, adding && { opacity: 0.6 }]}
               onPress={handleAddToLibrary}
-              disabled={adding || resolving}
+              disabled={adding}
             >
               {adding ? (
                 <ActivityIndicator color={Palette.live} size="small" />
@@ -180,11 +173,8 @@ const styles = StyleSheet.create({
   statusText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
   platformBadge: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4 },
   platformText: { color: '#fff', fontSize: 9, fontWeight: '700' },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md },
-  loadingText: { color: Palette.textMuted, fontSize: 14 },
   info: { marginBottom: Spacing.md },
   streamTitle: { color: Palette.text, fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  author: { color: Palette.textMuted, fontSize: 13, marginBottom: 2 },
   category: { color: Palette.accent, fontSize: 12, fontWeight: '500' },
   offlineRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
   offlineText: { color: Palette.textMuted, fontSize: 13 },

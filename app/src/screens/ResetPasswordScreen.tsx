@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
@@ -8,8 +8,22 @@ export function ResetPasswordScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+  
+  const checkSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    setSessionLoading(false);
+    if (error || !session) {
+      setSessionError('Your reset session has expired or is invalid. Please request a new password reset link.');
+    }
+  };
 
   const handleUpdatePassword = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -47,6 +61,29 @@ export function ResetPasswordScreen({ navigation }: any) {
       ]);
     }
   };
+
+  if (sessionLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <ActivityIndicator size="large" color={Palette.primary} />
+        </View>
+      </View>
+    );
+  }
+  
+  if (sessionError) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.errorText}>{sessionError}</Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Auth')}>
+            <Text style={styles.btnText}>Back to Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -151,5 +188,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+    lineHeight: 24,
   },
 });

@@ -13,6 +13,7 @@ import { Palette, Spacing } from '../theme/Theme';
 import { COMMUNITY_CATEGORIES, COMMUNITY_COUNTRIES, COMMUNITY_LANGUAGES } from '../types';
 import { detectPlatformFromUrl } from '../utils/detectPlatform';
 import { useProfile } from '../hooks/useProfile';
+import { useCommunity } from '../context/CommunityContext';
 import { shareStream } from '../services/communityService';
 import { X, ChevronDown, Share2 } from 'lucide-react-native';
 
@@ -30,6 +31,7 @@ interface PickerState {
 
 export function ShareStreamModal({ visible, stream, onClose, onShared }: ShareStreamModalProps) {
   const { profile } = useProfile();
+  const { addStream } = useCommunity();
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState('');
   const [country, setCountry] = useState('');
@@ -51,7 +53,7 @@ export function ShareStreamModal({ visible, stream, onClose, onShared }: ShareSt
 
     setLoading(true);
     try {
-      await shareStream({
+      const newStream = await shareStream({
         original_url: stream.original_url,
         streamer_name: stream.streamer_name,
         platform,
@@ -60,6 +62,7 @@ export function ShareStreamModal({ visible, stream, onClose, onShared }: ShareSt
         language,
         username: profile.username,
       });
+      addStream(newStream);
       Alert.alert('Shared!', 'Stream added to community.');
       resetForm();
       onShared();

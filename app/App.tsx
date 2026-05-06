@@ -129,38 +129,42 @@ export default function App() {
   const handleDeepLink = async (url: string) => {
     if (!url) return;
     
+    console.log('Deep link received:', url);
+    
     const urlObj = new URL(url);
     
-    // 1. Handle Implicit Flow (hash fragment #access_token=...)
-    // React Native's URL polyfill handles hash in .hash or sometimes as part of .href
-    const hash = url.split('#')[1];
-    if (hash && hash.includes('access_token=')) {
-      const params = new URLSearchParams(hash);
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      
-      if (access_token && refresh_token) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-        });
-        if (data.session) setSession(data.session);
-        return;
+    // Handle hash fragment (implicit flow)
+    if (url.includes('#')) {
+      const hash = url.split('#')[1];
+      if (hash && hash.includes('access_token=')) {
+        const params = new URLSearchParams(hash);
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        const type = params.get('type');
+        
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (data.session) {
+            setSession(data.session);
+            // If it's a recovery link, navigate to ResetPassword screen
+            if (type === 'recovery') {
+              // Navigation will happen automatically due to session change
+            }
+          }
+        }
       }
     }
-
-    // 2. Handle PKCE Flow (query param ?code=...)
+    
+    // Handle PKCE flow (query param ?code=...)
     const code = urlObj.searchParams.get('code');
     if (code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-      if (data.session) setSession(data.session);
-      return;
-    }
-
-    // 3. Handle specific recovery token (if using older or custom flow)
-    if (url.includes('type=recovery')) {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) setSession(data.session);
+      if (data.session) {
+        setSession(data.session);
+      }
     }
   };
 

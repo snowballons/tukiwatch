@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { useCommunity } from '../context/CommunityContext';
 import { StreamCard } from '../components/StreamCard';
 import { CommunityPreviewModal } from '../components/CommunityPreviewModal';
@@ -29,25 +29,19 @@ const FILTER_OPTIONS: { key: 'platform' | 'category' | 'country'; label: string 
 ];
 
 export function CommunityScreen() {
-  const { streams, loading, filters, setFilters, refresh, refreshLiveness, isCheckingLiveness } = useCommunity();
+  const { streams, loading, filters, setFilters, isCheckingLiveness, lastUpdated } = useCommunity();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'platform' | 'category' | 'country' | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [previewStream, setPreviewStream] = useState<CommunityStream | null>(null);
   const [previewVisible, setPreviewVisible] = useState(false);
 
-  useEffect(() => {
-    refresh({ search: searchQuery });
-  }, [searchQuery]);
+  const minutesUntilUpdate = lastUpdated
+    ? Math.max(0, 60 - Math.floor((Date.now() - lastUpdated) / 60000))
+    : null;
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([
-      refresh({ ...filters, search: searchQuery }),
-      refreshLiveness(),
-    ]);
-    setRefreshing(false);
-  };
+  useEffect(() => {
+    setFilters({ ...filters, search: searchQuery });
+  }, [searchQuery]);
 
   const handleStreamPress = (stream: CommunityStream) => {
     setPreviewStream(stream);
@@ -120,6 +114,12 @@ export function CommunityScreen() {
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Community</Text>
 
+      {minutesUntilUpdate !== null && (
+        <Text style={styles.updateHint}>
+          {isCheckingLiveness ? 'Updating...' : `Next update in ${minutesUntilUpdate}m`}
+        </Text>
+      )}
+
       <View style={styles.searchContainer}>
         <Search color={Palette.textMuted} size={20} style={styles.searchIcon} />
         <TextInput
@@ -187,9 +187,6 @@ export function CommunityScreen() {
         data={streams}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Palette.primary} />
-        }
         renderItem={({ item }) => (
           <StreamCard
             title={item.streamer_name}
@@ -215,10 +212,6 @@ export function CommunityScreen() {
         }
       />
 
-      {isCheckingLiveness && (
-        <Text style={styles.livenessText}>Checking stream status...</Text>
-      )}
-
       <CommunityPreviewModal
         visible={previewVisible}
         stream={previewStream}
@@ -241,6 +234,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: Spacing.lg,
+  },
+  updateHint: {
+    color: Palette.textMuted,
+    fontSize: 12,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -325,12 +324,6 @@ const styles = StyleSheet.create({
   loadingText: {
     color: Palette.textMuted,
     marginTop: Spacing.md,
-  },
-  livenessText: {
-    color: Palette.textMuted,
-    fontSize: 11,
-    textAlign: 'center',
-    marginBottom: 8,
   },
   emptyContainer: {
     marginTop: 100,
