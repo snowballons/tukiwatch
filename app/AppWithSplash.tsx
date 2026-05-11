@@ -1,21 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { Session } from '@supabase/supabase-js';
+import * as SplashScreen from 'expo-splash-screen';
 import { Home, Library, PlusCircle, Settings } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { supabase } from './lib/supabase';
-import { Session } from '@supabase/supabase-js';
-
+import { StreamProvider } from './src/context/StreamContext';
+import { AddScreen } from './src/screens/AddScreen';
 // Screen Imports
 import { AuthScreen } from './src/screens/AuthScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
-import { AddScreen } from './src/screens/AddScreen';
-import { SettingsScreen } from './src/screens/SettingsScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
-import { StreamProvider } from './src/context/StreamContext';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { Palette } from './src/theme/Theme';
 
 // Keep the splash screen visible while we fetch resources
@@ -39,10 +38,26 @@ function TabNavigator() {
         tabBarInactiveTintColor: Palette.textMuted,
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: ({ color }) => <Home color={color} size={24} /> }} />
-      <Tab.Screen name="My List" component={LibraryScreen} options={{ tabBarIcon: ({ color }) => <Library color={color} size={24} /> }} />
-      <Tab.Screen name="Add" component={AddScreen} options={{ tabBarIcon: ({ color }) => <PlusCircle color={color} size={24} /> }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarIcon: ({ color }) => <Settings color={color} size={24} /> }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarIcon: ({ color }) => <Home color={color} size={24} /> }}
+      />
+      <Tab.Screen
+        name="My List"
+        component={LibraryScreen}
+        options={{ tabBarIcon: ({ color }) => <Library color={color} size={24} /> }}
+      />
+      <Tab.Screen
+        name="Add"
+        component={AddScreen}
+        options={{ tabBarIcon: ({ color }) => <PlusCircle color={color} size={24} /> }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ tabBarIcon: ({ color }) => <Settings color={color} size={24} /> }}
+      />
     </Tab.Navigator>
   );
 }
@@ -55,14 +70,16 @@ export default function App() {
     async function prepare() {
       try {
         // Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         setSession(session);
-        
+
         // Set up auth listener
         supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-        
+
         // Simulate loading time for branded splash
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -97,7 +114,11 @@ export default function App() {
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
             <Stack.Screen name="MainTabs" component={TabNavigator} />
-            <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
+            <Stack.Screen
+              name="Player"
+              component={PlayerScreen}
+              options={{ presentation: 'fullScreenModal' }}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </View>

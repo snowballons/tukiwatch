@@ -35,10 +35,7 @@
               "pathPrefix": "/auth"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "queries": [
@@ -98,9 +95,7 @@
         }
       ]
     },
-    "plugins": [
-      "expo-video"
-    ],
+    "plugins": ["expo-video"],
     "extra": {
       "eas": {
         "projectId": "2879c1fe-24f0-415e-b606-b5ab7888d48b"

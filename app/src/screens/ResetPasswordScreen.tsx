@@ -1,39 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Lock } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
-import { Lock } from 'lucide-react-native';
 
-export function ResetPasswordScreen({ navigation }: any) {
+export function ResetPasswordScreen({ navigation }: { navigation: any }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionError, setSessionError] = useState<string | null>(null);
-  
+
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
+
+  const checkSession = useCallback(async () => {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    setSessionLoading(false);
+    if (error || !session) {
+      setSessionError(
+        'Your reset session has expired or is invalid. Please request a new password reset link.'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     checkSession();
-  }, []);
-  
-  const checkSession = async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    setSessionLoading(false);
-    if (error || !session) {
-      setSessionError('Your reset session has expired or is invalid. Please request a new password reset link.');
-    }
-  };
+  }, [checkSession]);
 
   const handleUpdatePassword = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
-      Alert.alert('Session Missing', 'Your reset session has expired or is invalid. Please request a new password reset link.', [
-        { text: 'Go Back', onPress: () => navigation.navigate('Auth') }
-      ]);
+      Alert.alert(
+        'Session Missing',
+        'Your reset session has expired or is invalid. Please request a new password reset link.',
+        [{ text: 'Go Back', onPress: () => navigation.navigate('Auth') }]
+      );
       return;
     }
-    
+
     if (!password.trim() || !confirmPassword.trim()) {
       Alert.alert('Required', 'Please fill in all fields.');
       return;
@@ -57,7 +76,7 @@ export function ResetPasswordScreen({ navigation }: any) {
       Alert.alert('Error', error.message);
     } else {
       Alert.alert('Success', 'Your password has been updated!', [
-        { text: 'OK', onPress: () => navigation.navigate('MainTabs') }
+        { text: 'OK', onPress: () => navigation.navigate('MainTabs') },
       ]);
     }
   };
@@ -71,7 +90,7 @@ export function ResetPasswordScreen({ navigation }: any) {
       </View>
     );
   }
-  
+
   if (sessionError) {
     return (
       <View style={styles.container}>
@@ -87,15 +106,16 @@ export function ResetPasswordScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.content}
+      >
         <View style={styles.iconContainer}>
           <Lock color={Palette.primary} size={48} />
         </View>
 
         <Text style={styles.title}>Create New Password</Text>
-        <Text style={styles.subtitle}>
-          Enter your new password below.
-        </Text>
+        <Text style={styles.subtitle}>Enter your new password below.</Text>
 
         <TextInput
           style={styles.input}

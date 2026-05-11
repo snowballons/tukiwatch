@@ -5,15 +5,15 @@ export const Palette = {
   card: '#161616',
   text: '#FFFFFF',
   textMuted: '#A1A1AA',
-  
+
   // Accents
   primary: '#2B35FF',
   secondary: '#1C1C1E',
-  live: '#10B981',    // Vivid Emerald
+  live: '#10B981', // Vivid Emerald
   offline: '#3F3F46', // Zinc Gray
   accent: '#00D1FF',
   border: '#27272A',
-  
+
   // Light Mode (Optional - for later)
   lightBackground: '#F9FAFB',
   lightCard: '#FFFFFF',
@@ -42,7 +42,7 @@ export const PlatformColors = {
   abematv: '#00D4AA',
   aloula: '#FF6B6B',
   unknown: '#6B7280',
-  default: '#6B7280'
+  default: '#6B7280',
 };
 
 export const Spacing = {

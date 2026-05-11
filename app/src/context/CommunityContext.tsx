@@ -1,7 +1,16 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CommunityStream, CommunityFilters } from '../types';
+import type React from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { fetchCommunityStreams } from '../services/communityService';
+import type { CommunityFilters, CommunityStream } from '../types';
 
 const CACHE_KEY = 'sw_community_cache';
 const CACHE_TS_KEY = 'sw_community_cache_ts';
@@ -28,20 +37,25 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFiltersState] = useState<CommunityFilters>({});
   const streamsRef = useRef<CommunityStream[]>([]);
 
-  useEffect(() => { streamsRef.current = streams; }, [streams]);
+  useEffect(() => {
+    streamsRef.current = streams;
+  }, [streams]);
 
-  const sortStreams = (list: CommunityStream[]) =>
-    [...list].sort((a, b) => {
-      if (a.is_online !== b.is_online) return a.is_online ? -1 : 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+  const sortStreams = useCallback(
+    (list: CommunityStream[]) =>
+      [...list].sort((a, b) => {
+        if (a.is_online !== b.is_online) return a.is_online ? -1 : 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }),
+    []
+  );
 
-  const saveCache = async (list: CommunityStream[]) => {
+  const saveCache = useCallback(async (list: CommunityStream[]) => {
     await AsyncStorage.multiSet([
       [CACHE_KEY, JSON.stringify(list)],
       [CACHE_TS_KEY, Date.now().toString()],
     ]);
-  };
+  }, []);
 
   // Initial load
   useEffect(() => {
@@ -51,10 +65,10 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
         const [[, cached], [, ts]] = await AsyncStorage.multiGet([CACHE_KEY, CACHE_TS_KEY]);
         const age = ts ? Date.now() - parseInt(ts, 10) : Infinity;
 
-        if (cached && age < HOUR_MS) {
+        if (cached && ts && age < HOUR_MS) {
           const parsed = JSON.parse(cached) as CommunityStream[];
           setStreams(sortStreams(parsed));
-          setLastUpdated(parseInt(ts!, 10));
+          setLastUpdated(parseInt(ts, 10));
         } else {
           const data = await fetchCommunityStreams();
           const sorted = sortStreams(data);
@@ -68,7 +82,7 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [sortStreams, saveCache]);
 
   // Hourly refresh job - fetches latest data from DB (updated by backend)
   useEffect(() => {
@@ -89,23 +103,29 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
 
     const timer = setInterval(runUpdate, HOUR_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [sortStreams, saveCache]);
 
-  const addStream = useCallback((stream: CommunityStream) => {
-    setStreams(prev => {
-      const updated = sortStreams([stream, ...prev]);
-      saveCache(updated);
-      return updated;
-    });
-  }, []);
+  const addStream = useCallback(
+    (stream: CommunityStream) => {
+      setStreams((prev) => {
+        const updated = sortStreams([stream, ...prev]);
+        saveCache(updated);
+        return updated;
+      });
+    },
+    [sortStreams, saveCache]
+  );
 
-  const removeStream = useCallback((id: string) => {
-    setStreams(prev => {
-      const updated = prev.filter(s => s.id !== id);
-      saveCache(updated);
-      return updated;
-    });
-  }, []);
+  const removeStream = useCallback(
+    (id: string) => {
+      setStreams((prev) => {
+        const updated = prev.filter((s) => s.id !== id);
+        saveCache(updated);
+        return updated;
+      });
+    },
+    [saveCache]
+  );
 
   const setFilters = useCallback((f: CommunityFilters) => {
     setFiltersState(f);
@@ -113,28 +133,30 @@ export function CommunityProvider({ children }: { children: React.ReactNode }) {
 
   const filteredStreams = useMemo(() => {
     let result = streams;
-    if (filters.platform) result = result.filter(s => s.platform === filters.platform);
-    if (filters.category) result = result.filter(s => s.category === filters.category);
-    if (filters.country)  result = result.filter(s => s.country  === filters.country);
-    if (filters.language) result = result.filter(s => s.language === filters.language);
+    if (filters.platform) result = result.filter((s) => s.platform === filters.platform);
+    if (filters.category) result = result.filter((s) => s.category === filters.category);
+    if (filters.country) result = result.filter((s) => s.country === filters.country);
+    if (filters.language) result = result.filter((s) => s.language === filters.language);
     if (filters.search?.trim()) {
       const q = filters.search.trim().toLowerCase();
-      result = result.filter(s => s.streamer_name.toLowerCase().includes(q));
+      result = result.filter((s) => s.streamer_name.toLowerCase().includes(q));
     }
     return result;
   }, [streams, filters]);
 
   return (
-    <CommunityContext.Provider value={{
-      streams: filteredStreams,
-      loading,
-      filters,
-      setFilters,
-      addStream,
-      removeStream,
-      isCheckingLiveness,
-      lastUpdated,
-    }}>
+    <CommunityContext.Provider
+      value={{
+        streams: filteredStreams,
+        loading,
+        filters,
+        setFilters,
+        addStream,
+        removeStream,
+        isCheckingLiveness,
+        lastUpdated,
+      }}
+    >
       {children}
     </CommunityContext.Provider>
   );

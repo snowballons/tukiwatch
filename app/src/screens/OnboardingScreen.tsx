@@ -1,16 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Animated,
-  useWindowDimensions,
-  SafeAreaView,
-  AccessibilityInfo
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useState } from 'react';
+import {
+  AccessibilityInfo,
+  Animated,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Palette, PlatformColors } from '../theme/Theme';
 
 // --- VISUAL COMPONENTS ---
@@ -25,18 +25,20 @@ const FEATURED_PLATFORMS = [
 ];
 
 function Slide1Visual() {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [_reduceMotion, setReduceMotion] = useState(false);
   const anims = useRef(FEATURED_PLATFORMS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
       setReduceMotion(enabled);
       if (enabled) {
-        anims.forEach(anim => anim.setValue(1));
+        for (const anim of anims) {
+          anim.setValue(1);
+        }
       } else {
         Animated.stagger(
           80,
-          anims.map(anim =>
+          anims.map((anim) =>
             Animated.timing(anim, {
               toValue: 1,
               duration: 300,
@@ -46,7 +48,7 @@ function Slide1Visual() {
         ).start();
       }
     });
-  }, []);
+  }, [anims.map, anims.forEach, anims]);
 
   return (
     <View style={styles.visualContainer}>
@@ -62,7 +64,7 @@ function Slide1Visual() {
               style={[
                 styles.platformPill,
                 { borderLeftColor: platform.color },
-                { opacity: anims[i], transform: [{ translateY }] }
+                { opacity: anims[i], transform: [{ translateY }] },
               ]}
             >
               <View style={[styles.platformDot, { backgroundColor: platform.color }]} />
@@ -71,7 +73,9 @@ function Slide1Visual() {
           );
         })}
       </View>
-      <Animated.Text style={[styles.platformMore, { opacity: anims[FEATURED_PLATFORMS.length - 1] }]}>
+      <Animated.Text
+        style={[styles.platformMore, { opacity: anims[FEATURED_PLATFORMS.length - 1] }]}
+      >
         + 17 more platforms
       </Animated.Text>
     </View>
@@ -79,12 +83,12 @@ function Slide1Visual() {
 }
 
 function Slide2Visual() {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [_reduceMotion, setReduceMotion] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
       setReduceMotion(enabled);
       if (enabled) {
         slideAnim.setValue(1);
@@ -100,18 +104,18 @@ function Slide2Visual() {
             Animated.loop(
               Animated.sequence([
                 Animated.timing(pulseAnim, { toValue: 1.3, duration: 750, useNativeDriver: true }),
-                Animated.timing(pulseAnim, { toValue: 1.0, duration: 750, useNativeDriver: true })
+                Animated.timing(pulseAnim, { toValue: 1.0, duration: 750, useNativeDriver: true }),
               ])
-            )
+            ),
           ]).start();
         });
       }
     });
-  }, []);
+  }, [slideAnim, pulseAnim]);
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-40, 0]
+    outputRange: [-40, 0],
   });
 
   return (
@@ -128,7 +132,13 @@ function Slide2Visual() {
         <Text style={styles.cardDesc}>Tap to watch →</Text>
       </Animated.View>
 
-      <Animated.View style={[styles.notificationCard, styles.notificationCardPartial, { transform: [{ translateY }] }]}>
+      <Animated.View
+        style={[
+          styles.notificationCard,
+          styles.notificationCardPartial,
+          { transform: [{ translateY }] },
+        ]}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.liveContainer}>
             <View style={styles.liveDot} />
@@ -142,13 +152,13 @@ function Slide2Visual() {
 }
 
 function Slide3Visual() {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [_reduceMotion, setReduceMotion] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(enabled => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
       setReduceMotion(enabled);
       if (enabled) {
         fadeAnim.setValue(1);
@@ -164,26 +174,42 @@ function Slide3Visual() {
             Animated.parallel([
               Animated.loop(
                 Animated.sequence([
-                  Animated.timing(pulseAnim, { toValue: 1.1, duration: 1000, useNativeDriver: true }),
-                  Animated.timing(pulseAnim, { toValue: 1.0, duration: 1000, useNativeDriver: true })
+                  Animated.timing(pulseAnim, {
+                    toValue: 1.1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                  }),
+                  Animated.timing(pulseAnim, {
+                    toValue: 1.0,
+                    duration: 1000,
+                    useNativeDriver: true,
+                  }),
                 ])
               ),
               Animated.loop(
                 Animated.sequence([
-                  Animated.timing(shimmerAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-                  Animated.timing(shimmerAnim, { toValue: 0.5, duration: 800, useNativeDriver: true })
+                  Animated.timing(shimmerAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                  }),
+                  Animated.timing(shimmerAnim, {
+                    toValue: 0.5,
+                    duration: 800,
+                    useNativeDriver: true,
+                  }),
                 ])
-              )
-            ])
+              ),
+            ]),
           ]).start();
         });
       }
     });
-  }, []);
+  }, [fadeAnim.setValue, fadeAnim, shimmerAnim.setValue, shimmerAnim, pulseAnim]);
 
   const scale = fadeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.92, 1]
+    outputRange: [0.92, 1],
   });
 
   return (
@@ -195,7 +221,7 @@ function Slide3Visual() {
             <Text style={styles.playerLiveText}>LIVE</Text>
           </View>
         </View>
-        
+
         <View style={styles.playerCenter}>
           <Animated.View style={[styles.playButton, { transform: [{ scale: pulseAnim }] }]}>
             <Text style={styles.playIcon}>▶</Text>
@@ -216,27 +242,30 @@ function Slide3Visual() {
 }
 
 const SLIDES = [
-  { 
-    id: 0, 
-    headline: 'All Your Streams, One Place', 
-    description: 'Add channels from Twitch, YouTube, Kick, and 17+ more platforms. One app, every streamer you follow.', 
-    Visual: Slide1Visual 
+  {
+    id: 0,
+    headline: 'All Your Streams, One Place',
+    description:
+      'Add channels from Twitch, YouTube, Kick, and 17+ more platforms. One app, every streamer you follow.',
+    Visual: Slide1Visual,
   },
-  { 
-    id: 1, 
-    headline: 'Never Miss a Live Moment', 
-    description: 'Get instant alerts the second your favorites go live — even when the app is closed.', 
-    Visual: Slide2Visual 
+  {
+    id: 1,
+    headline: 'Never Miss a Live Moment',
+    description:
+      'Get instant alerts the second your favorites go live — even when the app is closed.',
+    Visual: Slide2Visual,
   },
-  { 
-    id: 2, 
-    headline: 'Watch Without Ads', 
-    description: 'Integrated player with quality selection. No interruptions, no redirects — just the stream.', 
-    Visual: Slide3Visual 
+  {
+    id: 2,
+    headline: 'Watch Without Ads',
+    description:
+      'Integrated player with quality selection. No interruptions, no redirects — just the stream.',
+    Visual: Slide3Visual,
   },
 ];
 
-function SlideWrapper({ width, slide }: { width: number, slide: any }) {
+function SlideWrapper({ width, slide }: { width: number; slide: (typeof SLIDES)[0] }) {
   return (
     <View style={[styles.slide, { width }]}>
       <View style={styles.visualZone}>
@@ -250,11 +279,11 @@ function SlideWrapper({ width, slide }: { width: number, slide: any }) {
   );
 }
 
-function Dots({ current, total }: { current: number, total: number }) {
+function Dots({ current }: { current: number }) {
   return (
     <View style={styles.dotsContainer}>
-      {Array.from({ length: total }).map((_, i) => {
-        return <Dot key={i} isActive={i === current} />;
+      {SLIDES.map((slide) => {
+        return <Dot key={slide.id} isActive={slide.id === current} />;
       })}
     </View>
   );
@@ -277,21 +306,14 @@ function Dot({ isActive }: { isActive: boolean }) {
         useNativeDriver: false,
       }),
     ]).start();
-  }, [isActive]);
+  }, [isActive, widthAnim, bgColorAnim]);
 
   const backgroundColor = bgColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [Palette.textMuted, Palette.primary]
+    outputRange: [Palette.textMuted, Palette.primary],
   });
 
-  return (
-    <Animated.View
-      style={[
-        styles.dot,
-        { width: widthAnim, backgroundColor }
-      ]}
-    />
-  );
+  return <Animated.View style={[styles.dot, { width: widthAnim, backgroundColor }]} />;
 }
 
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
@@ -315,11 +337,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity 
-        style={styles.skip} 
-        onPress={finish}
-        accessibilityLabel="Skip onboarding"
-      >
+      <TouchableOpacity style={styles.skip} onPress={finish} accessibilityLabel="Skip onboarding">
         <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
 
@@ -329,20 +347,18 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={e => {
+        onMomentumScrollEnd={(e) => {
           setIndex(Math.round(e.nativeEvent.contentOffset.x / width));
         }}
-        renderItem={({ item }) => (
-          <SlideWrapper width={width} slide={item} />
-        )}
-        keyExtractor={item => String(item.id)}
+        renderItem={({ item }) => <SlideWrapper width={width} slide={item} />}
+        keyExtractor={(item) => String(item.id)}
       />
 
       <View style={styles.bottomChrome}>
-        <Dots current={index} total={SLIDES.length} />
+        <Dots current={index} />
 
-        <TouchableOpacity 
-          style={styles.cta} 
+        <TouchableOpacity
+          style={styles.cta}
           onPress={goNext}
           accessibilityLabel={index === SLIDES.length - 1 ? 'Get Started' : 'Next slide'}
         >

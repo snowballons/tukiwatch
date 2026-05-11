@@ -1,8 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { ArrowLeft, Mail } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { Palette, Spacing } from '../theme/Theme';
-import { ArrowLeft, Mail } from 'lucide-react-native';
 
 export function ForgotPasswordScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
@@ -35,9 +45,7 @@ export function ForgotPasswordScreen({ navigation }: any) {
         <View style={styles.successContainer}>
           <Mail color={Palette.primary} size={64} />
           <Text style={styles.successTitle}>Check Your Email</Text>
-          <Text style={styles.successText}>
-            We've sent a password reset link to {email}
-          </Text>
+          <Text style={styles.successText}>We've sent a password reset link to {email}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.goBack()}>
             <Text style={styles.btnText}>Back to Sign In</Text>
           </TouchableOpacity>
@@ -48,7 +56,10 @@ export function ForgotPasswordScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.content}
+      >
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft color={Palette.text} size={24} />
         </TouchableOpacity>

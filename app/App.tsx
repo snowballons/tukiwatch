@@ -1,28 +1,27 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet, Linking, Platform } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Library, PlusCircle, Settings, Users } from 'lucide-react-native';
-import { supabase } from './lib/supabase';
-import { Session } from '@supabase/supabase-js';
-
 // Screen Imports
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { type LinkingOptions, NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { Session } from '@supabase/supabase-js';
+import * as SplashScreen from 'expo-splash-screen';
+import { Home, Library, PlusCircle, Settings, Users } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Linking, StyleSheet, View } from 'react-native';
+import { supabase } from './lib/supabase';
+import { CustomSplashScreen } from './src/components/CustomSplashScreen';
+import { CommunityProvider } from './src/context/CommunityContext';
+import { StreamProvider } from './src/context/StreamContext';
+import { AddScreen } from './src/screens/AddScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
+import { CommunityScreen } from './src/screens/CommunityScreen';
+import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
-import { AddScreen } from './src/screens/AddScreen';
-import { SettingsScreen } from './src/screens/SettingsScreen';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
-import { ForgotPasswordScreen } from './src/screens/ForgotPasswordScreen';
 import { ResetPasswordScreen } from './src/screens/ResetPasswordScreen';
-import { CommunityScreen } from './src/screens/CommunityScreen';
-import { StreamProvider } from './src/context/StreamContext';
-import { CommunityProvider } from './src/context/CommunityContext';
-import { CustomSplashScreen } from './src/components/CustomSplashScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { Palette } from './src/theme/Theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -30,8 +29,12 @@ SplashScreen.preventAutoHideAsync();
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const linking: LinkingOptions<any> = {
-  prefixes: ['streamwatch://', 'https://streamwatch.snowballons.com', 'https://lnuxpkwnbesqrqsxyiek.supabase.co'],
+const linking: LinkingOptions<Record<string, object | undefined>> = {
+  prefixes: [
+    'streamwatch://',
+    'https://streamwatch.snowballons.com',
+    'https://lnuxpkwnbesqrqsxyiek.supabase.co',
+  ],
   config: {
     screens: {
       Auth: 'auth',
@@ -66,18 +69,42 @@ function TabNavigator() {
         tabBarInactiveTintColor: Palette.textMuted,
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: ({ color }) => <Home color={color} size={24} /> }} />
-      <Tab.Screen name="My List" component={LibraryScreen} options={{ tabBarIcon: ({ color }) => <Library color={color} size={24} /> }} />
-      <Tab.Screen name="Add" component={AddScreen} options={{
-        tabBarIcon: ({ color }) => (
-          <View style={styles.addButton}>
-            <PlusCircle color="#fff" size={26} />
-          </View>
-        ),
-        tabBarLabel: () => null,
-      }} />
-      <Tab.Screen name="Community" component={CommunityScreen} options={{ tabBarIcon: ({ color, focused }) => <Users color={focused ? Palette.accent : color} size={24} /> }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarIcon: ({ color }) => <Settings color={color} size={24} /> }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarIcon: ({ color }) => <Home color={color} size={24} /> }}
+      />
+      <Tab.Screen
+        name="My List"
+        component={LibraryScreen}
+        options={{ tabBarIcon: ({ color }) => <Library color={color} size={24} /> }}
+      />
+      <Tab.Screen
+        name="Add"
+        component={AddScreen}
+        options={{
+          tabBarIcon: () => (
+            <View style={styles.addButton}>
+              <PlusCircle color="#fff" size={26} />
+            </View>
+          ),
+          tabBarLabel: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Community"
+        component={CommunityScreen}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <Users color={focused ? Palette.accent : color} size={24} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ tabBarIcon: ({ color }) => <Settings color={color} size={24} /> }}
+      />
     </Tab.Navigator>
   );
 }
@@ -89,61 +116,28 @@ export default function App() {
 
   useEffect(() => {
     AsyncStorage.getItem('onboarding_complete')
-      .then(val => setOnboardingComplete(val === 'true'))
+      .then((val) => setOnboardingComplete(val === 'true'))
       .catch(() => setOnboardingComplete(true)); // on error, skip onboarding
   }, []);
 
-  useEffect(() => {
-    async function prepare() {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Supabase session error:', error);
-        } else {
-          setSession(session);
-        }
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          setSession(session);
-        });
-
-        // Handle initial URL
-        const initialUrl = await Linking.getInitialURL();
-        if (initialUrl) {
-          handleDeepLink(initialUrl);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        return () => subscription.unsubscribe();
-      } catch (e) {
-        console.error('Network error:', e);
-      } finally {
-        setAppIsReady(true);
-      }
-    }
-
-    prepare();
-  }, []);
-
-  const handleDeepLink = async (url: string) => {
+  const handleDeepLink = useCallback(async (url: string) => {
     if (!url) return;
-    
+
     console.log('Deep link received:', url);
-    
+
     const urlObj = new URL(url);
-    
+
     // Handle hash fragment (implicit flow)
     if (url.includes('#')) {
       const hash = url.split('#')[1];
-      if (hash && hash.includes('access_token=')) {
+      if (hash?.includes('access_token=')) {
         const params = new URLSearchParams(hash);
         const access_token = params.get('access_token');
         const refresh_token = params.get('refresh_token');
         const type = params.get('type');
-        
+
         if (access_token && refresh_token) {
-          const { data, error } = await supabase.auth.setSession({
+          const { data } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
@@ -157,23 +151,61 @@ export default function App() {
         }
       }
     }
-    
+
     // Handle PKCE flow (query param ?code=...)
     const code = urlObj.searchParams.get('code');
     if (code) {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data } = await supabase.auth.exchangeCodeForSession(code);
       if (data.session) {
         setSession(data.session);
       }
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Supabase session error:', error);
+        } else {
+          setSession(session);
+        }
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          setSession(session);
+        });
+
+        // Handle initial URL
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl) {
+          handleDeepLink(initialUrl);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        return () => subscription.unsubscribe();
+      } catch (e) {
+        console.error('Network error:', e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, [handleDeepLink]);
 
   useEffect(() => {
     const subscription = Linking.addEventListener('url', (event) => {
       handleDeepLink(event.url);
     });
     return () => subscription.remove();
-  }, []);
+  }, [handleDeepLink]);
 
   const onLayoutRootView = useCallback(async () => {
     if (appIsReady) {
@@ -222,7 +254,11 @@ export default function App() {
           <NavigationContainer linking={linking}>
             <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
               <Stack.Screen name="MainTabs" component={TabNavigator} />
-              <Stack.Screen name="Player" component={PlayerScreen} options={{ presentation: 'fullScreenModal' }} />
+              <Stack.Screen
+                name="Player"
+                component={PlayerScreen}
+                options={{ presentation: 'fullScreenModal' }}
+              />
               <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             </Stack.Navigator>
           </NavigationContainer>

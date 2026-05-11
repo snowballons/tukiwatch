@@ -3,23 +3,30 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
+    "prepare": "husky",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "check:ci": "biome ci .",
+    "type-check": "tsc --noEmit",
     "start": "npx expo start",
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web"
   },
   "dependencies": {
+    "@biomejs/biome": "2.4.14",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.12.0",
     "@react-navigation/native": "^7.1.28",
     "@react-navigation/native-stack": "^7.12.0",
     "@supabase/supabase-js": "^2.95.3",
     "axios": "^1.13.4",
-    "expo": "~55.0.17",
+    "expo": "~55.0.23",
     "expo-linear-gradient": "~55.0.13",
-    "expo-splash-screen": "~55.0.19",
-    "expo-status-bar": "~55.0.5",
-    "expo-video": "~55.0.15",
+    "expo-splash-screen": "~55.0.20",
+    "expo-status-bar": "~55.0.6",
+    "expo-video": "~55.0.16",
     "lucide-react-native": "^0.562.0",
     "react": "19.2.0",
     "react-native": "0.83.6",
@@ -30,6 +37,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.2",
     "typescript": "~5.9.3"
   },
   "private": true

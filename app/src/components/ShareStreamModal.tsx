@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
+import { ChevronDown, Share2, X } from 'lucide-react-native';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
   ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { useCommunity } from '../context/CommunityContext';
+import { useProfile } from '../hooks/useProfile';
+import { shareStream } from '../services/communityService';
 import { Palette, Spacing } from '../theme/Theme';
 import { COMMUNITY_CATEGORIES, COMMUNITY_COUNTRIES, COMMUNITY_LANGUAGES } from '../types';
 import { detectPlatformFromUrl } from '../utils/detectPlatform';
-import { useProfile } from '../hooks/useProfile';
-import { useCommunity } from '../context/CommunityContext';
-import { shareStream } from '../services/communityService';
-import { X, ChevronDown, Share2 } from 'lucide-react-native';
 
 interface ShareStreamModalProps {
   visible: boolean;
@@ -170,10 +170,7 @@ export function ShareStreamModal({ visible, stream, onClose, onShared }: ShareSt
           )}
 
           <TouchableOpacity
-            style={[
-              styles.shareButton,
-              { opacity: category && country ? 1 : 0.5 },
-            ]}
+            style={[styles.shareButton, { opacity: category && country ? 1 : 0.5 }]}
             onPress={handleShare}
             disabled={loading || !category || !country}
           >
@@ -188,9 +185,18 @@ export function ShareStreamModal({ visible, stream, onClose, onShared }: ShareSt
           </TouchableOpacity>
         </View>
 
-        <Modal visible={picker.visible} transparent animationType="fade" onRequestClose={closePicker}>
+        <Modal
+          visible={picker.visible}
+          transparent
+          animationType="fade"
+          onRequestClose={closePicker}
+        >
           <View style={styles.pickerOverlay}>
-            <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closePicker} />
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={closePicker}
+            />
             <View style={styles.pickerContent}>
               <Text style={styles.pickerTitle}>{getPickerLabel()}</Text>
               <ScrollView style={styles.pickerList}>
@@ -331,7 +337,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   pickerOptionSelected: {
-    backgroundColor: Palette.primary + '20',
+    backgroundColor: `${Palette.primary}20`,
   },
   pickerOptionText: {
     color: Palette.text,

@@ -1,20 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert, ActivityIndicator } from 'react-native';
+import { ChevronRight, User } from 'lucide-react-native';
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
 import { Palette, Spacing } from '../theme/Theme';
-import { ChevronRight, User } from 'lucide-react-native';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <View style={styles.section}>
     <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionContent}>
-      {children}
-    </View>
+    <View style={styles.sectionContent}>{children}</View>
   </View>
 );
 
-const ListItem: React.FC<{ label: string; value?: string; onPress?: () => void, isDestructive?: boolean }> = ({ label, value, onPress, isDestructive }) => (
+const ListItem: React.FC<{
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  isDestructive?: boolean;
+}> = ({ label, value, onPress, isDestructive }) => (
   <TouchableOpacity onPress={onPress} style={styles.listItem} disabled={!onPress}>
     <Text style={[styles.listItemLabel, isDestructive && styles.destructiveText]}>{label}</Text>
     <View style={styles.listItemValueContainer}>
@@ -24,7 +37,7 @@ const ListItem: React.FC<{ label: string; value?: string; onPress?: () => void, 
   </TouchableOpacity>
 );
 
-const appVersion = "1.0.0";
+const appVersion = '1.0.0';
 
 const isNewerVersion = (current: string, latest: string) => {
   const currentParts = current.replace('v', '').split('.').map(Number);
@@ -38,52 +51,54 @@ const isNewerVersion = (current: string, latest: string) => {
   return false;
 };
 
-export function SettingsScreen({ navigation }: any) {
+export function SettingsScreen() {
   const { profile } = useProfile();
   const [showAbout, setShowAbout] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
 
-  useEffect(() => {
-    // Silently check for updates on mount
-    checkForUpdates(false);
-  }, []);
-
-  const checkForUpdates = async (isManual: boolean = false) => {
+  const checkForUpdates = useCallback(async (isManual: boolean = false) => {
     if (isManual) setCheckingUpdate(true);
     try {
-      const response = await fetch('https://api.github.com/repos/snowballons/streamwatch-api/releases/latest');
+      const response = await fetch(
+        'https://api.github.com/repos/snowballons/streamwatch-api/releases/latest'
+      );
       const data = await response.json();
-      
+
       if (data.tag_name) {
         const latestVersion = data.tag_name.replace('v', '');
-        
+
         if (isNewerVersion(appVersion, latestVersion)) {
           // Look for an APK file in the release assets, fallback to html release page
-          const apkAsset = data.assets?.find((a: any) => a.name.endsWith('.apk'));
+          const apkAsset = data.assets?.find((a: { name: string }) => a.name.endsWith('.apk'));
           const downloadUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
-          
+
           Alert.alert(
-            "Update Available",
+            'Update Available',
             `Version ${latestVersion} of StreamWatch is ready. Would you like to download it now?`,
             [
-              { text: "Later", style: "cancel" },
-              { text: "Download", onPress: () => Linking.openURL(downloadUrl) }
+              { text: 'Later', style: 'cancel' },
+              { text: 'Download', onPress: () => Linking.openURL(downloadUrl) },
             ]
           );
         } else if (isManual) {
-          Alert.alert("Up to Date", `You are running the latest version (${appVersion}).`);
+          Alert.alert('Up to Date', `You are running the latest version (${appVersion}).`);
         }
       } else if (isManual) {
-        Alert.alert("Notice", "Could not verify the latest version at this time.");
+        Alert.alert('Notice', 'Could not verify the latest version at this time.');
       }
-    } catch (error) {
+    } catch (_error) {
       if (isManual) {
-        Alert.alert("Error", "Failed to check for updates. Please check your internet connection.");
+        Alert.alert('Error', 'Failed to check for updates. Please check your internet connection.');
       }
     } finally {
       if (isManual) setCheckingUpdate(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Silently check for updates on mount
+    checkForUpdates(false);
+  }, [checkForUpdates]);
 
   const handleCopyrightPress = () => {
     Linking.openURL('https://snowballons.com');
@@ -110,13 +125,20 @@ export function SettingsScreen({ navigation }: any) {
         <ListItem label="About StreamWatch" onPress={() => setShowAbout(!showAbout)} />
         {showAbout && (
           <Text style={styles.aboutText}>
-            Dive into a world of live entertainment! StreamWatch is your personal portal to endless streams, bringing all your favorite content directly to your screen. Experience seamless, high-quality viewing of live events, gaming, music, and more, all in one place.
+            Dive into a world of live entertainment! StreamWatch is your personal portal to endless
+            streams, bringing all your favorite content directly to your screen. Experience
+            seamless, high-quality viewing of live events, gaming, music, and more, all in one
+            place.
           </Text>
         )}
       </Section>
 
       <Section title="Information">
-        <TouchableOpacity onPress={() => checkForUpdates(true)} style={styles.listItem} disabled={checkingUpdate}>
+        <TouchableOpacity
+          onPress={() => checkForUpdates(true)}
+          style={styles.listItem}
+          disabled={checkingUpdate}
+        >
           <Text style={styles.listItemLabel}>Check for Updates</Text>
           <View style={styles.listItemValueContainer}>
             {checkingUpdate ? (
@@ -135,23 +157,22 @@ export function SettingsScreen({ navigation }: any) {
       <Section title="Danger Zone">
         <ListItem label="Sign Out" onPress={() => supabase.auth.signOut()} isDestructive />
       </Section>
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: Palette.background, 
-    paddingTop: 60, 
-    paddingHorizontal: Spacing.lg 
+  container: {
+    flex: 1,
+    backgroundColor: Palette.background,
+    paddingTop: 60,
+    paddingHorizontal: Spacing.lg,
   },
-  title: { 
-    color: Palette.text, 
-    fontSize: 32, 
-    fontWeight: 'bold', 
-    marginBottom: Spacing.xl 
+  title: {
+    color: Palette.text,
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: Spacing.xl,
   },
   section: {
     marginBottom: Spacing.xl,

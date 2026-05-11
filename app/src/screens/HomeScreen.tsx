@@ -1,11 +1,21 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useStreams } from '../context/StreamContext';
+import { Search, X } from 'lucide-react-native';
+import { useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { StreamCard } from '../components/StreamCard';
+import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
-import { Search, X } from 'lucide-react-native';
 
 export function HomeScreen() {
   const { streams, loading, refreshStreams } = useStreams();
@@ -17,26 +27,25 @@ export function HomeScreen() {
   const isResolvingRef = useRef(false);
 
   const platforms = useMemo(() => {
-    const liveStreams = streams.filter(s => s.status === 'online');
-    const unique = new Set(liveStreams.map(s => s.platform).filter((p): p is string => !!p));
+    const liveStreams = streams.filter((s) => s.status === 'online');
+    const unique = new Set(liveStreams.map((s) => s.platform).filter((p): p is string => !!p));
     return ['all', ...Array.from(unique)];
   }, [streams]);
 
   const filteredStreams = useMemo(() => {
-    let result = streams.filter(stream => stream.status === 'online');
-    
+    let result = streams.filter((stream) => stream.status === 'online');
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(s => 
-        s.author?.toLowerCase().includes(query) || 
-        s.title?.toLowerCase().includes(query)
+      result = result.filter(
+        (s) => s.author?.toLowerCase().includes(query) || s.title?.toLowerCase().includes(query)
       );
     }
-    
+
     if (filterPlatform !== 'all') {
-      result = result.filter(s => s.platform === filterPlatform);
+      result = result.filter((s) => s.platform === filterPlatform);
     }
-    
+
     return result;
   }, [streams, searchQuery, filterPlatform]);
 
@@ -54,9 +63,9 @@ export function HomeScreen() {
       if (data && data.status === 'online') {
         navigation.navigate('Player', { streamData: data, url: stream.url });
       } else if (data) {
-        Alert.alert("Offline", data.error || "Stream is not live.");
+        Alert.alert('Offline', data.error || 'Stream is not live.');
       } else {
-        Alert.alert("Error", "Could not connect to engine.");
+        Alert.alert('Error', 'Could not connect to engine.');
       }
     } finally {
       isResolvingRef.current = false;
@@ -101,16 +110,12 @@ export function HomeScreen() {
         {/* "All" button (constant) */}
         <TouchableOpacity
           key="all"
-          style={[
-            styles.filterChip,
-            filterPlatform === 'all' && styles.filterChipActive
-          ]}
+          style={[styles.filterChip, filterPlatform === 'all' && styles.filterChipActive]}
           onPress={() => setFilterPlatform('all')}
         >
-          <Text style={[
-            styles.filterChipText,
-            filterPlatform === 'all' && styles.filterChipTextActive
-          ]}>
+          <Text
+            style={[styles.filterChipText, filterPlatform === 'all' && styles.filterChipTextActive]}
+          >
             All
           </Text>
         </TouchableOpacity>
@@ -122,23 +127,31 @@ export function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollableFilterContent} // New style for scrollable content
           >
-            {platforms.filter(p => p !== 'all').map(platform => ( // Filter out 'all'
-              <TouchableOpacity
-                key={platform}
-                style={[
-                  styles.filterChip,
-                  filterPlatform === platform && styles.filterChipActive
-                ]}
-                onPress={() => setFilterPlatform(platform)}
-              >
-                <Text style={[
-                  styles.filterChipText,
-                  filterPlatform === platform && styles.filterChipTextActive
-                ]}>
-                  {platform}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {platforms
+              .filter((p) => p !== 'all')
+              .map(
+                (
+                  platform // Filter out 'all'
+                ) => (
+                  <TouchableOpacity
+                    key={platform}
+                    style={[
+                      styles.filterChip,
+                      filterPlatform === platform && styles.filterChipActive,
+                    ]}
+                    onPress={() => setFilterPlatform(platform)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        filterPlatform === platform && styles.filterChipTextActive,
+                      ]}
+                    >
+                      {platform}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
           </ScrollView>
         )}
       </View>
@@ -196,15 +209,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginHorizontal: Spacing.lg,
     marginBottom: 12,
-    height: 48
+    height: 48,
   },
   searchIcon: {
-    marginRight: 8
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     color: Palette.text,
-    fontSize: 16
+    fontSize: 16,
   },
   filterSectionWrapper: {
     flexDirection: 'row',
@@ -230,16 +243,16 @@ const styles = StyleSheet.create({
   },
   filterChipActive: {
     backgroundColor: Palette.primary,
-    borderColor: Palette.primary
+    borderColor: Palette.primary,
   },
   filterChipText: {
     color: Palette.textMuted,
     fontSize: 14,
     fontWeight: '600',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
   },
   filterChipTextActive: {
-    color: '#fff'
+    color: '#fff',
   },
   scrollContent: { paddingHorizontal: Spacing.lg },
   centered: { justifyContent: 'center', alignItems: 'center' },
@@ -247,19 +260,19 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: Spacing.xl * 2,
-    paddingHorizontal: Spacing.lg
+    paddingHorizontal: Spacing.lg,
   },
   emptyTitle: {
     color: Palette.text,
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: Spacing.sm
+    marginBottom: Spacing.sm,
   },
   emptySubtitle: {
     color: Palette.textMuted,
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 20
+    lineHeight: 20,
   },
   overlay: {
     position: 'absolute',
@@ -269,11 +282,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   overlayText: {
     color: '#fff',
     marginTop: Spacing.md,
-    fontSize: 16
-  }
+    fontSize: 16,
+  },
 });

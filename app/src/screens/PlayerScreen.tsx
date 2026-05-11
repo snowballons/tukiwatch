@@ -1,9 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, ScrollView, Modal, FlatList } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Palette, Spacing, PlatformColors } from '../theme/Theme';
-import { X, ChevronDown, ExternalLink, ChevronRight } from 'lucide-react-native';
-import { openInOfficialApp, getPlatformName } from '../utils/platformLinks';
+import { ChevronDown, ChevronRight, ExternalLink, X } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Palette, PlatformColors, Spacing } from '../theme/Theme';
+import { getPlatformName, openInOfficialApp } from '../utils/platformLinks';
 
 const { width } = Dimensions.get('window');
 
@@ -38,18 +48,15 @@ export function PlayerScreen({ route, navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
           <X color="#fff" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{sources.author || 'Stream'}</Text>
-        <View style={{ width: 40 }} /> 
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {sources.author || 'Stream'}
+        </Text>
+        <View style={{ width: 40 }} />
       </View>
 
       {/* Video Section */}
       <View style={styles.videoContainer}>
-        <VideoView 
-          player={player} 
-          style={styles.video} 
-          nativeControls 
-          allowsPictureInPicture 
-        />
+        <VideoView player={player} style={styles.video} nativeControls allowsPictureInPicture />
         {isChanging && (
           <View style={styles.overlay}>
             <ActivityIndicator color={Palette.primary} />
@@ -60,16 +67,18 @@ export function PlayerScreen({ route, navigation }: any) {
       {/* Metadata & Actions */}
       <ScrollView contentContainerStyle={styles.details}>
         <Text style={styles.streamTitle}>{sources.title || 'Live Stream'}</Text>
-        
+
         <View style={styles.statusRow}>
-          <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE</Text></View>
+          <View style={styles.liveBadge}>
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
           <Text style={styles.authorName}>{sources.author || 'Unknown'}</Text>
         </View>
 
         <View style={styles.divider} />
 
         {sources.all_qualities && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.qualitySelector}
             onPress={() => setShowQualityPicker(true)}
           >
@@ -88,12 +97,12 @@ export function PlayerScreen({ route, navigation }: any) {
             onPress={() => openInOfficialApp(platformKey, originalUrl)}
           >
             <ExternalLink
-              color={PlatformColors[platformKey as keyof typeof PlatformColors] || PlatformColors.default}
+              color={
+                PlatformColors[platformKey as keyof typeof PlatformColors] || PlatformColors.default
+              }
               size={20}
             />
-            <Text style={styles.openAppLabel}>
-              Open in {getPlatformName(platformKey)}
-            </Text>
+            <Text style={styles.openAppLabel}>Open in {getPlatformName(platformKey)}</Text>
             <ChevronRight color={Palette.textMuted} size={20} />
           </TouchableOpacity>
         ) : null}
@@ -121,14 +130,16 @@ export function PlayerScreen({ route, navigation }: any) {
                     <TouchableOpacity
                       style={[
                         styles.qualityOption,
-                        currentQuality === name && styles.qualityOptionSelected
+                        currentQuality === name && styles.qualityOptionSelected,
                       ]}
                       onPress={() => changeQuality(name, url as string)}
                     >
-                      <Text style={[
-                        styles.qualityOptionText,
-                        currentQuality === name && styles.qualityOptionTextSelected
-                      ]}>
+                      <Text
+                        style={[
+                          styles.qualityOptionText,
+                          currentQuality === name && styles.qualityOptionTextSelected,
+                        ]}
+                      >
                         {name}
                       </Text>
                     </TouchableOpacity>
@@ -145,16 +156,39 @@ export function PlayerScreen({ route, navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Palette.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.md, paddingBottom: 10 },
-  headerTitle: { color: Palette.text, fontSize: 16, fontWeight: '600', flex: 1, textAlign: 'center' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    color: Palette.text,
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
   closeBtn: { padding: 8, backgroundColor: '#1A1A1A', borderRadius: 20 },
-  videoContainer: { width: width, height: width * (9/16), backgroundColor: '#000' },
+  videoContainer: { width: width, height: width * (9 / 16), backgroundColor: '#000' },
   video: { flex: 1 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   details: { padding: Spacing.lg },
   streamTitle: { color: Palette.text, fontSize: 22, fontWeight: 'bold', lineHeight: 30 },
   statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 10 },
-  liveBadge: { backgroundColor: Palette.live, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  liveBadge: {
+    backgroundColor: Palette.live,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   liveText: { color: '#fff', fontSize: 10, fontWeight: '900' },
   authorName: { color: Palette.textMuted, fontSize: 16 },
   divider: { height: 1, backgroundColor: Palette.border, marginVertical: 25 },
@@ -209,7 +243,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   qualityOptionSelected: {
-    backgroundColor: Palette.primary + '20',
+    backgroundColor: `${Palette.primary}20`,
   },
   qualityOptionText: {
     color: Palette.text,

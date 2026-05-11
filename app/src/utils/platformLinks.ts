@@ -1,10 +1,10 @@
-import { Linking, Alert, Platform } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 // ── Platform Deep Link Configuration ──
 
 interface PlatformScheme {
-  scheme: string;       // URL scheme prefix (e.g., "twitch://")
-  iosScheme: string;    // iOS-specific scheme if different
+  scheme: string; // URL scheme prefix (e.g., "twitch://")
+  iosScheme: string; // iOS-specific scheme if different
   androidScheme: string; // Android-specific scheme if different
 }
 
@@ -124,7 +124,7 @@ function constructNativeUrl(platform: string, originalUrl: string): string | nul
         // URL format: https://www.instagram.com/{username}/ or /live/{username}
         const pathParts = url.pathname.split('/').filter(Boolean);
         // Could be: /username, /live/username, /reel/...
-        const username = pathParts.find(p => !['live', 'reel', 'stories', 'p'].includes(p));
+        const username = pathParts.find((p) => !['live', 'reel', 'stories', 'p'].includes(p));
         if (username) {
           return `instagram://user?username=${username}`;
         }
@@ -176,10 +176,7 @@ export function hasNativeScheme(platform: string): boolean {
  * @param platform - The platform key (e.g., "twitch", "youtube")
  * @param originalUrl - The stream's web URL (e.g., "https://www.twitch.tv/ninja")
  */
-export async function openInOfficialApp(
-  platform: string,
-  originalUrl: string
-): Promise<void> {
+export async function openInOfficialApp(platform: string, originalUrl: string): Promise<void> {
   const nativeScheme = getPlatformScheme(platform);
 
   // If no native scheme exists for this platform, open in browser

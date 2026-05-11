@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import { CommunityStream } from '../types';
+import type { CommunityStream } from '../types';
 import { streamService } from './engine';
 
 export async function fetchCommunityStreams(): Promise<CommunityStream[]> {
@@ -23,7 +23,9 @@ export async function shareStream(payload: {
   language: string;
   username: string;
 }): Promise<CommunityStream> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
   const results = await streamService.checkBatchStatus([payload.original_url]);

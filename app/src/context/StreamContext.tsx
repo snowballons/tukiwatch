@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import type React from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { streamService, checkHealth } from '../services/engine';
-import { Favorite, LiveStream } from '../types';
+import { checkHealth, streamService } from '../services/engine';
+import type { Favorite, LiveStream } from '../types';
 
 const AUTO_REFRESH_INTERVAL = 300_000; // 5 minutes — matches backend status TTL
 
@@ -20,9 +21,11 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
   const [isBackendReachable, setIsBackendReachable] = useState(true);
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const refreshStreams = async (bypassCache: boolean = false) => {
+  const refreshStreams = useCallback(async (bypassCache: boolean = false) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: favorites } = await supabase
@@ -37,7 +40,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
 
       const urls = favorites.map((fav: Favorite) => fav.original_url);
       const statusResults = await streamService.checkBatchStatus(urls, bypassCache);
-      
+
       const fetchedAt = Date.now();
       // Add favorite metadata and fetch timestamp to stream results
       const enrichedStreams = statusResults.map((stream, index) => ({
@@ -49,13 +52,13 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
 
       setStreams(enrichedStreams);
       setIsBackendReachable(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to refresh streams:', error);
       setIsBackendReachable(false);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const checkConnectivity = useCallback(async () => {
     const reachable = await checkHealth();
@@ -76,7 +79,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
         clearInterval(refreshTimerRef.current);
       }
     };
-  }, []);
+  }, [refreshStreams, checkConnectivity]);
 
   return (
     <StreamContext.Provider value={{ streams, loading, isBackendReachable, refreshStreams }}>

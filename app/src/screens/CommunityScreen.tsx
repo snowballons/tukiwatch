@@ -1,18 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity } from 'react-native';
-import { useCommunity } from '../context/CommunityContext';
-import { StreamCard } from '../components/StreamCard';
-import { CommunityPreviewModal } from '../components/CommunityPreviewModal';
+import { Search, Users, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { CommunityPreviewModal } from '../components/CommunityPreviewModal';
+import { StreamCard } from '../components/StreamCard';
+import { useCommunity } from '../context/CommunityContext';
 import { Palette, Spacing } from '../theme/Theme';
-import { Search, X, Users } from 'lucide-react-native';
-import { CommunityStream, COMMUNITY_CATEGORIES, COMMUNITY_COUNTRIES, CommunityFilters } from '../types';
+import {
+  COMMUNITY_CATEGORIES,
+  COMMUNITY_COUNTRIES,
+  type CommunityFilters,
+  type CommunityStream,
+} from '../types';
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (seconds < 60) return 'just now';
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m`;
@@ -31,7 +45,9 @@ const FILTER_OPTIONS: { key: 'platform' | 'category' | 'country'; label: string 
 export function CommunityScreen() {
   const { streams, loading, filters, setFilters, isCheckingLiveness, lastUpdated } = useCommunity();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'platform' | 'category' | 'country' | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'platform' | 'category' | 'country' | null>(
+    null
+  );
   const [previewStream, setPreviewStream] = useState<CommunityStream | null>(null);
   const [previewVisible, setPreviewVisible] = useState(false);
 
@@ -41,7 +57,7 @@ export function CommunityScreen() {
 
   useEffect(() => {
     setFilters({ ...filters, search: searchQuery });
-  }, [searchQuery]);
+  }, [searchQuery, setFilters, filters]);
 
   const handleStreamPress = (stream: CommunityStream) => {
     setPreviewStream(stream);
@@ -50,8 +66,13 @@ export function CommunityScreen() {
 
   const handleAddToLibrary = async (stream: CommunityStream) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { Alert.alert('Error', 'Please sign in first.'); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        Alert.alert('Error', 'Please sign in first.');
+        return;
+      }
 
       const { data: existing } = await supabase
         .from('favorites')
@@ -60,13 +81,18 @@ export function CommunityScreen() {
         .eq('original_url', stream.original_url)
         .maybeSingle();
 
-      if (existing) { Alert.alert('Already in Library', 'This stream is already in your library.'); return; }
+      if (existing) {
+        Alert.alert('Already in Library', 'This stream is already in your library.');
+        return;
+      }
 
-      const { error } = await supabase.from('favorites').insert([{
-        user_id: user.id,
-        streamer_name: stream.streamer_name,
-        original_url: stream.original_url,
-      }]);
+      const { error } = await supabase.from('favorites').insert([
+        {
+          user_id: user.id,
+          streamer_name: stream.streamer_name,
+          original_url: stream.original_url,
+        },
+      ]);
 
       if (!error) Alert.alert('Added!', `"${stream.streamer_name}" added to your library.`);
       else Alert.alert('Error', 'Failed to add stream.');
@@ -91,7 +117,7 @@ export function CommunityScreen() {
     if (type === 'category') return [...COMMUNITY_CATEGORIES];
     if (type === 'country') return [...COMMUNITY_COUNTRIES];
     if (type === 'platform') {
-      const platforms = [...new Set(streams.map(s => s.platform))];
+      const platforms = [...new Set(streams.map((s) => s.platform))];
       return platforms;
     }
     return [];
@@ -137,19 +163,15 @@ export function CommunityScreen() {
       </View>
 
       <View style={styles.filterRow}>
-        {FILTER_OPTIONS.map(filter => (
+        {FILTER_OPTIONS.map((filter) => (
           <TouchableOpacity
             key={filter.key}
-            style={[
-              styles.filterChip,
-              filters[filter.key] && styles.filterChipActive
-            ]}
+            style={[styles.filterChip, filters[filter.key] && styles.filterChipActive]}
             onPress={() => setActiveFilter(activeFilter === filter.key ? null : filter.key)}
           >
-            <Text style={[
-              styles.filterChipText,
-              filters[filter.key] && styles.filterChipTextActive
-            ]}>
+            <Text
+              style={[styles.filterChipText, filters[filter.key] && styles.filterChipTextActive]}
+            >
               {filters[filter.key] || filter.label}
             </Text>
           </TouchableOpacity>
@@ -158,19 +180,21 @@ export function CommunityScreen() {
 
       {activeFilter && (
         <View style={styles.filterOptions}>
-          {getFilterOptions(activeFilter).map(option => (
+          {getFilterOptions(activeFilter).map((option) => (
             <TouchableOpacity
               key={option}
               style={[
                 styles.filterOption,
-                getCurrentFilterValue(activeFilter) === option && styles.filterOptionActive
+                getCurrentFilterValue(activeFilter) === option && styles.filterOptionActive,
               ]}
               onPress={() => applyFilter(activeFilter, option)}
             >
-              <Text style={[
-                styles.filterOptionText,
-                getCurrentFilterValue(activeFilter) === option && styles.filterOptionTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.filterOptionText,
+                  getCurrentFilterValue(activeFilter) === option && styles.filterOptionTextActive,
+                ]}
+              >
                 {option}
               </Text>
             </TouchableOpacity>
@@ -215,8 +239,14 @@ export function CommunityScreen() {
       <CommunityPreviewModal
         visible={previewVisible}
         stream={previewStream}
-        onClose={() => { setPreviewVisible(false); setPreviewStream(null); }}
-        onAdded={() => { setPreviewVisible(false); setPreviewStream(null); }}
+        onClose={() => {
+          setPreviewVisible(false);
+          setPreviewStream(null);
+        }}
+        onAdded={() => {
+          setPreviewVisible(false);
+          setPreviewStream(null);
+        }}
       />
     </View>
   );

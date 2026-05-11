@@ -1,9 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef } from 'react';
+import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { Palette } from '../theme/Theme';
-
-const { width, height } = Dimensions.get('window');
 
 export function CustomSplashScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -42,35 +40,32 @@ export function CustomSplashScreen() {
 
     // Start loading animation after logo appears
     setTimeout(animateLoadingDots, 500);
-  }, []);
+  }, [dot2Anim, scaleAnim, fadeAnim, dot3Anim, dot1Anim]);
 
   return (
-    <LinearGradient
-      colors={Palette.backgroundGradient}
-      style={styles.container}
-    >
-      <Animated.View 
+    <LinearGradient colors={Palette.backgroundGradient} style={styles.container}>
+      <Animated.View
         style={[
           styles.content,
           {
             opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }]
-          }
+            transform: [{ scale: scaleAnim }],
+          },
         ]}
       >
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/logo.png')} 
+          <Image
+            source={require('../../assets/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
         </View>
-        
+
         {/* App Name */}
         <Text style={styles.appName}>StreamWatch</Text>
         <Text style={styles.tagline}>Your Streaming Hub</Text>
-        
+
         {/* Loading indicator */}
         <View style={styles.loadingContainer}>
           <Animated.View style={[styles.loadingDot, { opacity: dot1Anim }]} />

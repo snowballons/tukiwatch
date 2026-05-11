@@ -1,42 +1,159 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Alert, Keyboard, ScrollView, Modal, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { ChevronDown, Link, Plus, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Keyboard,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useStreamResolver } from '../hooks/useStreamResolver';
 import { StreamCard } from '../components/StreamCard';
+import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
-import { Link, Plus, X, ChevronDown } from 'lucide-react-native';
 
 // Platform configuration based on backend supported domains
 const PLATFORMS = [
-  { key: 'twitch', name: 'Twitch', urlTemplate: 'https://www.twitch.tv/{identifier}', placeholder: 'Enter channel name (e.g., ninja)' },
-  { key: 'youtube', name: 'YouTube', urlTemplate: 'https://www.youtube.com/{identifier}', placeholder: 'Enter @username, channel ID, or video path' },
-  { key: 'youtu-be', name: 'YouTube (youtu.be)', urlTemplate: 'https://youtu.be/{identifier}', placeholder: 'Enter video ID' },
-  { key: 'facebook', name: 'Facebook', urlTemplate: 'https://www.facebook.com/{identifier}', placeholder: 'Enter page/video path (e.g., page/videos/...)' },
-  { key: 'instagram', name: 'Instagram', urlTemplate: 'https://www.instagram.com/{identifier}', placeholder: 'Enter username or post path' },
-  { key: 'tiktok', name: 'TikTok', urlTemplate: 'https://www.tiktok.com/{identifier}', placeholder: 'Enter @username or video path' },
-  { key: 'bigo', name: 'Bigo', urlTemplate: 'https://www.bigo.tv/{identifier}', placeholder: 'Enter streamer name' },
-  { key: 'dailymotion', name: 'Dailymotion', urlTemplate: 'https://www.dailymotion.com/{identifier}', placeholder: 'Enter video/user path' },
-  { key: 'vimeo', name: 'Vimeo', urlTemplate: 'https://vimeo.com/{identifier}', placeholder: 'Enter video ID or user path' },
-  { key: 'steam', name: 'Steam', urlTemplate: 'https://steamcommunity.com/{identifier}', placeholder: 'Enter broadcast path' },
-  { key: 'bilibili', name: 'Bilibili', urlTemplate: 'https://live.bilibili.com/{identifier}', placeholder: 'Enter channel ID or video path' },
-  { key: 'huya', name: 'Huya', urlTemplate: 'https://www.huya.com/{identifier}', placeholder: 'Enter streamer name' },
-  { key: 'picarto', name: 'Picarto', urlTemplate: 'https://picarto.tv/{identifier}', placeholder: 'Enter channel name' },
-  { key: 'trovo', name: 'Trovo', urlTemplate: 'https://trovo.live/{identifier}', placeholder: 'Enter channel name' },
-  { key: 'vk', name: 'VK', urlTemplate: 'https://vk.com/{identifier}', placeholder: 'Enter video/user path' },
-  { key: 'dlive', name: 'DLive', urlTemplate: 'https://dlive.tv/{identifier}', placeholder: 'Enter channel name' },
-  { key: 'goodgame', name: 'GoodGame', urlTemplate: 'https://goodgame.ru/{identifier}', placeholder: 'Enter channel name' },
-  { key: 'abematv', name: 'AbemaTV', urlTemplate: 'https://abema.tv/{identifier}', placeholder: 'Enter channel/program path' },
-  { key: 'aloula', name: 'Aloula', urlTemplate: 'https://www.aloula.sa/{identifier}', placeholder: 'Enter channel/video path' },
-  { key: 'kick', name: 'Kick', urlTemplate: 'https://kick.com/{identifier}', placeholder: 'Enter channel name' },
+  {
+    key: 'twitch',
+    name: 'Twitch',
+    urlTemplate: 'https://www.twitch.tv/{identifier}',
+    placeholder: 'Enter channel name (e.g., ninja)',
+  },
+  {
+    key: 'youtube',
+    name: 'YouTube',
+    urlTemplate: 'https://www.youtube.com/{identifier}',
+    placeholder: 'Enter @username, channel ID, or video path',
+  },
+  {
+    key: 'youtu-be',
+    name: 'YouTube (youtu.be)',
+    urlTemplate: 'https://youtu.be/{identifier}',
+    placeholder: 'Enter video ID',
+  },
+  {
+    key: 'facebook',
+    name: 'Facebook',
+    urlTemplate: 'https://www.facebook.com/{identifier}',
+    placeholder: 'Enter page/video path (e.g., page/videos/...)',
+  },
+  {
+    key: 'instagram',
+    name: 'Instagram',
+    urlTemplate: 'https://www.instagram.com/{identifier}',
+    placeholder: 'Enter username or post path',
+  },
+  {
+    key: 'tiktok',
+    name: 'TikTok',
+    urlTemplate: 'https://www.tiktok.com/{identifier}',
+    placeholder: 'Enter @username or video path',
+  },
+  {
+    key: 'bigo',
+    name: 'Bigo',
+    urlTemplate: 'https://www.bigo.tv/{identifier}',
+    placeholder: 'Enter streamer name',
+  },
+  {
+    key: 'dailymotion',
+    name: 'Dailymotion',
+    urlTemplate: 'https://www.dailymotion.com/{identifier}',
+    placeholder: 'Enter video/user path',
+  },
+  {
+    key: 'vimeo',
+    name: 'Vimeo',
+    urlTemplate: 'https://vimeo.com/{identifier}',
+    placeholder: 'Enter video ID or user path',
+  },
+  {
+    key: 'steam',
+    name: 'Steam',
+    urlTemplate: 'https://steamcommunity.com/{identifier}',
+    placeholder: 'Enter broadcast path',
+  },
+  {
+    key: 'bilibili',
+    name: 'Bilibili',
+    urlTemplate: 'https://live.bilibili.com/{identifier}',
+    placeholder: 'Enter channel ID or video path',
+  },
+  {
+    key: 'huya',
+    name: 'Huya',
+    urlTemplate: 'https://www.huya.com/{identifier}',
+    placeholder: 'Enter streamer name',
+  },
+  {
+    key: 'picarto',
+    name: 'Picarto',
+    urlTemplate: 'https://picarto.tv/{identifier}',
+    placeholder: 'Enter channel name',
+  },
+  {
+    key: 'trovo',
+    name: 'Trovo',
+    urlTemplate: 'https://trovo.live/{identifier}',
+    placeholder: 'Enter channel name',
+  },
+  {
+    key: 'vk',
+    name: 'VK',
+    urlTemplate: 'https://vk.com/{identifier}',
+    placeholder: 'Enter video/user path',
+  },
+  {
+    key: 'dlive',
+    name: 'DLive',
+    urlTemplate: 'https://dlive.tv/{identifier}',
+    placeholder: 'Enter channel name',
+  },
+  {
+    key: 'goodgame',
+    name: 'GoodGame',
+    urlTemplate: 'https://goodgame.ru/{identifier}',
+    placeholder: 'Enter channel name',
+  },
+  {
+    key: 'abematv',
+    name: 'AbemaTV',
+    urlTemplate: 'https://abema.tv/{identifier}',
+    placeholder: 'Enter channel/program path',
+  },
+  {
+    key: 'aloula',
+    name: 'Aloula',
+    urlTemplate: 'https://www.aloula.sa/{identifier}',
+    placeholder: 'Enter channel/video path',
+  },
+  {
+    key: 'kick',
+    name: 'Kick',
+    urlTemplate: 'https://kick.com/{identifier}',
+    placeholder: 'Enter channel name',
+  },
 ];
 
 const constructStreamUrl = (platformKey: string, identifier: string): string => {
-  const platform = PLATFORMS.find(p => p.key === platformKey);
+  const platform = PLATFORMS.find((p) => p.key === platformKey);
   if (!platform || !identifier.trim()) return '';
   let cleanedIdentifier = identifier.trim();
-  if (platformKey === 'youtube' && !cleanedIdentifier.startsWith('@') && !cleanedIdentifier.includes('/') && !cleanedIdentifier.includes('?')) {
-    cleanedIdentifier = '@' + cleanedIdentifier;
+  if (
+    platformKey === 'youtube' &&
+    !cleanedIdentifier.startsWith('@') &&
+    !cleanedIdentifier.includes('/') &&
+    !cleanedIdentifier.includes('?')
+  ) {
+    cleanedIdentifier = `@${cleanedIdentifier}`;
   }
   return platform.urlTemplate.replace('{identifier}', cleanedIdentifier);
 };
@@ -70,10 +187,10 @@ export function AddScreen() {
 
   const handlePreview = async () => {
     if (!selectedPlatform || !identifier.trim()) return;
-    
+
     const url = constructStreamUrl(selectedPlatform, identifier);
     if (!url) return;
-    
+
     setPreviewData(null); // Clear previous preview
     Keyboard.dismiss();
 
@@ -81,14 +198,16 @@ export function AddScreen() {
     if (data && data.status === 'online') {
       setPreviewData(data);
     } else if (data) {
-      Alert.alert("Offline", "Stream is currently offline.");
+      Alert.alert('Offline', 'Stream is currently offline.');
     } else {
-      Alert.alert("Error", "Could not resolve link.");
+      Alert.alert('Error', 'Could not resolve link.');
     }
   };
 
   const handleSave = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user || !previewData || !constructedUrl) return;
 
     try {
@@ -100,12 +219,12 @@ export function AddScreen() {
         .eq('original_url', constructedUrl);
 
       if (checkError) {
-        Alert.alert("Error", "Failed to check for duplicates.");
+        Alert.alert('Error', 'Failed to check for duplicates.');
         return;
       }
 
       if (existingFavorites && existingFavorites.length > 0) {
-        Alert.alert("Already Added", "This stream is already in your library.");
+        Alert.alert('Already Added', 'This stream is already in your library.');
         return;
       }
 
@@ -113,36 +232,38 @@ export function AddScreen() {
       const { error } = await supabase.from('favorites').insert([
         {
           user_id: user.id,
-          streamer_name: previewData.author || "Unknown",
+          streamer_name: previewData.author || 'Unknown',
           original_url: constructedUrl,
         },
       ]);
 
       if (!error) {
-        Alert.alert("Saved", "Added to your library.");
+        Alert.alert('Saved', 'Added to your library.');
         handleClear(); // Reset after successful save
       } else {
-        console.error("Insert error:", error);
-        Alert.alert("Error", error.message || "Failed to add stream to library.");
+        console.error('Insert error:', error);
+        Alert.alert('Error', error.message || 'Failed to add stream to library.');
       }
     } catch (error: any) {
-      console.error("Save error:", error);
-      Alert.alert("Error", error.message || "Failed to add stream to library.");
+      console.error('Save error:', error);
+      Alert.alert('Error', error.message || 'Failed to add stream to library.');
     }
   };
 
-  const selectedPlatformData = PLATFORMS.find(p => p.key === selectedPlatform);
+  const selectedPlatformData = PLATFORMS.find((p) => p.key === selectedPlatform);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: 80, paddingHorizontal: Spacing.lg }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingTop: 80, paddingHorizontal: Spacing.lg }}
+    >
       <Text style={styles.title}>Add New Stream</Text>
-      <Text style={styles.subtitle}>Select platform and enter streamer name or stream identifier.</Text>
+      <Text style={styles.subtitle}>
+        Select platform and enter streamer name or stream identifier.
+      </Text>
 
       {/* Platform Selector */}
-      <TouchableOpacity
-        style={styles.platformSelector}
-        onPress={() => setShowPlatformPicker(true)}
-      >
+      <TouchableOpacity style={styles.platformSelector} onPress={() => setShowPlatformPicker(true)}>
         <Link color={Palette.textMuted} size={20} />
         <Text style={[styles.platformSelectorText, !selectedPlatform && styles.placeholderText]}>
           {selectedPlatform ? selectedPlatformData?.name : 'Select platform'}
@@ -154,7 +275,9 @@ export function AddScreen() {
       <View style={styles.inputWrapper}>
         <TextInput
           style={styles.input}
-          placeholder={selectedPlatformData?.placeholder || 'Enter streamer name or stream identifier'}
+          placeholder={
+            selectedPlatformData?.placeholder || 'Enter streamer name or stream identifier'
+          }
           placeholderTextColor={Palette.textMuted}
           value={identifier}
           onChangeText={setIdentifier}
@@ -173,16 +296,22 @@ export function AddScreen() {
       {constructedUrl && (
         <View style={styles.urlPreview}>
           <Text style={styles.urlPreviewLabel}>URL:</Text>
-          <Text style={styles.urlPreviewText} numberOfLines={1}>{constructedUrl}</Text>
+          <Text style={styles.urlPreviewText} numberOfLines={1}>
+            {constructedUrl}
+          </Text>
         </View>
       )}
 
       <TouchableOpacity
-        style={[styles.primaryButton, { opacity: (selectedPlatform && identifier.trim()) ? 1 : 0.5 }]}
+        style={[styles.primaryButton, { opacity: selectedPlatform && identifier.trim() ? 1 : 0.5 }]}
         onPress={handlePreview}
         disabled={resolving || !selectedPlatform || !identifier.trim()}
       >
-        {resolving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify Link</Text>}
+        {resolving ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Verify Link</Text>
+        )}
       </TouchableOpacity>
 
       {/* Platform Picker Modal */}
@@ -207,17 +336,19 @@ export function AddScreen() {
                 <TouchableOpacity
                   style={[
                     styles.platformOption,
-                    selectedPlatform === item.key && styles.platformOptionSelected
+                    selectedPlatform === item.key && styles.platformOptionSelected,
                   ]}
                   onPress={() => {
                     setSelectedPlatform(item.key);
                     setShowPlatformPicker(false);
                   }}
                 >
-                  <Text style={[
-                    styles.platformOptionText,
-                    selectedPlatform === item.key && styles.platformOptionTextSelected
-                  ]}>
+                  <Text
+                    style={[
+                      styles.platformOptionText,
+                      selectedPlatform === item.key && styles.platformOptionTextSelected,
+                    ]}
+                  >
                     {item.name}
                   </Text>
                 </TouchableOpacity>
@@ -243,7 +374,9 @@ export function AddScreen() {
             thumbnail={previewData.thumbnail}
             isLive={true}
             url={constructedUrl}
-            onPress={() => navigation.navigate('Player', { streamData: previewData, url: constructedUrl })}
+            onPress={() =>
+              navigation.navigate('Player', { streamData: previewData, url: constructedUrl })
+            }
             category={previewData.category}
             platform={previewData.platform}
             isCached={previewData._cached}
@@ -333,8 +466,18 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   previewSection: { marginTop: 40, paddingBottom: 40 },
-  previewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  previewLabel: { color: Palette.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  previewLabel: {
+    color: Palette.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
   cancelLink: { color: '#EF4444', fontSize: 12, fontWeight: '600' },
   // Modal styles
   modalOverlay: {
@@ -363,7 +506,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   platformOptionSelected: {
-    backgroundColor: Palette.primary + '20',
+    backgroundColor: `${Palette.primary}20`,
   },
   platformOptionText: {
     color: Palette.text,

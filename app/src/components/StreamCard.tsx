@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { Palette, Spacing, PlatformColors } from '../theme/Theme';
-import { Play, Trash2, Share2, Plus } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
+import { Play, Plus, Share2, Trash2 } from 'lucide-react-native';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Palette, PlatformColors, Spacing } from '../theme/Theme';
 
 interface StreamCardProps {
   title: string;
@@ -35,9 +33,28 @@ function formatCacheAge(fetchedAt: number): string {
   return `${Math.floor(minutes / 60)}h`;
 }
 
-export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, category, platform, onDelete, showDelete, isCached, fetchedAt, sharedBy, sharedAt, onShare, showShare, onAddToLibrary, showAddButton }: StreamCardProps) {
+export function StreamCard({
+  title,
+  streamer,
+  thumbnail,
+  isLive,
+  url,
+  onPress,
+  category,
+  platform,
+  onDelete,
+  showDelete,
+  isCached,
+  fetchedAt,
+  sharedBy,
+  sharedAt,
+  onShare,
+  showShare,
+  onAddToLibrary,
+  showAddButton,
+}: StreamCardProps) {
   const [imageError, setImageError] = useState(false);
-  
+
   const handlePress = () => {
     if (onPress) {
       onPress();
@@ -47,24 +64,31 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
     }
   };
 
-  const platformColor = PlatformColors[platform as keyof typeof PlatformColors] || PlatformColors.default;
+  const platformColor =
+    PlatformColors[platform as keyof typeof PlatformColors] || PlatformColors.default;
 
   // Fallback image - use a reliable source
-  const fallbackImage = 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=300&h=169&fit=crop';
-  
+  const fallbackImage =
+    'https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=300&h=169&fit=crop';
+
   // Use thumbnail from backend, fallback to reliable image if it fails to load
-  const imageSource = imageError ? fallbackImage : (thumbnail || fallbackImage);
+  const imageSource = imageError ? fallbackImage : thumbnail || fallbackImage;
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.9}>
-      <Image 
-        source={{ uri: imageSource }} 
+      <Image
+        source={{ uri: imageSource }}
         style={styles.thumbnail}
         onError={() => setImageError(true)}
       />
-      
+
       {/* Live Indicator Overlay */}
-      <View style={[styles.badge, { backgroundColor: isLive ? 'rgba(16, 185, 129, 0.9)' : 'rgba(63, 63, 70, 0.9)' }]}>
+      <View
+        style={[
+          styles.badge,
+          { backgroundColor: isLive ? 'rgba(16, 185, 129, 0.9)' : 'rgba(63, 63, 70, 0.9)' },
+        ]}
+      >
         <Text style={styles.badgeText}>{isLive ? 'LIVE' : 'OFFLINE'}</Text>
       </View>
 
@@ -84,14 +108,17 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
 
       <View style={styles.info}>
         <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
           <Text style={styles.streamer}>{streamer}</Text>
           {sharedBy && (
-            <Text style={styles.sharedBy}>@{sharedBy}{sharedAt ? ` · ${sharedAt}` : ''}</Text>
+            <Text style={styles.sharedBy}>
+              @{sharedBy}
+              {sharedAt ? ` · ${sharedAt}` : ''}
+            </Text>
           )}
-          {category && (
-            <Text style={styles.category}>{category}</Text>
-          )}
+          {category && <Text style={styles.category}>{category}</Text>}
         </View>
         <View style={styles.actionButtons}>
           {isLive && (
@@ -121,15 +148,49 @@ export function StreamCard({ title, streamer, thumbnail, isLive, url, onPress, c
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: Palette.card, borderRadius: 20, marginBottom: Spacing.md, overflow: 'hidden', borderWidth: 1, borderColor: Palette.border },
+  card: {
+    backgroundColor: Palette.card,
+    borderRadius: 20,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Palette.border,
+  },
   thumbnail: { width: '100%', height: 180, opacity: 0.7 },
-  badge: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  badge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-  platformBadge: { position: 'absolute', top: 12, right: 12, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4 },
+  platformBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
   platformText: { color: '#fff', fontSize: 9, fontWeight: '700', letterSpacing: 0.3 },
-  cacheBadge: { position: 'absolute', top: 12, right: 60, backgroundColor: 'rgba(255, 215, 0, 0.9)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 },
+  cacheBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 60,
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
   cacheText: { fontSize: 9, fontWeight: '700', color: '#000' },
-  info: { padding: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  info: {
+    padding: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   textContainer: { flex: 1, marginRight: 10 },
   title: { color: Palette.text, fontSize: 16, fontWeight: '600' },
   streamer: { color: Palette.textMuted, fontSize: 13, marginTop: 2 },
@@ -138,6 +199,6 @@ const styles = StyleSheet.create({
   actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   playIcon: { backgroundColor: Palette.primary, padding: 8, borderRadius: 12 },
   addIcon: { backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: 8, borderRadius: 12 },
-  shareIcon: { backgroundColor: Palette.accent + '20', padding: 8, borderRadius: 12 },
+  shareIcon: { backgroundColor: `${Palette.accent}20`, padding: 8, borderRadius: 12 },
   deleteIcon: { backgroundColor: 'rgba(255, 68, 68, 0.1)', padding: 8, borderRadius: 12 },
 });

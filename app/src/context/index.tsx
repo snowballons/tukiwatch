@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, View } from 'react-native';
 
 // Create context directory
 export default function ContextIndex() {

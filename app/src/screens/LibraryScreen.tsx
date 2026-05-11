@@ -1,13 +1,24 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert, TextInput, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useStreams } from '../context/StreamContext';
-import { StreamCard } from '../components/StreamCard';
-import { ShareStreamModal } from '../components/ShareStreamModal';
-import { useStreamResolver } from '../hooks/useStreamResolver';
-import { supabase } from '../../lib/supabase';
-import { Palette, Spacing } from '../theme/Theme';
 import { Search, X } from 'lucide-react-native';
+import { useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { supabase } from '../../lib/supabase';
+import { ShareStreamModal } from '../components/ShareStreamModal';
+import { StreamCard } from '../components/StreamCard';
+import { useStreams } from '../context/StreamContext';
+import { useStreamResolver } from '../hooks/useStreamResolver';
+import { Palette, Spacing } from '../theme/Theme';
 
 export function LibraryScreen() {
   const { streams, loading, refreshStreams } = useStreams();
@@ -17,30 +28,34 @@ export function LibraryScreen() {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const isResolvingRef = useRef(false);
-  const [streamToShare, setStreamToShare] = useState<{ original_url: string; streamer_name: string } | null>(null);
+  const [streamToShare, setStreamToShare] = useState<{
+    original_url: string;
+    streamer_name: string;
+  } | null>(null);
   const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const platforms = useMemo(() => {
-    const unique = new Set(streams.map(s => s.platform).filter((p): p is string => !!p));
+    const unique = new Set(streams.map((s) => s.platform).filter((p): p is string => !!p));
     return ['all', ...Array.from(unique)];
   }, [streams]);
 
   const filteredStreams = useMemo(() => {
     let result = streams;
-    
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(s => 
-        s.streamer_name?.toLowerCase().includes(query) || 
-        s.author?.toLowerCase().includes(query) ||
-        s.title?.toLowerCase().includes(query)
+      result = result.filter(
+        (s) =>
+          s.streamer_name?.toLowerCase().includes(query) ||
+          s.author?.toLowerCase().includes(query) ||
+          s.title?.toLowerCase().includes(query)
       );
     }
-    
+
     if (filterPlatform !== 'all') {
-      result = result.filter(s => s.platform === filterPlatform);
+      result = result.filter((s) => s.platform === filterPlatform);
     }
-    
+
     return result;
   }, [streams, searchQuery, filterPlatform]);
 
@@ -61,20 +76,23 @@ export function LibraryScreen() {
           navigation.navigate('Player', { streamData: data, url: stream.url });
           await refreshStreams();
         } else {
-          Alert.alert("Stream Unavailable", "Stream went offline. Refreshing library...");
+          Alert.alert('Stream Unavailable', 'Stream went offline. Refreshing library...');
           await refreshStreams();
         }
       } else if (stream.status === 'error') {
         // Error streams — show the stored error, no need to re-resolve
         const detail = stream.error_details;
         if (detail?.alternative) {
-          Alert.alert(detail.error || "Stream Error", detail.alternative);
+          Alert.alert(detail.error || 'Stream Error', detail.alternative);
         } else {
-          Alert.alert("Stream Error", stream.error || "This stream could not be checked.");
+          Alert.alert('Stream Error', stream.error || 'This stream could not be checked.');
         }
       } else {
         // Offline streams — no need to re-resolve, tell user to refresh
-        Alert.alert("Offline", "This stream is currently offline. Pull down to refresh and check again.");
+        Alert.alert(
+          'Offline',
+          'This stream is currently offline. Pull down to refresh and check again.'
+        );
       }
     } finally {
       isResolvingRef.current = false;
@@ -82,34 +100,27 @@ export function LibraryScreen() {
   };
 
   const handleDeleteStream = async (streamId: number, streamerName: string) => {
-    Alert.alert(
-      "Delete Stream",
-      `Remove "${streamerName}" from your library?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { error } = await supabase
-                .from('favorites')
-                .delete()
-                .eq('id', streamId);
+    Alert.alert('Delete Stream', `Remove "${streamerName}" from your library?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const { error } = await supabase.from('favorites').delete().eq('id', streamId);
 
-              if (!error) {
-                Alert.alert("Deleted", "Stream removed from library.");
-                await refreshStreams();
-              } else {
-                Alert.alert("Error", "Failed to delete stream.");
-              }
-            } catch (error) {
-              Alert.alert("Error", "Failed to delete stream.");
+            if (!error) {
+              Alert.alert('Deleted', 'Stream removed from library.');
+              await refreshStreams();
+            } else {
+              Alert.alert('Error', 'Failed to delete stream.');
             }
+          } catch (_error) {
+            Alert.alert('Error', 'Failed to delete stream.');
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -147,16 +158,12 @@ export function LibraryScreen() {
         {/* "All" button (constant) */}
         <TouchableOpacity
           key="all"
-          style={[
-            styles.filterChip,
-            filterPlatform === 'all' && styles.filterChipActive
-          ]}
+          style={[styles.filterChip, filterPlatform === 'all' && styles.filterChipActive]}
           onPress={() => setFilterPlatform('all')}
         >
-          <Text style={[
-            styles.filterChipText,
-            filterPlatform === 'all' && styles.filterChipTextActive
-          ]}>
+          <Text
+            style={[styles.filterChipText, filterPlatform === 'all' && styles.filterChipTextActive]}
+          >
             All
           </Text>
         </TouchableOpacity>
@@ -168,23 +175,31 @@ export function LibraryScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollableFilterContent} // New style for scrollable content
           >
-            {platforms.filter(p => p !== 'all').map(platform => ( // Filter out 'all'
-              <TouchableOpacity
-                key={platform}
-                style={[
-                  styles.filterChip,
-                  filterPlatform === platform && styles.filterChipActive
-                ]}
-                onPress={() => setFilterPlatform(platform)}
-              >
-                <Text style={[
-                  styles.filterChipText,
-                  filterPlatform === platform && styles.filterChipTextActive
-                ]}>
-                  {platform}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {platforms
+              .filter((p) => p !== 'all')
+              .map(
+                (
+                  platform // Filter out 'all'
+                ) => (
+                  <TouchableOpacity
+                    key={platform}
+                    style={[
+                      styles.filterChip,
+                      filterPlatform === platform && styles.filterChipActive,
+                    ]}
+                    onPress={() => setFilterPlatform(platform)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        filterPlatform === platform && styles.filterChipTextActive,
+                      ]}
+                    >
+                      {platform}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
           </ScrollView>
         )}
       </View>
@@ -194,7 +209,11 @@ export function LibraryScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Palette.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Palette.primary}
+          />
         }
         renderItem={({ item }) => (
           <StreamCard
@@ -210,7 +229,10 @@ export function LibraryScreen() {
             onDelete={() => handleDeleteStream(item.id, item.streamer_name || item.title)}
             showShare={true}
             onShare={() => {
-              setStreamToShare({ original_url: item.url, streamer_name: item.streamer_name || item.title });
+              setStreamToShare({
+                original_url: item.url,
+                streamer_name: item.streamer_name || item.title,
+              });
               setShareModalVisible(true);
             }}
             isCached={item._cached}
@@ -253,13 +275,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Palette.background,
     paddingTop: 60,
-    paddingHorizontal: Spacing.lg
+    paddingHorizontal: Spacing.lg,
   },
   headerTitle: {
     color: Palette.text,
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: Spacing.lg
+    marginBottom: Spacing.lg,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -268,15 +290,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     marginBottom: 12,
-    height: 48
+    height: 48,
   },
   searchIcon: {
-    marginRight: 8
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     color: Palette.text,
-    fontSize: 16
+    fontSize: 16,
   },
   filterSectionWrapper: {
     flexDirection: 'row',
@@ -301,24 +323,24 @@ const styles = StyleSheet.create({
   },
   filterChipActive: {
     backgroundColor: Palette.primary,
-    borderColor: Palette.primary
+    borderColor: Palette.primary,
   },
   filterChipText: {
     color: Palette.textMuted,
     fontSize: 14,
     fontWeight: '600',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
   },
   filterChipTextActive: {
-    color: '#fff'
+    color: '#fff',
   },
   centered: {
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   loadingText: {
     color: Palette.textMuted,
-    marginTop: Spacing.md
+    marginTop: Spacing.md,
   },
   emptyContainer: {
     marginTop: 100,
@@ -327,12 +349,12 @@ const styles = StyleSheet.create({
   emptyText: {
     color: Palette.text,
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   emptySubtext: {
     color: Palette.textMuted,
     fontSize: 14,
-    marginTop: 8
+    marginTop: 8,
   },
   overlay: {
     position: 'absolute',
@@ -342,11 +364,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   overlayText: {
     color: '#fff',
     marginTop: Spacing.md,
-    fontSize: 16
-  }
+    fontSize: 16,
+  },
 });

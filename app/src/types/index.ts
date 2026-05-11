@@ -87,16 +87,44 @@ export interface CommunityFilters {
 }
 
 export const COMMUNITY_CATEGORIES = [
-  'Gaming', 'Music', 'Sports', 'News', 'Talk Shows',
-  'Art & Creative', 'Education', 'IRL', 'Other'
+  'Gaming',
+  'Music',
+  'Sports',
+  'News',
+  'Talk Shows',
+  'Art & Creative',
+  'Education',
+  'IRL',
+  'Other',
 ] as const;
 
 export const COMMUNITY_COUNTRIES = [
-  'Global', 'US', 'UK', 'CA', 'AU', 'DE', 'FR',
-  'JP', 'KR', 'BR', 'IN', 'MX', 'NG', 'ZA', 'Other'
+  'Global',
+  'US',
+  'UK',
+  'CA',
+  'AU',
+  'DE',
+  'FR',
+  'JP',
+  'KR',
+  'BR',
+  'IN',
+  'MX',
+  'NG',
+  'ZA',
+  'Other',
 ] as const;
 
 export const COMMUNITY_LANGUAGES = [
-  'English', 'Spanish', 'Portuguese', 'French', 'German',
-  'Japanese', 'Korean', 'Chinese', 'Arabic', 'Other'
+  'English',
+  'Spanish',
+  'Portuguese',
+  'French',
+  'German',
+  'Japanese',
+  'Korean',
+  'Chinese',
+  'Arabic',
+  'Other',
 ] as const;

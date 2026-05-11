@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import { Favorite, LiveStream } from '../types';
+import type { LiveStream } from '../types';
 
 const PYTHON_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -34,7 +34,7 @@ export function getRateLimitInfo(): RateLimitInfo | null {
 const getRequestHeaders = async () => {
   return {
     'X-API-Key': process.env.EXPO_PUBLIC_BACKEND_API_KEY || '',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   };
 };
 
@@ -79,7 +79,11 @@ export const streamService = {
     try {
       const headers = await getRequestHeaders();
       const params = bypassCache ? '?bypass_cache=true' : '';
-      const response = await axios.post(`${PYTHON_API_URL}/api/status-batch${params}`, { urls }, { headers });
+      const response = await axios.post(
+        `${PYTHON_API_URL}/api/status-batch${params}`,
+        { urls },
+        { headers }
+      );
       updateRateLimitInfo(response.headers);
       return response.data.results.map((result: any, index: number) => ({
         id: index,
@@ -133,5 +137,5 @@ export const streamService = {
         error_details: null,
       }));
     }
-  }
+  },
 };

@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { X } from 'lucide-react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Palette, Spacing } from '../theme/Theme';
 
 interface PrivacyPolicyScreenProps {
@@ -29,9 +28,7 @@ export function PrivacyPolicyScreen({ onClose }: PrivacyPolicyScreenProps) {
         <Text style={styles.bullet}>• Usage data and app interactions</Text>
 
         <Text style={styles.sectionTitle}>2. How We Use Your Information</Text>
-        <Text style={styles.paragraph}>
-          We use the information we collect to:
-        </Text>
+        <Text style={styles.paragraph}>We use the information we collect to:</Text>
         <Text style={styles.bullet}>• Provide, maintain, and improve our services</Text>
         <Text style={styles.bullet}>• Create and manage your account</Text>
         <Text style={styles.bullet}>• Send you technical notices and support messages</Text>
@@ -39,7 +36,8 @@ export function PrivacyPolicyScreen({ onClose }: PrivacyPolicyScreenProps) {
 
         <Text style={styles.sectionTitle}>3. Information Sharing</Text>
         <Text style={styles.paragraph}>
-          We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:
+          We do not sell, trade, or rent your personal information to third parties. We may share
+          your information only in the following circumstances:
         </Text>
         <Text style={styles.bullet}>• With your consent</Text>
         <Text style={styles.bullet}>• To comply with legal obligations</Text>
@@ -47,23 +45,26 @@ export function PrivacyPolicyScreen({ onClose }: PrivacyPolicyScreenProps) {
 
         <Text style={styles.sectionTitle}>4. Data Security</Text>
         <Text style={styles.paragraph}>
-          We implement appropriate security measures to protect your personal information. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.
+          We implement appropriate security measures to protect your personal information. However,
+          no method of transmission over the internet is 100% secure, and we cannot guarantee
+          absolute security.
         </Text>
 
         <Text style={styles.sectionTitle}>5. Third-Party Services</Text>
         <Text style={styles.paragraph}>
-          Our app may contain links to third-party streaming platforms. We are not responsible for the privacy practices of these external sites. We encourage you to read their privacy policies.
+          Our app may contain links to third-party streaming platforms. We are not responsible for
+          the privacy practices of these external sites. We encourage you to read their privacy
+          policies.
         </Text>
 
         <Text style={styles.sectionTitle}>6. Data Retention</Text>
         <Text style={styles.paragraph}>
-          We retain your information for as long as your account is active or as needed to provide you services. You may request deletion of your account at any time.
+          We retain your information for as long as your account is active or as needed to provide
+          you services. You may request deletion of your account at any time.
         </Text>
 
         <Text style={styles.sectionTitle}>7. Your Rights</Text>
-        <Text style={styles.paragraph}>
-          You have the right to:
-        </Text>
+        <Text style={styles.paragraph}>You have the right to:</Text>
         <Text style={styles.bullet}>• Access your personal information</Text>
         <Text style={styles.bullet}>• Correct inaccurate data</Text>
         <Text style={styles.bullet}>• Request deletion of your account</Text>
@@ -71,12 +72,14 @@ export function PrivacyPolicyScreen({ onClose }: PrivacyPolicyScreenProps) {
 
         <Text style={styles.sectionTitle}>8. Children's Privacy</Text>
         <Text style={styles.paragraph}>
-          Our service is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13.
+          Our service is not intended for users under the age of 13. We do not knowingly collect
+          personal information from children under 13.
         </Text>
 
         <Text style={styles.sectionTitle}>9. Changes to This Policy</Text>
         <Text style={styles.paragraph}>
-          We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy in the app.
+          We may update this Privacy Policy from time to time. We will notify you of any changes by
+          posting the new policy in the app.
         </Text>
 
         <Text style={styles.sectionTitle}>10. Contact Us</Text>
