@@ -31,8 +31,8 @@ const Stack = createNativeStackNavigator();
 
 const linking: LinkingOptions<Record<string, object | undefined>> = {
   prefixes: [
-    'streamwatch://',
-    'https://streamwatch.snowballons.com',
+    'tukiwatch://',
+    'https://tukiwatch.snowballons.com',
     'https://lnuxpkwnbesqrqsxyiek.supabase.co',
   ],
   config: {

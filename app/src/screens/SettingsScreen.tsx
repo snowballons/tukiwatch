@@ -74,7 +74,7 @@ export function SettingsScreen() {
 
           Alert.alert(
             'Update Available',
-            `Version ${latestVersion} of StreamWatch is ready. Would you like to download it now?`,
+            `Version ${latestVersion} of TukiWatch is ready. Would you like to download it now?`,
             [
               { text: 'Later', style: 'cancel' },
               { text: 'Download', onPress: () => Linking.openURL(downloadUrl) },
@@ -122,10 +122,10 @@ export function SettingsScreen() {
       )}
 
       <Section title="About">
-        <ListItem label="About StreamWatch" onPress={() => setShowAbout(!showAbout)} />
+        <ListItem label="About TukiWatch" onPress={() => setShowAbout(!showAbout)} />
         {showAbout && (
           <Text style={styles.aboutText}>
-            Dive into a world of live entertainment! StreamWatch is your personal portal to endless
+            Dive into a world of live entertainment! TukiWatch is your personal portal to endless
             streams, bringing all your favorite content directly to your screen. Experience
             seamless, high-quality viewing of live events, gaming, music, and more, all in one
             place.

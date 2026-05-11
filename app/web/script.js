@@ -58,12 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (heroBtn) {
         heroBtn.href = downloadUrl;
         heroBtn.querySelector('.version-text').textContent = `(${version})`;
-        heroBtn.setAttribute('aria-label', `Download StreamWatch APK for Android - ${version}`);
+        heroBtn.setAttribute('aria-label', `Download TukiWatch APK for Android - ${version}`);
       }
       if (footerBtn) {
         footerBtn.href = downloadUrl;
         footerBtn.querySelector('.version-text').textContent = `(${version})`;
-        footerBtn.setAttribute('aria-label', `Download StreamWatch Android APK - ${version}`);
+        footerBtn.setAttribute('aria-label', `Download TukiWatch Android APK - ${version}`);
       }
     } catch (error) {
       console.error('Error fetching latest release:', error);

@@ -72,7 +72,7 @@ export function AuthScreen({ navigation }: any) {
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>{view === 'login' ? 'Welcome Back' : 'Join StreamWatch'}</Text>
+          <Text style={styles.title}>{view === 'login' ? 'Welcome Back' : 'Join TukiWatch'}</Text>
 
           {view === 'signup' && (
             <TextInput
@@ -149,7 +149,7 @@ export function AuthScreen({ navigation }: any) {
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.brandName}>StreamWatch</Text>
+        <Text style={styles.brandName}>TukiWatch</Text>
         <Text style={styles.tagline}>
           Monitor. Organize. <Text style={{ color: Palette.accent }}>Stream.</Text>
         </Text>
@@ -168,7 +168,7 @@ export function AuthScreen({ navigation }: any) {
       </View>
 
       <View style={styles.footerContainer}>
-        <Text style={styles.footerText}>By continuing, you agree to StreamWatch's </Text>
+        <Text style={styles.footerText}>By continuing, you agree to TukiWatch's </Text>
         <TouchableOpacity onPress={() => setShowTerms(true)}>
           <Text style={styles.link}>Terms of Service</Text>
         </TouchableOpacity>

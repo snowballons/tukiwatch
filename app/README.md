@@ -1,7 +1,7 @@
-# StreamWatch
+# TukiWatch
 
 <p align="center">
-  <img src="https://streamwatch.snowballons.com/logo.png" alt="StreamWatch Logo" width="200"/>
+  <img src="https://tukiwatch.snowballons.com/logo.png" alt="TukiWatch Logo" width="200"/>
 </p>
 
 <h3 align="center">Track and Watch Your Favorite Live Streams Effortlessly</h3>
@@ -11,12 +11,12 @@
 </p>
 
 <p align="center">
-  <img src="https://streamwatch.snowballons.com/preview.png" alt="StreamWatch App Preview" width="600"/>
+  <img src="https://tukiwatch.snowballons.com/preview.png" alt="TukiWatch App Preview" width="600"/>
 </p>
 
-## What is StreamWatch?
+## What is TukiWatch?
 
-StreamWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface.
+TukiWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface.
 
 ### Main Benefits:
 - **Saves time** by automating stream tracking
@@ -46,7 +46,7 @@ StreamWatch is a mobile app designed for enthusiasts of live streaming content. 
 - Support for multiple streaming platforms
 - Privacy-focused design with minimal data collection
 
-## Get StreamWatch Now!
+## Get TukiWatch Now!
 
 Ready to revolutionize your live streaming experience?
 
@@ -56,8 +56,8 @@ Ready to revolutionize your live streaming experience?
 
 ## Contact
 
-📧 Email: streamwatch@snowballons.com
+📧 Email: tukiwatch@snowballons.com
 
 ---
 
-© 2026 StreamWatch. All rights reserved.
+© 2026 TukiWatch. All rights reserved.

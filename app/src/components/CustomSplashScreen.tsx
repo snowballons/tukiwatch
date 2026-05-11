@@ -63,7 +63,7 @@ export function CustomSplashScreen() {
         </View>
 
         {/* App Name */}
-        <Text style={styles.appName}>StreamWatch</Text>
+        <Text style={styles.appName}>TukiWatch</Text>
         <Text style={styles.tagline}>Your Streaming Hub</Text>
 
         {/* Loading indicator */}

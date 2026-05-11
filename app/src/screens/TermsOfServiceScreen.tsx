@@ -21,14 +21,14 @@ export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
 
         <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
         <Text style={styles.paragraph}>
-          By accessing or using StreamWatch ("the App"), you agree to be bound by these Terms of
+          By accessing or using TukiWatch ("the App"), you agree to be bound by these Terms of
           Service. If you do not agree to these terms, please do not use the App.
         </Text>
 
         <Text style={styles.sectionTitle}>2. Description of Service</Text>
         <Text style={styles.paragraph}>
-          StreamWatch is a mobile application that allows users to organize, monitor, and access
-          live streaming content from various platforms. The App provides tools to manage favorite
+          TukiWatch is a mobile application that allows users to organize, monitor, and access live
+          streaming content from various platforms. The App provides tools to manage favorite
           streams and receive notifications.
         </Text>
 
@@ -52,7 +52,7 @@ export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
 
         <Text style={styles.sectionTitle}>5. Content and Intellectual Property</Text>
         <Text style={styles.paragraph}>
-          The App and its original content, features, and functionality are owned by StreamWatch and
+          The App and its original content, features, and functionality are owned by TukiWatch and
           are protected by international copyright, trademark, and other intellectual property laws.
         </Text>
         <Text style={styles.paragraph}>
@@ -75,7 +75,7 @@ export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
 
         <Text style={styles.sectionTitle}>8. Limitation of Liability</Text>
         <Text style={styles.paragraph}>
-          TO THE MAXIMUM EXTENT PERMITTED BY LAW, STREAMWATCH SHALL NOT BE LIABLE FOR ANY INDIRECT,
+          TO THE MAXIMUM EXTENT PERMITTED BY LAW, TUKIWATCH SHALL NOT BE LIABLE FOR ANY INDIRECT,
           INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE APP.
         </Text>
 
@@ -99,7 +99,7 @@ export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
 
         <Text style={styles.sectionTitle}>12. Contact Information</Text>
         <Text style={styles.paragraph}>For questions about these Terms, contact us at:</Text>
-        <Text style={styles.contact}>streamwatch@snowballons.com</Text>
+        <Text style={styles.contact}>tukiwatch@snowballons.com</Text>
       </ScrollView>
     </View>
   );

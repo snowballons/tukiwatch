@@ -1,4 +1,4 @@
-# StreamWatch Project Instructions
+# TukiWatch Project Instructions
 
 ## Code Quality Standards
 - **Biome:** We use [Biome](https://biomejs.dev/) for formatting, linting, and organizing imports. 

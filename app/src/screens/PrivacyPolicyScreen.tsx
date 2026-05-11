@@ -86,7 +86,7 @@ export function PrivacyPolicyScreen({ onClose }: PrivacyPolicyScreenProps) {
         <Text style={styles.paragraph}>
           If you have questions about this Privacy Policy, please contact us at:
         </Text>
-        <Text style={styles.contact}>streamwatch@snowballons.com</Text>
+        <Text style={styles.contact}>tukiwatch@snowballons.com</Text>
       </ScrollView>
     </View>
   );
