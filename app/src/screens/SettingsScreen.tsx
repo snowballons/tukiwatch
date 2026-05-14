@@ -1,6 +1,6 @@
 import { ChevronRight, User } from 'lucide-react-native';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../hooks/useProfile';
+import { checkForUpdate } from '../services/updateService';
 import { Palette, Spacing } from '../theme/Theme';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -37,19 +38,9 @@ const ListItem: React.FC<{
   </TouchableOpacity>
 );
 
-const appVersion = '1.0.0';
-
-const isNewerVersion = (current: string, latest: string) => {
-  const currentParts = current.replace('v', '').split('.').map(Number);
-  const latestParts = latest.replace('v', '').split('.').map(Number);
-  for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
-    const curr = currentParts[i] || 0;
-    const lat = latestParts[i] || 0;
-    if (lat > curr) return true;
-    if (lat < curr) return false;
-  }
-  return false;
-};
+// Matches versionCode in app.json android.versionCode (or use expo-constants in a managed build)
+const APP_VERSION = '1.0.1';
+const APP_VERSION_CODE = 1;
 
 export function SettingsScreen() {
   const { profile } = useProfile();
@@ -59,32 +50,16 @@ export function SettingsScreen() {
   const checkForUpdates = useCallback(async (isManual: boolean = false) => {
     if (isManual) setCheckingUpdate(true);
     try {
-      const response = await fetch(
-        'https://api.github.com/repos/snowballons/streamwatch-api/releases/latest'
-      );
-      const data = await response.json();
+      const result = await checkForUpdate(APP_VERSION_CODE);
 
-      if (data.tag_name) {
-        const latestVersion = data.tag_name.replace('v', '');
-
-        if (isNewerVersion(appVersion, latestVersion)) {
-          // Look for an APK file in the release assets, fallback to html release page
-          const apkAsset = data.assets?.find((a: { name: string }) => a.name.endsWith('.apk'));
-          const downloadUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
-
-          Alert.alert(
-            'Update Available',
-            `Version ${latestVersion} of TukiWatch is ready. Would you like to download it now?`,
-            [
-              { text: 'Later', style: 'cancel' },
-              { text: 'Download', onPress: () => Linking.openURL(downloadUrl) },
-            ]
-          );
-        } else if (isManual) {
-          Alert.alert('Up to Date', `You are running the latest version (${appVersion}).`);
-        }
+      if (result.available && result.manifest) {
+        const { version, apkUrl, releaseNotes, mandatory } = result.manifest;
+        Alert.alert('Update Available', `Version ${version} is ready.\n\n${releaseNotes}`, [
+          ...(!mandatory ? [{ text: 'Later', style: 'cancel' as const }] : []),
+          { text: 'Download', onPress: () => Linking.openURL(apkUrl) },
+        ]);
       } else if (isManual) {
-        Alert.alert('Notice', 'Could not verify the latest version at this time.');
+        Alert.alert('Up to Date', `You are running the latest version (${APP_VERSION}).`);
       }
     } catch (_error) {
       if (isManual) {
@@ -145,7 +120,7 @@ export function SettingsScreen() {
               <ActivityIndicator size="small" color={Palette.textMuted} />
             ) : (
               <>
-                <Text style={styles.listItemValue}>v{appVersion}</Text>
+                <Text style={styles.listItemValue}>v{APP_VERSION}</Text>
                 <ChevronRight color={Palette.textMuted} size={18} />
               </>
             )}

@@ -1,0 +1,8 @@
+{
+  "version": "1.0.1",
+  "versionCode": 1,
+  "apkUrl": "https://download.snowballons.com/tukiwatch-latest.apk",
+  "releaseNotes": "Initial release.",
+  "mandatory": false,
+  "minAndroidVersion": 8
+}

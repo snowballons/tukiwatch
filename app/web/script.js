@@ -38,18 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
     observer.observe(section);
   });
 
-  // Auto-Update Download Links from GitHub Releases
+  // Auto-Update Download Links from R2
   async function fetchLatestRelease() {
     try {
-      const response = await fetch(
-        'https://api.github.com/repos/snowballons/streamwatch-api/releases/latest'
-      );
+      const response = await fetch('https://download.snowballons.com/version.json', {
+        headers: { 'Cache-Control': 'no-cache' },
+      });
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
 
-      const version = data.tag_name;
-      const apkAsset = data.assets.find((asset) => asset.name.endsWith('.apk'));
-      const downloadUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
+      const version = `v${data.version}`;
+      const downloadUrl = data.apkUrl;
 
       // Update buttons
       const heroBtn = document.getElementById('hero-download-btn');
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Error fetching latest release:', error);
-      // Fallback is already handled by HTML having the /releases/latest link
+      // Fallback: buttons keep their default href from HTML
     }
   }
 
