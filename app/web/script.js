@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-Update Download Links from R2
   async function fetchLatestRelease() {
     try {
-      const response = await fetch('https://download.snowballons.com/version.json', {
+      const response = await fetch('https://downloads.snowballons.com/version.json', {
         headers: { 'Cache-Control': 'no-cache' },
       });
       if (!response.ok) throw new Error('Network response was not ok');
