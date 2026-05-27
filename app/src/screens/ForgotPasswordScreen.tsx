@@ -62,23 +62,23 @@ export function ForgotPasswordScreen({ navigation }: any) {
         <View style={styles.successContainer}>
           <Mail color={Palette.primary} size={64} />
           <Text style={styles.successTitle}>Check Your Email</Text>
-          <Text style={styles.successText}>Enter the 6-digit code sent to {email}</Text>
+          <Text style={styles.successText}>Enter the 8-digit code sent to {email}</Text>
           <TextInput
             style={styles.otpInput}
-            placeholder="000000"
+            placeholder="00000000"
             placeholderTextColor={Palette.textMuted}
             value={otp}
             onChangeText={setOtp}
             keyboardType="number-pad"
-            maxLength={6}
+            maxLength={8}
             autoFocus
             returnKeyType="done"
             onSubmitEditing={handleVerifyOtp}
           />
           <TouchableOpacity
-            style={[styles.primaryBtn, { opacity: otp.trim().length === 6 ? 1 : 0.5 }]}
+            style={[styles.primaryBtn, { opacity: otp.trim().length === 8 ? 1 : 0.5 }]}
             onPress={handleVerifyOtp}
-            disabled={loading || otp.trim().length !== 6}
+            disabled={loading || otp.trim().length !== 8}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />

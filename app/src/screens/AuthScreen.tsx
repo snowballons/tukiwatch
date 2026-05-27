@@ -64,7 +64,7 @@ export function AuthScreen({ navigation }: any) {
   };
 
   const handleVerifyOtp = async () => {
-    if (otpCode.trim().length !== 6) return Alert.alert('Error', 'Code must be 6 digits.');
+    if (otpCode.trim().length !== 8) return Alert.alert('Error', 'Code must be 8 digits.');
     setLoading(true);
     const { error } = await supabase.auth.verifyOtp({
       email: email.trim(),
@@ -102,23 +102,23 @@ export function AuthScreen({ navigation }: any) {
           </TouchableOpacity>
           <Mail color={Palette.primary} size={64} />
           <Text style={styles.otpTitle}>Check Your Email</Text>
-          <Text style={styles.otpSubtitle}>Enter the 6-digit code sent to {email}</Text>
+          <Text style={styles.otpSubtitle}>Enter the 8-digit code sent to {email}</Text>
           <TextInput
             style={styles.otpInput}
-            placeholder="000000"
+            placeholder="00000000"
             placeholderTextColor="#666"
             value={otpCode}
             onChangeText={setOtpCode}
             keyboardType="number-pad"
-            maxLength={6}
+            maxLength={8}
             autoFocus
             returnKeyType="done"
             onSubmitEditing={handleVerifyOtp}
           />
           <TouchableOpacity
-            style={[styles.primaryBtn, { opacity: otpCode.trim().length === 6 ? 1 : 0.5 }]}
+            style={[styles.primaryBtn, { opacity: otpCode.trim().length === 8 ? 1 : 0.5 }]}
             onPress={handleVerifyOtp}
-            disabled={loading || otpCode.trim().length !== 6}
+            disabled={loading || otpCode.trim().length !== 8}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
