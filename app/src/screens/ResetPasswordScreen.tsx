@@ -24,16 +24,19 @@ export function ResetPasswordScreen({ navigation }: { navigation: any }) {
   const confirmPasswordInputRef = React.useRef<TextInput>(null);
 
   const checkSession = useCallback(async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    setSessionLoading(false);
-    if (error || !session) {
-      setSessionError(
-        'Your reset session has expired or is invalid. Please request a new password reset link.'
-      );
+    for (let i = 0; i < 5; i++) {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+      if (session && !error) {
+        setSessionLoading(false);
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 500));
     }
+    setSessionLoading(false);
+    setSessionError('Session not established. Please request a new code.');
   }, []);
 
   useEffect(() => {

@@ -17,7 +17,8 @@ import { Palette, Spacing } from '../theme/Theme';
 export function ForgotPasswordScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
@@ -26,28 +27,71 @@ export function ForgotPasswordScreen({ navigation }: any) {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://tukiwatch.snowballons.com/auth/reset-password',
-    });
-
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
     setLoading(false);
 
     if (error) {
       Alert.alert('Error', error.message);
     } else {
-      setSent(true);
+      setOtpSent(true);
     }
   };
 
-  if (sent) {
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      Alert.alert('Required', 'Please enter the code from your email.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim(),
+      token: otp.trim(),
+      type: 'recovery',
+    });
+    setLoading(false);
+    if (error) {
+      Alert.alert('Error', error.message);
+    } else {
+      navigation.navigate('ResetPassword');
+    }
+  };
+
+  if (otpSent) {
     return (
       <View style={styles.container}>
         <View style={styles.successContainer}>
           <Mail color={Palette.primary} size={64} />
           <Text style={styles.successTitle}>Check Your Email</Text>
-          <Text style={styles.successText}>We've sent a password reset link to {email}</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.btnText}>Back to Sign In</Text>
+          <Text style={styles.successText}>Enter the 6-digit code sent to {email}</Text>
+          <TextInput
+            style={styles.otpInput}
+            placeholder="000000"
+            placeholderTextColor={Palette.textMuted}
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+            maxLength={6}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleVerifyOtp}
+          />
+          <TouchableOpacity
+            style={[styles.primaryBtn, { opacity: otp.trim().length === 6 ? 1 : 0.5 }]}
+            onPress={handleVerifyOtp}
+            disabled={loading || otp.trim().length !== 6}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.btnText}>Verify Code</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resendBtn}
+            onPress={handleResetPassword}
+            disabled={loading}
+          >
+            <Text style={styles.resendText}>Resend Code</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -66,7 +110,7 @@ export function ForgotPasswordScreen({ navigation }: any) {
 
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we'll send you a code to reset your password.
         </Text>
 
         <TextInput
@@ -90,7 +134,7 @@ export function ForgotPasswordScreen({ navigation }: any) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.btnText}>Send Reset Link</Text>
+            <Text style={styles.btnText}>Send Reset Code</Text>
           )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -165,5 +209,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: Spacing.xl,
+  },
+  otpInput: {
+    backgroundColor: Palette.card,
+    height: 64,
+    width: 200,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    color: Palette.text,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Palette.border,
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 8,
+  },
+  resendBtn: {
+    marginTop: Spacing.lg,
+    padding: 8,
+  },
+  resendText: {
+    color: Palette.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

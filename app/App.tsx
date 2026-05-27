@@ -1,7 +1,11 @@
 // Screen Imports
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { type LinkingOptions, NavigationContainer } from '@react-navigation/native';
+import {
+  createNavigationContainerRef,
+  type LinkingOptions,
+  NavigationContainer,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Session } from '@supabase/supabase-js';
 import * as SplashScreen from 'expo-splash-screen';
@@ -53,6 +57,8 @@ const linking: LinkingOptions<Record<string, object | undefined>> = {
     },
   },
 };
+
+const navigationRef = createNavigationContainerRef<Record<string, object | undefined>>();
 
 function TabNavigator() {
   return (
@@ -134,7 +140,6 @@ export default function App() {
         const params = new URLSearchParams(hash);
         const access_token = params.get('access_token');
         const refresh_token = params.get('refresh_token');
-        const type = params.get('type');
 
         if (access_token && refresh_token) {
           const { data } = await supabase.auth.setSession({
@@ -143,10 +148,6 @@ export default function App() {
           });
           if (data.session) {
             setSession(data.session);
-            // If it's a recovery link, navigate to ResetPassword screen
-            if (type === 'recovery') {
-              // Navigation will happen automatically due to session change
-            }
           }
         }
       }
@@ -233,33 +234,29 @@ export default function App() {
     );
   }
 
-  if (!session) {
-    return (
-      <View style={styles.container} onLayout={onLayoutRootView}>
-        <NavigationContainer linking={linking}>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Auth" component={AuthScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </View>
-    );
-  }
-
   return (
     <StreamProvider>
       <CommunityProvider>
         <View style={styles.container} onLayout={onLayoutRootView}>
-          <NavigationContainer linking={linking}>
+          <NavigationContainer linking={linking} ref={navigationRef}>
             <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
-              <Stack.Screen name="MainTabs" component={TabNavigator} />
-              <Stack.Screen
-                name="Player"
-                component={PlayerScreen}
-                options={{ presentation: 'fullScreenModal' }}
-              />
-              <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+              {session ? (
+                <>
+                  <Stack.Screen name="MainTabs" component={TabNavigator} />
+                  <Stack.Screen
+                    name="Player"
+                    component={PlayerScreen}
+                    options={{ presentation: 'fullScreenModal' }}
+                  />
+                  <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+                </>
+              ) : (
+                <>
+                  <Stack.Screen name="Auth" component={AuthScreen} />
+                  <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                  <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+                </>
+              )}
             </Stack.Navigator>
           </NavigationContainer>
         </View>

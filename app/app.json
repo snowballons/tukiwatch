@@ -19,25 +19,6 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.tukiwatch.app",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "tukiwatch.snowballons.com",
-              "pathPrefix": "/auth/reset-password"
-            },
-            {
-              "scheme": "https",
-              "host": "lnuxpkwnbesqrqsxyiek.supabase.co",
-              "pathPrefix": "/auth"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ],
       "queries": [
         {
           "intent": {
@@ -104,6 +85,11 @@
     "owner": "lunderwood1967s-organization",
     "ios": {
       "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["tukiwatch"]
+          }
+        ],
         "LSApplicationQueriesSchemes": [
           "twitch",
           "youtube",
