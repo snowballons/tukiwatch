@@ -1,0 +1,76 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# =========================
+# Virtual Environments
+# =========================
+.venv/
+.env/
+.env.*
+.env
+venv/
+env/
+streamwatch-back
+# =========================
+# Railway & Deployment
+# =========================
+.railway/
+.vercel/
+.netlify/
+
+# =========================
+# Testing & Coverage
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# =========================
+# Editor / IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+# Documentation
+# =========================
+streamlink-docs/
+docs/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+*.tmp
+
+# =========================
+# Logs & Cache
+# =========================
+*.log
+.cache/
+.ruff_cache/
+
+# =========================
+# Analysis & Profiling
+# =========================
+*.prof
+.prof/
+OPTIMIZATION_SUMMARY.md
+CF_WORKERS_TEST_RESULTS.md
+RENDER_ANALYSIS.md
+RAILWAY_ANALYSIS.md
+PLATFORM_COMPARISON.md
+

@@ -1,0 +1,48 @@
+[project]
+name = "streamlink-api"
+version = "0.1.0"
+description = "FastAPI-based Streamlink API for stream resolution and status checking"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "streamwatch-core @ git+https://github.com/snowballons/streamwatch-core.git",
+    "streamlink>=8.5.0",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.3",
+    "gunicorn>=26.0.0",
+    "python-dotenv>=1.2.2",
+    "redis>=8.1.0",
+    "apscheduler>=3.11.3",
+    "supabase>=2.31.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.3",
+    "memory-profiler>=0.61.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "httpx>=0.28.1",
+    "lxml>=6.1.1",
+]
+
+[tool.ruff.lint]
+# BLE001: broad `except Exception` is a deliberate resilience pattern in the
+# service layer (cache degrades gracefully, stream resolution never crashes,
+# input validation converts errors into HTTP responses).
+ignore = ["BLE001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["app", "main", "config"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
