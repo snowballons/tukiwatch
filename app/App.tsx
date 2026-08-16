@@ -5,6 +5,7 @@ import {
   createNavigationContainerRef,
   type LinkingOptions,
   NavigationContainer,
+  type NavigatorScreenParams,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { Session } from '@supabase/supabase-js';
@@ -33,7 +34,23 @@ SplashScreen.preventAutoHideAsync();
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const linking: LinkingOptions<Record<string, object | undefined>> = {
+type MainTabsParamList = {
+  Home: undefined;
+  'My List': undefined;
+  Add: undefined;
+  Community: undefined;
+  Settings: undefined;
+};
+
+type RootStackParamList = {
+  Auth: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: undefined;
+  MainTabs: NavigatorScreenParams<MainTabsParamList>;
+  Player: undefined;
+};
+
+const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
     'tukiwatch://',
     'https://tukiwatch.snowballons.com',
@@ -58,7 +75,7 @@ const linking: LinkingOptions<Record<string, object | undefined>> = {
   },
 };
 
-const navigationRef = createNavigationContainerRef<Record<string, object | undefined>>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 function TabNavigator() {
   return (
