@@ -158,12 +158,14 @@ class TestCustomRateLimitMiddleware:
         patched_limits = dict(RateLimitConfig.LIMITS)
         patched_limits["/api/resolve"] = (2, 60)
 
-        with patch.object(RateLimitConfig, "LIMITS", patched_limits):
-            with TestClient(app, raise_server_exceptions=False) as client:
-                with patch.dict("os.environ", {"API_KEY": ""}):
-                    r1 = client.get("/api/resolve")
-                    r2 = client.get("/api/resolve")
-                    r3 = client.get("/api/resolve")  # should be rate-limited
+        with (
+            patch.object(RateLimitConfig, "LIMITS", patched_limits),
+            TestClient(app, raise_server_exceptions=False) as client,
+            patch.dict("os.environ", {"API_KEY": ""}),
+        ):
+            r1 = client.get("/api/resolve")
+            r2 = client.get("/api/resolve")
+            r3 = client.get("/api/resolve")  # should be rate-limited
 
         assert r1.status_code == 200
         assert r2.status_code == 200
@@ -212,10 +214,12 @@ class TestCustomRateLimitMiddleware:
         patched_limits = dict(RateLimitConfig.LIMITS)
         patched_limits["/api/resolve"] = (1, 60)
 
-        with patch.object(RateLimitConfig, "LIMITS", patched_limits):
-            with TestClient(app, raise_server_exceptions=False) as client:
-                client.get("/api/resolve")
-                response = client.get("/api/resolve")
+        with (
+            patch.object(RateLimitConfig, "LIMITS", patched_limits),
+            TestClient(app, raise_server_exceptions=False) as client,
+        ):
+            client.get("/api/resolve")
+            response = client.get("/api/resolve")
 
         assert response.status_code == 429
         body = response.json()

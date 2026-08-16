@@ -16,14 +16,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from streamlink.exceptions import NoPluginError, NoStreamsError, PluginError
 
-from app.models import StreamStatus
 from app.exceptions import (
+    BrowserRequiredException,
     NoPluginException,
     NoStreamsException,
-    BrowserRequiredException,
     PluginException,
 )
-
+from app.models import StreamStatus
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -296,9 +295,7 @@ class TestCheckSingleStream:
 
             from app.services.stream_service import check_single_stream
 
-            result = asyncio.get_event_loop().run_until_complete(
-                check_single_stream(TWITCH_URL)
-            )
+            result = asyncio.run(check_single_stream(TWITCH_URL))
 
         assert isinstance(result, StreamStatus)
         assert result.status == "online"
@@ -315,9 +312,7 @@ class TestCheckSingleStream:
 
             from app.services.stream_service import check_single_stream
 
-            result = asyncio.get_event_loop().run_until_complete(
-                check_single_stream(TWITCH_URL)
-            )
+            result = asyncio.run(check_single_stream(TWITCH_URL))
 
         pool.get_session.assert_not_called()
         assert result.status == "online"
@@ -335,9 +330,7 @@ class TestCheckSingleStream:
 
             from app.services.stream_service import check_single_stream
 
-            result = asyncio.get_event_loop().run_until_complete(
-                check_single_stream(TWITCH_URL)
-            )
+            result = asyncio.run(check_single_stream(TWITCH_URL))
 
         assert result.status == "error"
         assert "network failure" in result.error
@@ -356,7 +349,7 @@ class TestCheckSingleStream:
 
             from app.services.stream_service import check_single_stream
 
-            asyncio.get_event_loop().run_until_complete(check_single_stream(TWITCH_URL))
+            asyncio.run(check_single_stream(TWITCH_URL))
 
         mock_cache.set.assert_called_once()
         cache_key = mock_cache.set.call_args[0][0]
@@ -375,7 +368,7 @@ class TestCheckSingleStream:
 
             from app.services.stream_service import check_single_stream
 
-            asyncio.get_event_loop().run_until_complete(check_single_stream(TWITCH_URL))
+            asyncio.run(check_single_stream(TWITCH_URL))
 
         _, _kwargs_or_args = (
             mock_cache.set.call_args[0],

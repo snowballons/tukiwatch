@@ -1,12 +1,14 @@
+
+from typing import ClassVar
+
 from fastapi import HTTPException
-from typing import Tuple
 
 
 class RateLimitConfig:
     """Rate limiting configuration for different endpoints"""
 
     # Rate limits: (requests, time_window_seconds)
-    LIMITS = {
+    LIMITS: ClassVar[dict[str, tuple[int, int]]] = {
         # General API endpoints
         "default": (100, 60),  # 100 requests per minute
         # Stream-specific endpoints (more restrictive)
@@ -18,7 +20,7 @@ class RateLimitConfig:
     }
 
     @classmethod
-    def get_limit_for_path(cls, path: str) -> Tuple[int, int]:
+    def get_limit_for_path(cls, path: str) -> tuple[int, int]:
         """Get rate limit for specific path"""
         # Check for exact match first
         if path in cls.LIMITS:

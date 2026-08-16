@@ -1,7 +1,9 @@
-from supabase import create_client, Client
-from config import config
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
+
+from supabase import Client, create_client
+
+from config import config
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ class SupabaseService:
         """Update is_online and last_checked for a specific stream."""
         try:
             self.supabase.table("community_streams").update(
-                {"is_online": is_online, "last_checked": datetime.utcnow().isoformat()}
+                {"is_online": is_online, "last_checked": datetime.now(timezone.utc).isoformat()}
             ).eq("id", stream_id).execute()
         except Exception as e:
             logger.error(f"Error updating stream {stream_id} status: {e}")

@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from app.services.supabase_service import SupabaseService
 from config import config
 
@@ -15,8 +17,10 @@ def mock_supabase_client():
 @pytest.fixture
 def supabase_service(mock_supabase_client):
     # Ensure config has some values so lazy init works
-    with patch.object(config, "SUPABASE_URL", "https://example.supabase.co"):
-        with patch.object(config, "SUPABASE_SERVICE_KEY", "fake-key"):
+    with (
+            patch.object(config, "SUPABASE_URL", "https://example.supabase.co"),
+            patch.object(config, "SUPABASE_SERVICE_KEY", "fake-key"),
+        ):
             service = SupabaseService()
             yield service
 
@@ -53,8 +57,10 @@ def test_update_stream_status_success(supabase_service, mock_supabase_client):
 
 def test_lazy_initialization_error():
     # Test that it raises ValueError if config is missing
-    with patch.object(config, "SUPABASE_URL", ""):
-        with patch.object(config, "SUPABASE_SERVICE_KEY", ""):
+    with (
+            patch.object(config, "SUPABASE_URL", ""),
+            patch.object(config, "SUPABASE_SERVICE_KEY", ""),
+            pytest.raises(ValueError, match="Supabase configuration missing"),
+        ):
             service = SupabaseService()
-            with pytest.raises(ValueError, match="Supabase configuration missing"):
-                _ = service.supabase
+            _ = service.supabase

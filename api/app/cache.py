@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 from config import config
 
@@ -60,13 +60,13 @@ class RedisCache:
         from redis.retry import Retry
 
         retry = Retry(ExponentialBackoff(), 3)
-        conn_kwargs = dict(
-            decode_responses=True,
-            socket_connect_timeout=5,
-            socket_timeout=5,
-            health_check_interval=3,
-            retry=retry,
-        )
+        conn_kwargs = {
+            "decode_responses": True,
+            "socket_connect_timeout": 5,
+            "socket_timeout": 5,
+            "health_check_interval": 3,
+            "retry": retry,
+        }
 
         if config.REDIS_URL:
             pool = redis.ConnectionPool.from_url(config.REDIS_URL, **conn_kwargs)
@@ -99,7 +99,7 @@ class RedisCache:
         # Verify connectivity on startup
         self._client.ping()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         try:
             raw = self._client.get(key)
             if raw is None:
@@ -170,7 +170,7 @@ class SimpleCache:
     def __init__(self):
         self._cache: dict[str, CacheEntry] = {}
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if key in self._cache:
             entry = self._cache[key]
             if not entry.is_expired():

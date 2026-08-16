@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException
 import asyncio
+
+from fastapi import APIRouter, HTTPException
+
+from app.cache import cache
+from app.exceptions import StreamlinkAPIException
 from app.models import BatchRequest, StreamStatus
 from app.services import stream_service
-from app.exceptions import StreamlinkAPIException
-from app.cache import cache
-from app.validators import validate_url, validate_batch_request
+from app.validators import validate_batch_request, validate_url
 
 router = APIRouter()
 
@@ -24,7 +26,7 @@ async def get_stream_url(url: str, bypass_cache: bool = False):
     except StreamlinkAPIException:
         raise  # Re-raise our custom exceptions with proper HTTP codes
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e!s}")
 
 
 @router.post("/status-batch")

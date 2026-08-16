@@ -18,7 +18,6 @@ import pytest
 
 from app.models import StreamStatus
 
-
 # ===========================================================================
 # SimpleCache
 # ===========================================================================
@@ -133,7 +132,7 @@ class TestSerializationHelpers:
 
     def test_deserialize_dict_returns_dict(self):
         """_deserialize() on a dict envelope must return a plain dict."""
-        from app.cache import _serialize, _deserialize
+        from app.cache import _deserialize, _serialize
 
         original = {"hello": "world"}
         result = _deserialize(_serialize(original))
@@ -141,7 +140,7 @@ class TestSerializationHelpers:
 
     def test_deserialize_stream_status_returns_model(self):
         """_deserialize() on a StreamStatus envelope must return a StreamStatus."""
-        from app.cache import _serialize, _deserialize
+        from app.cache import _deserialize, _serialize
 
         status = StreamStatus(url="https://twitch.tv/test", status="online")
         result = _deserialize(_serialize(status))
@@ -157,7 +156,7 @@ class TestSerializationHelpers:
 
     def test_round_trip_preserves_all_fields(self):
         """A full StreamStatus round-trip must preserve every field."""
-        from app.cache import _serialize, _deserialize
+        from app.cache import _deserialize, _serialize
 
         status = StreamStatus(
             url="https://twitch.tv/test",

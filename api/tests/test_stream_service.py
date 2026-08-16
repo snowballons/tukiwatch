@@ -1,7 +1,9 @@
 from unittest.mock import MagicMock, patch
-from app.services.stream_service import _resolve_stream_sync, resolve_stream_details
-from app.models import StreamStatus
+
 from streamlink.exceptions import NoPluginError
+
+from app.models import StreamStatus
+from app.services.stream_service import _resolve_stream_sync, resolve_stream_details
 
 
 @patch("app.services.stream_service.session_pool")

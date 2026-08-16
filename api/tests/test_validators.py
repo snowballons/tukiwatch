@@ -11,8 +11,7 @@ Covers:
 import pytest
 from fastapi import HTTPException
 
-from app.validators import validate_url, validate_batch_request
-
+from app.validators import validate_batch_request, validate_url
 
 # ===========================================================================
 # validate_url

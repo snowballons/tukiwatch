@@ -12,7 +12,6 @@ Covers:
 
 from unittest.mock import patch
 
-
 from tests.conftest import TEST_API_KEY
 
 AUTH = {"X-API-Key": TEST_API_KEY}
@@ -236,21 +235,20 @@ class TestAppInitialisation:
 
     def test_api_routes_are_registered(self, app):
         """The /api/resolve and /api/status-batch routes must be registered."""
-        paths = [route.path for route in app.routes]
-        assert "/api/resolve" in paths
-        assert "/api/status-batch" in paths
+        assert app.url_path_for("get_stream_url") == "/api/resolve"
+        assert app.url_path_for("get_batch_status") == "/api/status-batch"
 
     def test_utility_routes_are_registered(self, app):
         """The /, /health, /cache/stats, /rate-limit/stats, /session/stats routes must exist."""
-        paths = [route.path for route in app.routes]
-        for expected in [
-            "/",
-            "/health",
-            "/cache/stats",
-            "/rate-limit/stats",
-            "/session/stats",
-        ]:
-            assert expected in paths, f"Route {expected!r} not found in {paths}"
+        expected = {
+            "read_root": "/",
+            "health_check": "/health",
+            "cache_stats": "/cache/stats",
+            "rate_limit_stats": "/rate-limit/stats",
+            "session_stats": "/session/stats",
+        }
+        for name, path in expected.items():
+            assert app.url_path_for(name) == path, f"Route {name!r} not registered"
 
     def test_middleware_stack_includes_api_key_middleware(self, app):
         """APIKeyMiddleware must be present in the middleware stack."""

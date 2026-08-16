@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+
 from fastapi import HTTPException
 
 
@@ -47,8 +48,7 @@ def validate_url(url: str) -> str:
 
     domain = parsed.netloc.lower()
     # Remove www. prefix
-    if domain.startswith("www."):
-        domain = domain[4:]
+    domain = domain.removeprefix("www.")
 
     if not any(domain.endswith(supported) for supported in supported_domains):
         raise HTTPException(

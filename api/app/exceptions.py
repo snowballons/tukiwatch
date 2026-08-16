@@ -1,6 +1,6 @@
 from fastapi import HTTPException
-from app.utils import extract_platform_from_url
 
+from app.utils import extract_platform_from_url
 
 BROWSER_ERROR_KEYWORDS = (
     "chromium-based web browser",
@@ -18,7 +18,6 @@ def is_browser_error(error_msg: str) -> bool:
 class StreamlinkAPIException(HTTPException):
     """Base exception for Streamlink API errors"""
 
-    pass
 
 
 class NoPluginException(StreamlinkAPIException):

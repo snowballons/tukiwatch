@@ -1,7 +1,8 @@
 import asyncio
 import logging
-from app.services.supabase_service import supabase_service
+
 from app.services import stream_service
+from app.services.supabase_service import supabase_service
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,6 @@ Covers:
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-
 from tests.conftest import TEST_API_KEY
 
 # ---------------------------------------------------------------------------

@@ -1,10 +1,11 @@
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
 import logging
 import os
 import time
-from typing import Dict, Tuple
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from app.rate_limit import RateLimitConfig, create_rate_limit_error
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ class CustomRateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # In-memory storage: {ip: {endpoint: [(timestamp, count), ...]}}
-        self.requests: Dict[str, Dict[str, list]] = {}
+        self.requests: dict[str, dict[str, list]] = {}
         self.cleanup_interval = 300  # Clean up old entries every 5 minutes
         self.last_cleanup = time.time()
 
@@ -99,8 +100,8 @@ class CustomRateLimitMiddleware(BaseHTTPMiddleware):
         return request.client.host if request.client else "unknown"
 
     def _is_rate_limited(
-        self, ip: str, endpoint: str, limit: Tuple[int, int]
-    ) -> Tuple[bool, int]:
+        self, ip: str, endpoint: str, limit: tuple[int, int]
+    ) -> tuple[bool, int]:
         """Check if request should be rate limited"""
         max_requests, time_window = limit
         current_time = time.time()

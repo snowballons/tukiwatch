@@ -1,27 +1,31 @@
 import asyncio
 import logging
+
 from streamlink.exceptions import NoPluginError, NoStreamsError, PluginError
-from config import config
-from app.models import StreamStatus
+
+from app.cache import cache
 from app.exceptions import (
+    BrowserRequiredException,
     NoPluginException,
     NoStreamsException,
     PluginException,
-    BrowserRequiredException,
     is_browser_error,
 )
-from app.cache import cache
+from app.models import StreamStatus
+from app.session_pool import session_pool
 from app.utils import (
     extract_platform_from_url,
     generate_fallback_thumbnail,
     get_stream_types_from_streams,
 )
-from app.session_pool import session_pool
+from config import config
 
 # Suppress Streamlink plugin loading warnings more aggressively
 logging.getLogger("streamlink.session.plugins").setLevel(logging.CRITICAL)
 logging.getLogger("streamlink.plugins").setLevel(logging.CRITICAL)
 logging.getLogger("streamlink").setLevel(logging.ERROR)
+
+logger = logging.getLogger(__name__)
 
 
 def _configure_twitch_session(session):
@@ -34,8 +38,8 @@ def _configure_twitch_session(session):
                 "twitch-api-header",
                 f"Authorization=OAuth {config.TWITCH_OAUTH_TOKEN}",
             )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Twitch session options not applied: %s", e)
 
 
 def _set_cached_flag(result):
@@ -137,7 +141,7 @@ def _resolve_stream_sync(url: str) -> StreamStatus:
         return StreamStatus(
             url=url,
             status="error",
-            error=f"Unexpected error: {str(e)}",
+            error=f"Unexpected error: {e!s}",
             platform=extract_platform_from_url(url),
         )
     finally:
@@ -204,7 +208,7 @@ def resolve_stream_details(url: str):
 
         raise PluginException(url, error_msg)
     except Exception as e:
-        raise PluginException(url, f"Unexpected error: {str(e)}")
+        raise PluginException(url, f"Unexpected error: {e!s}")
     finally:
         # Return session to pool
         session_pool.return_session(session)

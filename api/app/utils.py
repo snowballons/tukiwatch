@@ -5,8 +5,7 @@ def extract_platform_from_url(url: str) -> str:
     """Extract platform name from URL"""
     try:
         domain = urlparse(url).netloc.lower()
-        if domain.startswith("www."):
-            domain = domain[4:]
+        domain = domain.removeprefix("www.")
 
         if "twitch.tv" in domain:
             return "twitch"
@@ -100,4 +99,4 @@ def get_stream_types_from_streams(streams: dict) -> list:
             stream_types.add("DASH")
         else:
             stream_types.add(stream_type.upper())
-    return sorted(list(stream_types))
+    return sorted(stream_types)
