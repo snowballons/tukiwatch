@@ -1,10 +1,16 @@
-name: CI
+name: API CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, master, develop]
+    paths:
+      - "api/**"
+      - ".github/workflows/api.yml"
   pull_request:
+    branches: [main, master, develop]
+    paths:
+      - "api/**"
+      - ".github/workflows/api.yml"
 
 jobs:
   test:
@@ -15,6 +21,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
+
+    defaults:
+      run:
+        working-directory: api
 
     steps:
       - name: Checkout code

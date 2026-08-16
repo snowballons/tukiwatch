@@ -1,14 +1,24 @@
-name: CI
+name: App CI
 
 on:
   push:
     branches: [main, master, develop]
+    paths:
+      - "app/**"
+      - ".github/workflows/app.yml"
   pull_request:
     branches: [main, master, develop]
+    paths:
+      - "app/**"
+      - ".github/workflows/app.yml"
 
 jobs:
   lint-and-type-check:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: app
 
     steps:
       - name: Checkout code
@@ -27,7 +37,3 @@ jobs:
 
       - name: Type Check
         run: bun run type-check
-
-      # Optional: Run tests if you have them
-      # - name: Run Tests
-      #   run: bun test
