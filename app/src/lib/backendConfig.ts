@@ -76,6 +76,13 @@ export function parseConnectUri(uri: string): BackendConfig | null {
       const parsed = new URL(trimmed);
       if (parsed.pathname === '/connect') {
         params = parseQueryString(parsed.search.replace(/^\?/, ''));
+      } else if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        // A plain backend URL (e.g. a shared ngrok tunnel). No key/updates.
+        return {
+          apiUrl: trimmed.replace(/\/+$/, ''),
+          apiKey: undefined,
+          updateManifestUrl: undefined,
+        };
       }
     } catch {
       // Not a URL — not a connect link.

@@ -91,6 +91,11 @@ qrencode -o backend.png 'tukiwatch://connect?url=https%3A%2F%2Fyour-instance.exa
 Print the QR on your server / share it with your users; `key` is optional when
 your `API_KEY` is empty.
 
+A plain URL is also accepted — if the QR encodes just `https://your-instance.example.com`
+(with no path), the app treats it as the backend base URL and connects without a key.
+Use the full `tukiwatch://connect?...` form when you want to bundle the API key
+and/or the update-manifest URL.
+
 ## Notes
 
 - Redis holds only cached status results; it is **not** persistent storage.
