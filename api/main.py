@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.middleware import APIKeyMiddleware, CustomRateLimitMiddleware
+from app.middleware import CustomRateLimitMiddleware
 from app.routers import streams
 from config import config
 
@@ -21,9 +21,6 @@ logging.getLogger("streamlink.session.plugins").setLevel(logging.CRITICAL)
 
 
 app = FastAPI(title="Streamlink API", version="1.0.0")
-
-# Add API key authentication middleware (outermost — runs first)
-app.add_middleware(APIKeyMiddleware)
 
 # Add rate limiting middleware (before CORS)
 app.add_middleware(CustomRateLimitMiddleware)
