@@ -1,4 +1,4 @@
-# Railway.app Configuration for Streamlink API
+# Railway.app Configuration for TukiWatch API
 
 [phases.setup]
 # Install system packages required for streamlink
