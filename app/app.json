@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TukiWatch",
-    "slug": "tukiwatch",
+    "slug": "streamwatch",
     "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
