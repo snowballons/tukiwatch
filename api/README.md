@@ -1,63 +1,52 @@
-# StreamWatch
+# TukiWatch API
 
-<p align="center">
-  <img src="https://streamwatch.snowballons.com/logo.png" alt="StreamWatch Logo" width="200"/>
-</p>
+FastAPI backend for [TukiWatch](https://github.com/snowballons/tukiwatch) — resolves live-stream URLs and checks stream status across platforms (Twitch, YouTube, Kick, and more via [streamlink](https://streamlink.github.io/)).
 
-<h3 align="center">Track and Watch Your Favorite Live Streams Effortlessly</h3>
+- **Stateless** — no database. State is limited to an ephemeral cache (Redis or in-memory) and the streamlink session pool.
+- **Shared domain logic** comes from [streamwatch-core](https://github.com/snowballons/streamwatch-core) (pip dependency), the canonical package also vendored by the CLI.
+- Built for self-hosting: Docker, Railway, or plain `uv run uvicorn`.
 
-<p align="center">
-  Your Ultimate Companion for Live Streaming Discovery and Viewing – No Ads, No Hassle
-</p>
+## Endpoints
 
-<p align="center">
-  <img src="https://streamwatch.snowballons.com/preview.png" alt="StreamWatch App Preview" width="600"/>
-</p>
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/status` | Batch check stream status |
+| `GET` | `/api/resolve/{url}` | Resolve a stream URL to playable streams + metadata |
+| `GET` | `/health` | Liveness probe |
+| `GET` | `/cache/stats` | Cache statistics |
+| `GET` | `/rate-limit/stats` | Rate-limit configuration summary |
+| `GET` | `/session/stats` | Streamlink session pool statistics |
 
-## What is StreamWatch?
+All requests must send the API key in the `X-API-Key` header.
 
-StreamWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface.
+## Quick start
 
-### Main Benefits:
-- **Saves time** by automating stream tracking
-- **Ad-free viewing** options where possible
-- **Offline notifications** support
-- **Device media player integration** for a smooth experience
-- **Free and open-source** with no unnecessary data collection
-- **Privacy-focused** approach
+```bash
+cd api
+cp .env.example .env   # set API_KEY
+uv sync --all-groups
+uv run uvicorn main:app --host 0.0.0.0 --port 8000
+```
 
-## Key Features
+## Development
 
-- 🔄 **Real-Time Stream Tracking** - Add favorite channels or streamers and get instant notifications when they go live
-- 📱 **Integrated Viewing** - Watch streams directly in the app with optimal quality
-- 🔔 **Custom Alerts** - Set preferences for stream quality, categories (gaming, music, sports), and notification types
-- 🔍 **Discovery Tools** - Browse trending streams, search by platform or keyword, and explore recommendations
-- 🚫 **Ad-Free Experience** - Bypass ads on supported platforms
-- 🔗 **Cross-Platform Support** - Works with major streaming sites like Twitch, YouTube, Facebook Live, and more
-- 📴 **Offline Mode** - View saved stream info and history even without internet
-- 🔧 **Open-Source Customization** - Access the GitHub repo to modify or contribute to the app
+```bash
+uv sync --all-groups
+uv run ruff check .
+uv run pytest
+```
 
-## Core Functionalities
+## Deploy
 
-- Add streams to a favorites list
-- Set custom alerts and notifications
-- Browse popular and trending streams
-- Direct playback with quality selection
-- Support for multiple streaming platforms
-- Privacy-focused design with minimal data collection
+- Docker / docker-compose and Railway instructions: [docs/SELF_HOSTING.md](../docs/SELF_HOSTING.md)
+- `requirements.txt` is used by `nixpacks.toml` (Railway); `uv.lock` is used by Docker and local dev.
 
-## Get StreamWatch Now!
+## Related
 
-Ready to revolutionize your live streaming experience?
+- [streamwatch-core](https://github.com/snowballons/streamwatch-core) — shared domain package
+- [streamwatch-cli](https://github.com/snowballons/streamwatch-cli) — standalone terminal client
+- [TukiWatch app](../app/README.md) — Expo / React Native mobile client
 
-[📥 Download APK (Android)](https://github.com/snowballons/streamwatch-api/releases)
-[🔧 View on GitHub (Source & Instructions)](https://github.com/snowballons/streamwatch-api)
-[🍎 App Store (Coming Soon)](#)
+## License
 
-## Contact
-
-📧 Email: streamwatch@snowballons.com
-
----
-
-© 2026 StreamWatch. All rights reserved.
+[MIT](../LICENSE)
