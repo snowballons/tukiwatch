@@ -4,5 +4,3 @@ uvicorn>=0.52.3
 gunicorn>=26.0.0
 python-dotenv>=1.2.2
 redis>=8.1.0
-apscheduler>=3.11.3
-supabase>=2.31.0
