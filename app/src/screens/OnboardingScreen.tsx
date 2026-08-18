@@ -4,13 +4,13 @@ import {
   AccessibilityInfo,
   Animated,
   FlatList,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Palette, PlatformColors } from '../theme/Theme';
 
 // --- VISUAL COMPONENTS ---
