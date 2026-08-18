@@ -1,6 +1,6 @@
 {
   "name": "tukiwatchapp",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "main": "index.ts",
   "scripts": {
     "prepare": "husky",
@@ -19,19 +19,22 @@
     "@react-navigation/bottom-tabs": "^7.18.16",
     "@react-navigation/native": "^7.3.16",
     "@react-navigation/native-stack": "^7.18.8",
-    "@supabase/supabase-js": "^2.112.3",
     "axios": "^1.19.0",
     "expo": "~55.0.28",
+    "expo-constants": "~55.0.17",
+    "expo-document-picker": "~55.0.4",
+    "expo-file-system": "~55.0.4",
     "expo-linear-gradient": "~55.0.16",
+    "expo-sharing": "~55.0.2",
     "expo-splash-screen": "~55.0.23",
+    "expo-sqlite": "~55.0.15",
     "expo-video": "~55.0.19",
     "lucide-react-native": "^0.562.0",
     "react": "19.2.0",
     "react-native": "0.83.10",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
-    "react-native-svg": "15.15.3",
-    "react-native-url-polyfill": "^3.0.0"
+    "react-native-svg": "15.15.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
