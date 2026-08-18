@@ -17,13 +17,11 @@ FastAPI backend for [TukiWatch](https://github.com/snowballons/tukiwatch) — re
 | `GET` | `/rate-limit/stats` | Rate-limit configuration summary |
 | `GET` | `/session/stats` | Streamlink session pool statistics |
 
-All requests must send the API key in the `X-API-Key` header.
-
 ## Quick start
 
 ```bash
 cd api
-cp .env.example .env   # set API_KEY
+cp .env.example .env   # set ALLOWED_ORIGINS
 uv sync --all-groups
 uv run uvicorn main:app --host 0.0.0.0 --port 8000
 ```
