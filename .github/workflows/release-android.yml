@@ -1,0 +1,114 @@
+name: Android APK Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 1.0.6)"
+        required: true
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          # Normalize to SemVer (allow "1.0.6" or "v1.0.6")
+          VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release version: ${VERSION}"
+
+      - name: Set app version in app.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.version = '${{ steps.version.outputs.version }}';
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
+          "
+
+      - name: Build Android APK
+        run: eas build --platform android --profile production --non-interactive
+
+      - name: Download APK artifact
+        run: eas build:download --platform android --profile production
+
+      - name: Read built versionCode
+        id: versioncode
+        run: |
+          VERSION_CODE=$(node -e "
+            const cfg = JSON.parse(require('fs').readFileSync('app.json', 'utf8'));
+            console.log(cfg.expo.android?.versionCode ?? '');
+          ")
+          echo "versionCode=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "Built versionCode: ${VERSION_CODE}"
+
+      - name: Create GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: TukiWatch v${{ steps.version.outputs.version }}
+          files: app/build/*.apk
+          generate_release_notes: true
+
+      - name: Update version.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const v = '${{ steps.version.outputs.version }}';
+            const code = ${{ steps.versioncode.outputs.versionCode }};
+            const apk = 'https://github.com/${{ github.repository }}/releases/latest/download/' + fs.readdirSync('build').find(f => f.endsWith('.apk'));
+            const manifest = {
+              version: v,
+              versionCode: code,
+              apkUrl: apk,
+              releaseNotes: 'Released via GitHub Actions.',
+              mandatory: false,
+              minAndroidVersion: 8,
+            };
+            fs.writeFileSync('version.json', JSON.stringify(manifest, null, 2) + '\n');
+          "
+
+      - name: Commit version.json + app.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.json app.json
+          git commit -m "chore: bump version to v${{ steps.version.outputs.version }}"
+          git push
