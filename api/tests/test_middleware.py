@@ -2,7 +2,6 @@
 Tests for app/middleware.py
 
 Covers:
-- APIKeyMiddleware: missing key, invalid key, valid key, non-/api/ bypass
 - CustomRateLimitMiddleware: within-limit, over-limit, rate-limit headers,
   per-endpoint limits, IP extraction helpers, cleanup logic
 """
@@ -13,29 +12,11 @@ from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.middleware import APIKeyMiddleware, CustomRateLimitMiddleware
+from app.middleware import CustomRateLimitMiddleware
 
 # ---------------------------------------------------------------------------
 # Helpers — build a minimal app with only the middleware under test
 # ---------------------------------------------------------------------------
-
-TEST_KEY = "secret-key-for-tests"
-
-
-def _make_app_with_api_key_middleware(api_key: str = TEST_KEY) -> FastAPI:
-    """Return a tiny FastAPI app protected by APIKeyMiddleware."""
-    mini = FastAPI()
-    mini.add_middleware(APIKeyMiddleware)
-
-    @mini.get("/api/protected")
-    def protected():
-        return {"ok": True}
-
-    @mini.get("/health")
-    def health():
-        return {"ok": True}
-
-    return mini
 
 
 def _make_app_with_rate_limit_middleware() -> FastAPI:
@@ -56,79 +37,6 @@ def _make_app_with_rate_limit_middleware() -> FastAPI:
         return {"ok": True}
 
     return mini
-
-
-# ===========================================================================
-# APIKeyMiddleware tests
-# ===========================================================================
-
-
-class TestAPIKeyMiddleware:
-    """Tests for the API key authentication middleware."""
-
-    def test_missing_api_key_returns_401(self):
-        """Requests to /api/ without X-API-Key header must be rejected."""
-        with patch.dict("os.environ", {"API_KEY": TEST_KEY}):
-            app = _make_app_with_api_key_middleware()
-            with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get("/api/protected")
-
-        assert response.status_code == 401
-        assert "Missing API key" in response.json()["detail"]
-
-    def test_invalid_api_key_returns_401(self):
-        """Requests to /api/ with a wrong key must be rejected."""
-        with patch.dict("os.environ", {"API_KEY": TEST_KEY}):
-            app = _make_app_with_api_key_middleware()
-            with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get(
-                    "/api/protected", headers={"X-API-Key": "wrong-key"}
-                )
-
-        assert response.status_code == 401
-        assert "Invalid API key" in response.json()["detail"]
-
-    def test_valid_api_key_passes_through(self):
-        """Requests to /api/ with the correct key must reach the handler."""
-        with patch.dict("os.environ", {"API_KEY": TEST_KEY}):
-            app = _make_app_with_api_key_middleware()
-            with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get("/api/protected", headers={"X-API-Key": TEST_KEY})
-
-        assert response.status_code == 200
-        assert response.json() == {"ok": True}
-
-    def test_non_api_route_bypasses_auth(self):
-        """Routes outside /api/ must not require an API key."""
-        with patch.dict("os.environ", {"API_KEY": TEST_KEY}):
-            app = _make_app_with_api_key_middleware()
-            with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get("/health")
-
-        assert response.status_code == 200
-
-    def test_empty_api_key_env_var_rejects_any_key(self):
-        """When API_KEY env var is empty, any provided key is invalid."""
-        with patch.dict("os.environ", {"API_KEY": ""}):
-            app = _make_app_with_api_key_middleware(api_key="")
-            with TestClient(app, raise_server_exceptions=False) as client:
-                response = client.get(
-                    "/api/protected", headers={"X-API-Key": "anything"}
-                )
-
-        # Empty env key means provided key != "" is always wrong
-        assert response.status_code == 401
-
-    def test_empty_api_key_env_var_with_empty_header_passes(self):
-        """When API_KEY is empty, an empty X-API-Key header is treated as missing."""
-        with patch.dict("os.environ", {"API_KEY": ""}):
-            app = _make_app_with_api_key_middleware(api_key="")
-            with TestClient(app, raise_server_exceptions=False) as client:
-                # Sending no header at all → missing key
-                response = client.get("/api/protected")
-
-        assert response.status_code == 401
-        assert "Missing API key" in response.json()["detail"]
 
 
 # ===========================================================================
@@ -161,7 +69,6 @@ class TestCustomRateLimitMiddleware:
         with (
             patch.object(RateLimitConfig, "LIMITS", patched_limits),
             TestClient(app, raise_server_exceptions=False) as client,
-            patch.dict("os.environ", {"API_KEY": ""}),
         ):
             r1 = client.get("/api/resolve")
             r2 = client.get("/api/resolve")

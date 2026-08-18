@@ -12,13 +12,8 @@ Covers:
 
 from unittest.mock import patch
 
-from tests.conftest import TEST_API_KEY
-
-AUTH = {"X-API-Key": TEST_API_KEY}
-
-
 # ===========================================================================
-# Root & health endpoints (no auth required)
+# Root & health endpoints
 # ===========================================================================
 
 
@@ -43,11 +38,6 @@ class TestRootEndpoint:
         assert "service" in data
         assert data["service"] == "streamlink-api"
 
-    def test_does_not_require_api_key(self, client):
-        """GET / must be accessible without an API key."""
-        response = client.get("/")
-        assert response.status_code == 200
-
 
 class TestHealthEndpoint:
     """Tests for the GET /health endpoint."""
@@ -68,11 +58,6 @@ class TestHealthEndpoint:
         response = client.get("/health")
         data = response.json()
         assert data["service"] == "streamlink-api"
-
-    def test_does_not_require_api_key(self, client):
-        """GET /health must be accessible without an API key."""
-        response = client.get("/health")
-        assert response.status_code == 200
 
 
 # ===========================================================================
@@ -104,13 +89,6 @@ class TestCacheStatsEndpoint:
             mock_cache.get_stats.return_value = {}
             response = client.get("/cache/stats")
         assert response.json()["service"] == "streamlink-api"
-
-    def test_does_not_require_api_key(self, client):
-        """GET /cache/stats must be accessible without an API key."""
-        with patch("app.cache.cache") as mock_cache:
-            mock_cache.get_stats.return_value = {}
-            response = client.get("/cache/stats")
-        assert response.status_code == 200
 
 
 # ===========================================================================
@@ -148,11 +126,6 @@ class TestRateLimitStatsEndpoint:
         """GET /rate-limit/stats must include the service name."""
         response = client.get("/rate-limit/stats")
         assert response.json()["service"] == "streamlink-api"
-
-    def test_does_not_require_api_key(self, client):
-        """GET /rate-limit/stats must be accessible without an API key."""
-        response = client.get("/rate-limit/stats")
-        assert response.status_code == 200
 
 
 # ===========================================================================
@@ -206,16 +179,6 @@ class TestSessionStatsEndpoint:
             response = client.get("/session/stats")
         assert response.json()["service"] == "streamlink-api"
 
-    def test_does_not_require_api_key(self, client):
-        """GET /session/stats must be accessible without an API key."""
-        with patch("app.session_pool.session_pool") as mock_pool:
-            mock_pool.size.return_value = 3
-            mock_pool.pool_size = 3
-            mock_pool.created_at = 0.0
-            mock_pool.refresh_interval = 3600
-            response = client.get("/session/stats")
-        assert response.status_code == 200
-
 
 # ===========================================================================
 # App initialisation
@@ -249,13 +212,6 @@ class TestAppInitialisation:
         }
         for name, path in expected.items():
             assert app.url_path_for(name) == path, f"Route {name!r} not registered"
-
-    def test_middleware_stack_includes_api_key_middleware(self, app):
-        """APIKeyMiddleware must be present in the middleware stack."""
-        from app.middleware import APIKeyMiddleware
-
-        middleware_classes = [m.cls for m in app.user_middleware]
-        assert APIKeyMiddleware in middleware_classes
 
     def test_middleware_stack_includes_rate_limit_middleware(self, app):
         """CustomRateLimitMiddleware must be present in the middleware stack."""

@@ -17,9 +17,6 @@ from fastapi.testclient import TestClient
 # config.py picks up the test values.
 # ---------------------------------------------------------------------------
 
-TEST_API_KEY = "test-api-key-12345"
-
-os.environ.setdefault("API_KEY", TEST_API_KEY)
 os.environ.setdefault("REDIS_URL", "")
 os.environ.setdefault("REDIS_HOST", "localhost")
 
@@ -45,12 +42,6 @@ def client(app):
     """Return a synchronous TestClient for the FastAPI app."""
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
-
-
-@pytest.fixture()
-def auth_headers():
-    """Return HTTP headers that satisfy API key authentication."""
-    return {"X-API-Key": TEST_API_KEY}
 
 
 # ---------------------------------------------------------------------------

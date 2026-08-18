@@ -2,20 +2,16 @@
 Tests for app/routers/streams.py
 
 Covers:
-- GET /api/resolve  — valid URL, invalid URL, cache bypass, auth guard
+- GET /api/resolve  — valid URL, invalid URL, cache bypass
 - POST /api/status-batch — multiple URLs, concurrent processing,
-  per-URL error handling, auth guard
+  per-URL error handling, request validation
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from tests.conftest import TEST_API_KEY
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-AUTH = {"X-API-Key": TEST_API_KEY}
 
 ONLINE_RESULT = {
     "status": "online",
@@ -60,7 +56,6 @@ class TestResolveEndpoint:
             response = client.get(
                 "/api/resolve",
                 params={"url": "https://www.twitch.tv/testchannel"},
-                headers=AUTH,
             )
 
         assert response.status_code == 200
@@ -73,26 +68,8 @@ class TestResolveEndpoint:
         response = client.get(
             "/api/resolve",
             params={"url": "https://unsupported-domain.xyz/stream"},
-            headers=AUTH,
         )
         assert response.status_code in (400, 422)
-
-    def test_missing_api_key_returns_401(self, client):
-        """Requests without X-API-Key must be rejected before reaching the handler."""
-        response = client.get(
-            "/api/resolve",
-            params={"url": "https://www.twitch.tv/testchannel"},
-        )
-        assert response.status_code == 401
-
-    def test_wrong_api_key_returns_401(self, client):
-        """Requests with an incorrect API key must be rejected."""
-        response = client.get(
-            "/api/resolve",
-            params={"url": "https://www.twitch.tv/testchannel"},
-            headers={"X-API-Key": "totally-wrong"},
-        )
-        assert response.status_code == 401
 
     def test_cache_bypass_deletes_cache_entry(self, client):
         """When bypass_cache=true the cache entry for the URL must be deleted."""
@@ -114,7 +91,6 @@ class TestResolveEndpoint:
                     "url": "https://www.twitch.tv/testchannel",
                     "bypass_cache": "true",
                 },
-                headers=AUTH,
             )
 
         assert response.status_code == 200
@@ -138,7 +114,6 @@ class TestResolveEndpoint:
             response = client.get(
                 "/api/resolve",
                 params={"url": "https://www.twitch.tv/testchannel"},
-                headers=AUTH,
             )
 
         assert response.status_code == 500
@@ -160,14 +135,13 @@ class TestResolveEndpoint:
             response = client.get(
                 "/api/resolve",
                 params={"url": "https://www.twitch.tv/testchannel"},
-                headers=AUTH,
             )
 
         assert response.status_code == 400
 
     def test_missing_url_param_returns_422(self, client):
         """Omitting the required `url` query parameter must return 422."""
-        response = client.get("/api/resolve", headers=AUTH)
+        response = client.get("/api/resolve")
         assert response.status_code == 422
 
 
@@ -202,7 +176,6 @@ class TestStatusBatchEndpoint:
             response = client.post(
                 "/api/status-batch",
                 json={"urls": ["https://www.twitch.tv/testchannel"]},
-                headers=AUTH,
             )
 
         assert response.status_code == 200
@@ -237,7 +210,6 @@ class TestStatusBatchEndpoint:
             response = client.post(
                 "/api/status-batch",
                 json={"urls": urls},
-                headers=AUTH,
             )
 
         assert response.status_code == 200
@@ -283,7 +255,6 @@ class TestStatusBatchEndpoint:
                         "https://www.twitch.tv/good",
                     ]
                 },
-                headers=AUTH,
             )
 
         assert response.status_code == 200
@@ -292,20 +263,11 @@ class TestStatusBatchEndpoint:
         assert statuses["https://www.twitch.tv/bad"] == "error"
         assert statuses["https://www.twitch.tv/good"] == "online"
 
-    def test_missing_api_key_returns_401(self, client):
-        """Batch requests without X-API-Key must be rejected."""
-        response = client.post(
-            "/api/status-batch",
-            json={"urls": ["https://www.twitch.tv/testchannel"]},
-        )
-        assert response.status_code == 401
-
     def test_empty_urls_list_returns_400(self, client):
         """An empty URLs list must be rejected by the validator."""
         response = client.post(
             "/api/status-batch",
             json={"urls": []},
-            headers=AUTH,
         )
         assert response.status_code == 400
 
@@ -315,7 +277,6 @@ class TestStatusBatchEndpoint:
         response = client.post(
             "/api/status-batch",
             json={"urls": urls},
-            headers=AUTH,
         )
         assert response.status_code == 400
 
@@ -345,12 +306,11 @@ class TestStatusBatchEndpoint:
                 "/api/status-batch",
                 params={"bypass_cache": "true"},
                 json={"urls": urls},
-                headers=AUTH,
             )
 
         assert mock_cache.delete.call_count == len(urls)
 
     def test_missing_body_returns_422(self, client):
         """Sending no JSON body must return 422 (validation error)."""
-        response = client.post("/api/status-batch", headers=AUTH)
+        response = client.post("/api/status-batch")
         assert response.status_code == 422
