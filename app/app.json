@@ -7,11 +7,6 @@
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "dark",
     "scheme": "tukiwatch",
-    "splash": {
-      "image": "./assets/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0A0A0A"
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
@@ -19,65 +14,74 @@
       },
       "versionCode": 4,
       "predictiveBackGestureEnabled": false,
-      "package": "com.tukiwatch.app",
-      "queries": [
+      "package": "com.tukiwatch.app"
+    },
+    "plugins": [
+      "expo-video",
+      "expo-sharing",
+      [
+        "expo-splash-screen",
         {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "twitch"
-            }
-          }
-        },
+          "image": "./assets/logo.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A0A"
+        }
+      ],
+      "expo-sqlite",
+      [
+        "expo-build-properties",
         {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "vnd.youtube"
-            }
-          }
-        },
-        {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "instagram"
-            }
-          }
-        },
-        {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "fb"
-            }
-          }
-        },
-        {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "tiktok"
-            }
-          }
-        },
-        {
-          "intent": {
-            "action": "VIEW",
-            "category": "BROWSABLE",
-            "data": {
-              "scheme": "vk"
+          "android": {
+            "manifestQueries": {
+              "intent": [
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "twitch"
+                  }
+                },
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "vnd.youtube"
+                  }
+                },
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "instagram"
+                  }
+                },
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "fb"
+                  }
+                },
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "tiktok"
+                  }
+                },
+                {
+                  "action": "VIEW",
+                  "category": ["BROWSABLE"],
+                  "data": {
+                    "scheme": "vk"
+                  }
+                }
+              ]
             }
           }
         }
       ]
-    },
-    "plugins": ["expo-video"],
+    ],
     "extra": {
       "eas": {
         "projectId": "2879c1fe-24f0-415e-b606-b5ab7888d48b"
