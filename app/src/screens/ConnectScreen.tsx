@@ -13,7 +13,6 @@ import { Palette, Spacing } from '../theme/Theme';
 
 export type ConnectRouteParams = {
   url?: string;
-  key?: string;
   updates?: string;
 };
 
@@ -25,7 +24,6 @@ type RootNavParams = {
 function buildConfigFromParams(params: ConnectRouteParams): BackendConfig | null {
   if (!params.url) return null;
   const config: BackendConfig = { apiUrl: params.url };
-  if (params.key) config.apiKey = params.key;
   if (params.updates) config.updateManifestUrl = params.updates;
   return config;
 }

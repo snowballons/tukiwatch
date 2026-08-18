@@ -3,27 +3,24 @@ import { useCallback, useEffect, useState } from 'react';
 
 export interface BackendConfig {
   apiUrl: string;
-  apiKey?: string;
   updateManifestUrl?: string;
 }
 
 export interface BackendVerification {
   ok: boolean;
-  reason?: 'unreachable' | 'unauthorized' | 'invalid';
+  reason?: 'unreachable' | 'invalid';
   detail?: string;
 }
 
 const CONFIG_KEY = 'backend_config';
 
 export const DEFAULT_BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-export const DEFAULT_API_KEY = process.env.EXPO_PUBLIC_BACKEND_API_KEY || '';
 export const DEFAULT_UPDATE_MANIFEST_URL =
   process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL || 'https://downloads.snowballons.com/version.json';
 
 export function getDefaultBackendConfig(): BackendConfig {
   return {
     apiUrl: DEFAULT_BACKEND_URL,
-    apiKey: DEFAULT_API_KEY,
     updateManifestUrl: DEFAULT_UPDATE_MANIFEST_URL,
   };
 }
@@ -61,7 +58,8 @@ function parseQueryString(query: string): Record<string, string> {
 /**
  * Parse a `tukiwatch://connect?url=..&key=..&updates=..` URI (as produced by a
  * QR code or a deep link) into a BackendConfig. Returns null when the URI is
- * not a valid connect link or lacks a backend URL.
+ * not a valid connect link or lacks a backend URL. A `key=` parameter is
+ * tolerated for compatibility with older links and silently ignored.
  */
 export function parseConnectUri(uri: string): BackendConfig | null {
   const trimmed = uri.trim();
@@ -77,10 +75,9 @@ export function parseConnectUri(uri: string): BackendConfig | null {
       if (parsed.pathname === '/connect') {
         params = parseQueryString(parsed.search.replace(/^\?/, ''));
       } else if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-        // A plain backend URL (e.g. a shared ngrok tunnel). No key/updates.
+        // A plain backend URL (e.g. a shared ngrok tunnel).
         return {
           apiUrl: trimmed.replace(/\/+$/, ''),
-          apiKey: undefined,
           updateManifestUrl: undefined,
         };
       }
@@ -93,7 +90,6 @@ export function parseConnectUri(uri: string): BackendConfig | null {
 
   return {
     apiUrl: params.url,
-    apiKey: params.key || undefined,
     updateManifestUrl: params.updates || undefined,
   };
 }
@@ -105,7 +101,6 @@ export function parseConnectUri(uri: string): BackendConfig | null {
 export function buildConnectUri(config: BackendConfig): string {
   const parts: string[] = [];
   if (config.apiUrl) parts.push(`url=${encodeURIComponent(config.apiUrl)}`);
-  if (config.apiKey) parts.push(`key=${encodeURIComponent(config.apiKey)}`);
   if (config.updateManifestUrl)
     parts.push(`updates=${encodeURIComponent(config.updateManifestUrl)}`);
   return `tukiwatch://connect?${parts.join('&')}`;
@@ -118,8 +113,7 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 5000): 
 }
 
 /**
- * Validate a backend config by pinging /health and confirming the API key
- * against an authenticated endpoint. Returns a structured result.
+ * Validate a backend config by pinging /health. Returns a structured result.
  */
 export async function verifyBackend(config: BackendConfig): Promise<BackendVerification> {
   const base = config.apiUrl.replace(/\/+$/, '');
@@ -135,27 +129,6 @@ export async function verifyBackend(config: BackendConfig): Promise<BackendVerif
     const health = await healthRes.json();
     if (health?.status !== 'healthy') {
       return { ok: false, reason: 'invalid', detail: 'Not a TukiWatch backend' };
-    }
-
-    if (config.apiKey) {
-      const authRes = await fetchWithTimeout(`${base}/api/status-batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': config.apiKey,
-        },
-        body: JSON.stringify({ urls: [] }),
-      });
-      if (authRes.status === 401) {
-        return { ok: false, reason: 'unauthorized', detail: 'Invalid API key' };
-      }
-      if (!authRes.ok) {
-        return {
-          ok: false,
-          reason: 'invalid',
-          detail: `Backend rejected the request (${authRes.status})`,
-        };
-      }
     }
 
     return { ok: true };
