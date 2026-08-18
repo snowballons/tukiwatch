@@ -1,4 +1,5 @@
-const VERSION_MANIFEST_URL = 'https://downloads.snowballons.com/version.json';
+const VERSION_MANIFEST_URL =
+  process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL || 'https://downloads.snowballons.com/version.json';
 
 export interface UpdateManifest {
   version: string;
