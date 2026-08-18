@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { addFavorite } from '../../lib/db';
 import { StreamCard } from '../components/StreamCard';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
@@ -205,45 +205,19 @@ export function AddScreen() {
   };
 
   const handleSave = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user || !previewData || !constructedUrl) return;
+    if (!previewData || !constructedUrl) return;
 
     try {
-      // Check if URL already exists for this user
-      const { data: existingFavorites, error: checkError } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('original_url', constructedUrl);
+      // Check if URL already exists locally
+      const added = await addFavorite(previewData.author || 'Unknown', constructedUrl);
 
-      if (checkError) {
-        Alert.alert('Error', 'Failed to check for duplicates.');
-        return;
-      }
-
-      if (existingFavorites && existingFavorites.length > 0) {
+      if (!added) {
         Alert.alert('Already Added', 'This stream is already in your library.');
         return;
       }
 
-      // Insert new favorite
-      const { error } = await supabase.from('favorites').insert([
-        {
-          user_id: user.id,
-          streamer_name: previewData.author || 'Unknown',
-          original_url: constructedUrl,
-        },
-      ]);
-
-      if (!error) {
-        Alert.alert('Saved', 'Added to your library.');
-        handleClear(); // Reset after successful save
-      } else {
-        console.error('Insert error:', error);
-        Alert.alert('Error', error.message || 'Failed to add stream to library.');
-      }
+      Alert.alert('Saved', 'Added to your library.');
+      handleClear(); // Reset after successful save
     } catch (error: any) {
       console.error('Save error:', error);
       Alert.alert('Error', error.message || 'Failed to add stream to library.');

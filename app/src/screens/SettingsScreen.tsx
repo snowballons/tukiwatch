@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { ChevronRight, User } from 'lucide-react-native';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { exportFavorites, importFavorites } from '../../lib/db';
 import { useProfile } from '../hooks/useProfile';
 import { checkForUpdate } from '../services/updateService';
 import { Palette, Spacing } from '../theme/Theme';
@@ -38,9 +39,10 @@ const ListItem: React.FC<{
   </TouchableOpacity>
 );
 
-// Matches versionCode in app.json android.versionCode (or use expo-constants in a managed build)
-const APP_VERSION = '1.0.1';
-const APP_VERSION_CODE = 1;
+// Read the app version from the built app config so it can't drift.
+// versionCode comes from app.json / EAS remote (with autoIncrement).
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
+const APP_VERSION_CODE = Constants.expoConfig?.android?.versionCode ?? 0;
 
 export function SettingsScreen() {
   const { profile } = useProfile();
@@ -77,6 +79,44 @@ export function SettingsScreen() {
 
   const handleCopyrightPress = () => {
     Linking.openURL('https://snowballons.com');
+  };
+
+  const handleExportData = async () => {
+    try {
+      const shared = await exportFavorites();
+      if (!shared) {
+        Alert.alert('No Share App', 'No app available to share the backup file with.');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert('Error', 'Failed to export data.');
+    }
+  };
+
+  const handleImportData = () => {
+    Alert.alert('Import Data', 'This will add streams from a backup file to your library.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Import',
+        onPress: async () => {
+          try {
+            const { imported, skipped } = await importFavorites();
+            if (imported > 0) {
+              Alert.alert(
+                'Import Complete',
+                `${imported} stream${imported === 1 ? '' : 's'} imported.${
+                  skipped > 0 ? ` ${skipped} skipped (already in library).` : ''
+                }`
+              );
+            } else {
+              Alert.alert('Nothing Imported', 'No new streams were found in the backup file.');
+            }
+          } catch (error: any) {
+            Alert.alert('Import Failed', error.message || 'Could not read the backup file.');
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -129,8 +169,9 @@ export function SettingsScreen() {
         <ListItem label="© 2026 snowballons" onPress={handleCopyrightPress} />
       </Section>
 
-      <Section title="Danger Zone">
-        <ListItem label="Sign Out" onPress={() => supabase.auth.signOut()} isDestructive />
+      <Section title="Data">
+        <ListItem label="Export Data" onPress={handleExportData} />
+        <ListItem label="Import Data" onPress={handleImportData} />
       </Section>
     </ScrollView>
   );

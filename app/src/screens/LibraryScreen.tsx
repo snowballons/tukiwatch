@@ -13,8 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { supabase } from '../../lib/supabase';
-import { ShareStreamModal } from '../components/ShareStreamModal';
+import { removeFavorite } from '../../lib/db';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
@@ -28,11 +27,6 @@ export function LibraryScreen() {
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const isResolvingRef = useRef(false);
-  const [streamToShare, setStreamToShare] = useState<{
-    original_url: string;
-    streamer_name: string;
-  } | null>(null);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const platforms = useMemo(() => {
     const unique = new Set(streams.map((s) => s.platform).filter((p): p is string => !!p));
@@ -107,14 +101,9 @@ export function LibraryScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            const { error } = await supabase.from('favorites').delete().eq('id', streamId);
-
-            if (!error) {
-              Alert.alert('Deleted', 'Stream removed from library.');
-              await refreshStreams();
-            } else {
-              Alert.alert('Error', 'Failed to delete stream.');
-            }
+            await removeFavorite(streamId);
+            Alert.alert('Deleted', 'Stream removed from library.');
+            await refreshStreams();
           } catch (_error) {
             Alert.alert('Error', 'Failed to delete stream.');
           }
@@ -227,14 +216,6 @@ export function LibraryScreen() {
             platform={item.platform}
             showDelete={true}
             onDelete={() => handleDeleteStream(item.id, item.streamer_name || item.title)}
-            showShare={true}
-            onShare={() => {
-              setStreamToShare({
-                original_url: item.url,
-                streamer_name: item.streamer_name || item.title,
-              });
-              setShareModalVisible(true);
-            }}
             isCached={item._cached}
             fetchedAt={item._fetchedAt}
           />
@@ -253,19 +234,6 @@ export function LibraryScreen() {
           <Text style={styles.overlayText}>Loading stream...</Text>
         </View>
       )}
-
-      <ShareStreamModal
-        visible={shareModalVisible}
-        stream={streamToShare}
-        onClose={() => {
-          setShareModalVisible(false);
-          setStreamToShare(null);
-        }}
-        onShared={() => {
-          setShareModalVisible(false);
-          setStreamToShare(null);
-        }}
-      />
     </View>
   );
 }
