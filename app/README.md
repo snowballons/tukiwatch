@@ -69,10 +69,10 @@ Releases are built with EAS and published as GitHub Releases:
 
 Everything is configurable for a self-hosted install:
 
-- `EXPO_PUBLIC_API_URL` + `EXPO_PUBLIC_BACKEND_API_KEY` — point the app at your
-  own backend (see [`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md)). These
-  are the **build-time defaults**; users of a published build can switch backend
-  at runtime via **Settings → Backend → Scan QR Code** without a rebuild.
+- `EXPO_PUBLIC_API_URL` — point the app at your own backend (see
+  [`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md)). This is the
+  **build-time default**; users of a published build can switch backend at
+  runtime via **Settings → Backend → Scan QR Code** without a rebuild.
 - `EXPO_PUBLIC_UPDATE_MANIFEST_URL` — host `version.json` + the APK anywhere;
   the app and web page fall back to
   `https://downloads.snowballons.com/version.json` if unset.

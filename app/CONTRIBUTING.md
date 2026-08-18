@@ -27,8 +27,7 @@ open-source — contributions from the community are what keep it that way.
    cp .env.example .env
    ```
 
-   Set `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_BACKEND_API_KEY` to match your
-   API instance.
+   Set `EXPO_PUBLIC_API_URL` to match your API instance.
 
 4. Start the development server:
 
