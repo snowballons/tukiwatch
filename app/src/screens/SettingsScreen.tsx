@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { ChevronRight, User } from 'lucide-react-native';
+import { ChevronRight, QrCode, RotateCcw, Server, User } from 'lucide-react-native';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -13,7 +13,10 @@ import {
   View,
 } from 'react-native';
 import { exportFavorites, importFavorites } from '../../lib/db';
+import { QrScannerModal } from '../components/QrScannerModal';
+import { useStreams } from '../context/StreamContext';
 import { useProfile } from '../hooks/useProfile';
+import { parseConnectUri, useBackendConfig, verifyBackend } from '../lib/backendConfig';
 import { checkForUpdate } from '../services/updateService';
 import { Palette, Spacing } from '../theme/Theme';
 
@@ -29,8 +32,10 @@ const ListItem: React.FC<{
   value?: string;
   onPress?: () => void;
   isDestructive?: boolean;
-}> = ({ label, value, onPress, isDestructive }) => (
+  icon?: React.ReactNode;
+}> = ({ label, value, onPress, isDestructive, icon }) => (
   <TouchableOpacity onPress={onPress} style={styles.listItem} disabled={!onPress}>
+    {icon && <View style={styles.listItemIcon}>{icon}</View>}
     <Text style={[styles.listItemLabel, isDestructive && styles.destructiveText]}>{label}</Text>
     <View style={styles.listItemValueContainer}>
       {value && <Text style={styles.listItemValue}>{value}</Text>}
@@ -46,8 +51,55 @@ const APP_VERSION_CODE = Constants.expoConfig?.android?.versionCode ?? 0;
 
 export function SettingsScreen() {
   const { profile } = useProfile();
+  const { config, isCustom, loading: configLoading, save, reset } = useBackendConfig();
+  const { isBackendReachable, reconnect } = useStreams();
   const [showAbout, setShowAbout] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationDetail, setVerificationDetail] = useState<string | null>(null);
+
+  const handleScanned = useCallback(
+    async (data: string) => {
+      setScannerVisible(false);
+      const parsed = parseConnectUri(data);
+      if (!parsed) {
+        Alert.alert('Invalid QR Code', 'That code is not a TukiWatch backend link.');
+        setVerifying(false);
+        return;
+      }
+
+      setVerifying(true);
+      setVerificationDetail(null);
+      const result = await verifyBackend(parsed);
+      if (result.ok) {
+        await save(parsed);
+        await reconnect();
+        setVerificationDetail('Connected');
+        Alert.alert('Connected', `Backend configured at ${parsed.apiUrl}.`);
+      } else {
+        setVerificationDetail(result.detail || 'Connection failed');
+        Alert.alert('Connection Failed', result.detail || 'Could not reach the backend.');
+      }
+      setVerifying(false);
+    },
+    [reconnect, save]
+  );
+
+  const handleResetBackend = useCallback(() => {
+    Alert.alert('Use Default Server', 'Reset to the default TukiWatch backend?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: async () => {
+          await reset();
+          await reconnect();
+          setVerificationDetail('Reset to default');
+        },
+      },
+    ]);
+  }, [reconnect, reset]);
 
   const checkForUpdates = useCallback(async (isManual: boolean = false) => {
     if (isManual) setCheckingUpdate(true);
@@ -134,6 +186,56 @@ export function SettingsScreen() {
             </View>
           </View>
         </Section>
+      )}
+
+      <Section title="Backend">
+        <View style={styles.listItem}>
+          <View style={styles.backendStatusContainer}>
+            <Server color={Palette.textMuted} size={18} />
+            <View style={styles.backendStatusText}>
+              <Text style={styles.listItemLabel}>
+                {configLoading || !config ? 'Loading...' : config.apiUrl}
+              </Text>
+              <Text
+                style={[
+                  styles.backendStatusDetail,
+                  !isBackendReachable && styles.backendStatusDetailError,
+                ]}
+              >
+                {!isBackendReachable
+                  ? 'Backend unreachable'
+                  : isCustom
+                    ? 'Custom backend · connected'
+                    : 'Default backend · connected'}
+                {verificationDetail ? ` · ${verificationDetail}` : ''}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <ListItem
+          label="Scan QR Code"
+          onPress={() => setScannerVisible(true)}
+          icon={<QrCode color={Palette.primary} size={18} />}
+        />
+        {isCustom && (
+          <ListItem
+            label="Use Default Server"
+            onPress={handleResetBackend}
+            icon={<RotateCcw color={Palette.textMuted} size={18} />}
+          />
+        )}
+      </Section>
+
+      <QrScannerModal
+        visible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onScanned={handleScanned}
+      />
+      {verifying && (
+        <View style={styles.verifyingOverlay}>
+          <ActivityIndicator size="large" color={Palette.primary} />
+          <Text style={styles.verifyingText}>Connecting to backend...</Text>
+        </View>
       )}
 
       <Section title="About">
@@ -259,5 +361,43 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     color: '#EF4444',
+  },
+  listItemIcon: {
+    marginRight: Spacing.md,
+  },
+  backendStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    flex: 1,
+  },
+  backendStatusText: {
+    flex: 1,
+  },
+  backendStatusDetail: {
+    color: Palette.live,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  backendStatusDetailError: {
+    color: '#EF4444',
+  },
+  verifyingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  verifyingText: {
+    color: '#fff',
+    marginTop: Spacing.md,
+    fontSize: 16,
   },
 });

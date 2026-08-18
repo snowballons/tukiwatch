@@ -1,8 +1,7 @@
 import axios from 'axios';
 
+import { getBackendConfig } from '../lib/backendConfig';
 import type { LiveStream } from '../types';
-
-const PYTHON_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Rate limit tracking
 export interface RateLimitInfo {
@@ -32,15 +31,22 @@ export function getRateLimitInfo(): RateLimitInfo | null {
 }
 
 const getRequestHeaders = async () => {
+  const config = await getBackendConfig();
   return {
-    'X-API-Key': process.env.EXPO_PUBLIC_BACKEND_API_KEY || '',
+    'X-API-Key': config.apiKey || '',
     'Content-Type': 'application/json',
   };
 };
 
+const getBaseUrl = async (): Promise<string> => {
+  const config = await getBackendConfig();
+  return config.apiUrl.replace(/\/+$/, '');
+};
+
 export const checkHealth = async (): Promise<boolean> => {
   try {
-    const response = await axios.get(`${PYTHON_API_URL}/health`, { timeout: 5000 });
+    const baseUrl = await getBaseUrl();
+    const response = await axios.get(`${baseUrl}/health`, { timeout: 5000 });
     return response.data?.status === 'healthy';
   } catch {
     return false;
@@ -49,7 +55,8 @@ export const checkHealth = async (): Promise<boolean> => {
 
 export const getCacheStats = async (): Promise<any> => {
   try {
-    const response = await axios.get(`${PYTHON_API_URL}/cache/stats`);
+    const baseUrl = await getBaseUrl();
+    const response = await axios.get(`${baseUrl}/cache/stats`);
     return response.data;
   } catch {
     return null;
@@ -57,13 +64,14 @@ export const getCacheStats = async (): Promise<any> => {
 };
 
 export const resolveStream = async (url: string, bypassCache: boolean = false) => {
+  const baseUrl = await getBaseUrl();
   const headers = await getRequestHeaders();
   const params = new URLSearchParams({ url });
   if (bypassCache) {
     params.append('bypass_cache', 'true');
   }
   try {
-    const response = await axios.get(`${PYTHON_API_URL}/api/resolve?${params}`, { headers });
+    const response = await axios.get(`${baseUrl}/api/resolve?${params}`, { headers });
     updateRateLimitInfo(response.headers);
     return response.data;
   } catch (error: any) {
@@ -77,10 +85,11 @@ export const resolveStream = async (url: string, bypassCache: boolean = false) =
 export const streamService = {
   async checkBatchStatus(urls: string[], bypassCache: boolean = false): Promise<LiveStream[]> {
     try {
+      const baseUrl = await getBaseUrl();
       const headers = await getRequestHeaders();
       const params = bypassCache ? '?bypass_cache=true' : '';
       const response = await axios.post(
-        `${PYTHON_API_URL}/api/status-batch${params}`,
+        `${baseUrl}/api/status-batch${params}`,
         { urls },
         { headers }
       );

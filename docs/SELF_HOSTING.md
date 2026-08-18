@@ -57,15 +57,43 @@ Redis is optional — omit `REDIS_URL` to use the in-memory cache.
 
 ## Clients
 
-Point your mobile app at your instance:
+Point your mobile app at your instance — two ways:
+
+### 1. Build-time default (rebuild required)
 
 - `EXPO_PUBLIC_API_URL` = `https://your-instance.example.com`
 - `EXPO_PUBLIC_BACKEND_API_KEY` = the same `API_KEY` you set on the server
+- `EXPO_PUBLIC_UPDATE_MANIFEST_URL` = URL of your hosted `version.json` (see the
+  app README for the full distribution story)
 
-See the app README for the full distribution story (hosting your own APK +
-`version.json`).
+### 2. Runtime via QR code (no rebuild needed)
+
+Published builds connect to a backend configured at runtime. From the app's
+**Settings → Backend → Scan QR Code**, users scan a QR that encodes the connect
+link. The QR content is a `tukiwatch://` URI carrying the base URL, the API key,
+and the update-manifest URL:
+
+```
+tukiwatch://connect?url=https%3A%2F%2Fyour-instance.example.com&key=YOUR_API_KEY&updates=https%3A%2F%2Fyour-instance.example.com%2Fversion.json
+```
+
+The app validates the backend (pings `/health`, verifies the API key) before
+saving. A scanned or deep-linked connect URI (`tukiwatch://connect?...`) is
+applied automatically. The default (build-time) backend remains the fallback
+until a QR is scanned, and **Settings → Use Default Server** resets to it.
+
+Generate the QR with any QR tool (e.g. `qrencode`):
+
+```bash
+qrencode -o backend.png 'tukiwatch://connect?url=https%3A%2F%2Fyour-instance.example.com&key=YOUR_API_KEY&updates=https%3A%2F%2Fyour-instance.example.com%2Fversion.json'
+```
+
+Print the QR on your server / share it with your users; `key` is optional when
+your `API_KEY` is empty.
 
 ## Notes
 
 - Redis holds only cached status results; it is **not** persistent storage.
 - No user data is stored server-side — favorites live on-device in the app.
+- The API key travels inside the connect URI/QR. Treat the QR as a secret —
+  share it only with people you want to grant access.

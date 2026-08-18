@@ -11,6 +11,7 @@ interface StreamContextType {
   loading: boolean;
   isBackendReachable: boolean;
   refreshStreams: (bypassCache?: boolean) => Promise<void>;
+  reconnect: () => Promise<void>;
 }
 
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
@@ -57,6 +58,13 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
     setIsBackendReachable(reachable);
   }, []);
 
+  const reconnect = useCallback(async () => {
+    setLoading(true);
+    await checkConnectivity();
+    await refreshStreams(true);
+    setLoading(false);
+  }, [checkConnectivity, refreshStreams]);
+
   useEffect(() => {
     refreshStreams();
     checkConnectivity();
@@ -74,7 +82,9 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
   }, [refreshStreams, checkConnectivity]);
 
   return (
-    <StreamContext.Provider value={{ streams, loading, isBackendReachable, refreshStreams }}>
+    <StreamContext.Provider
+      value={{ streams, loading, isBackendReachable, refreshStreams, reconnect }}
+    >
       {children}
     </StreamContext.Provider>
   );

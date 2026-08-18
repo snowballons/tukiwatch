@@ -1,5 +1,4 @@
-const VERSION_MANIFEST_URL =
-  process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL || 'https://downloads.snowballons.com/version.json';
+import { getBackendConfig } from '../lib/backendConfig';
 
 export interface UpdateManifest {
   version: string;
@@ -15,7 +14,13 @@ export interface UpdateResult {
 }
 
 export async function checkForUpdate(currentVersionCode: number): Promise<UpdateResult> {
-  const response = await fetch(VERSION_MANIFEST_URL, {
+  const config = await getBackendConfig();
+  const manifestUrl =
+    config.updateManifestUrl ||
+    process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL ||
+    'https://downloads.snowballons.com/version.json';
+
+  const response = await fetch(manifestUrl, {
     headers: { 'Cache-Control': 'no-cache' },
   });
 

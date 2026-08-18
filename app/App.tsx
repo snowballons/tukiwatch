@@ -15,6 +15,7 @@ import { StyleSheet, View } from 'react-native';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { StreamProvider } from './src/context/StreamContext';
 import { AddScreen } from './src/screens/AddScreen';
+import { ConnectScreen } from './src/screens/ConnectScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -37,6 +38,7 @@ type MainTabsParamList = {
 type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabsParamList>;
   Player: undefined;
+  Connect: { url?: string };
 };
 
 const linking: LinkingOptions<RootStackParamList> = {
@@ -52,6 +54,7 @@ const linking: LinkingOptions<RootStackParamList> = {
         },
       },
       Player: 'player',
+      Connect: 'connect',
     },
   },
 };
@@ -152,6 +155,7 @@ export default function App() {
               component={PlayerScreen}
               options={{ presentation: 'fullScreenModal' }}
             />
+            <Stack.Screen name="Connect" component={ConnectScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>
