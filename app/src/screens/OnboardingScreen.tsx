@@ -366,14 +366,6 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
             {index === SLIDES.length - 1 ? 'Get Started' : 'Next →'}
           </Text>
         </TouchableOpacity>
-
-        {index === SLIDES.length - 1 && (
-          <TouchableOpacity onPress={finish} style={styles.signInLink}>
-            <Text style={styles.signInText}>
-              Already have an account? <Text style={styles.signInBold}>Sign In</Text>
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -455,19 +447,6 @@ const styles = StyleSheet.create({
     color: Palette.text,
     fontSize: 18,
     fontWeight: '600',
-  },
-  signInLink: {
-    marginTop: 20,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  signInText: {
-    color: Palette.textMuted,
-    fontSize: 16,
-  },
-  signInBold: {
-    color: Palette.text,
-    fontWeight: 'bold',
   },
   // Visual specific styles
   visualContainer: {
