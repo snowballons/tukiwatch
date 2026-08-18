@@ -50,9 +50,30 @@ TukiWatch is a mobile app designed for enthusiasts of live streaming content. It
 
 Ready to revolutionize your live streaming experience?
 
-[📥 Download APK (Android)](https://github.com/snowballons/streamwatch-api/releases)
-[🔧 View on GitHub (Source & Instructions)](https://github.com/snowballons/streamwatch-api)
+[📥 Download APK (Android)](https://github.com/snowballons/tukiwatch/releases)
+[🔧 View on GitHub (Source & Instructions)](https://github.com/snowballons/tukiwatch)
 [🍎 App Store (Coming Soon)](#)
+
+## Releasing a New Version
+
+Releases are built with EAS and published as GitHub Releases:
+
+1. **Trigger** the [`Android APK Release`](../.github/workflows/release-android.yml)
+   workflow (manual dispatch with a version like `1.0.6`, or push a `v*` tag).
+2. The workflow builds an Android APK via EAS, uploads it to a GitHub Release,
+   and commits a bumped `version.json` + `app.json`.
+3. The in-app **Check for Updates** and the [web download page](web/) read
+   `version.json` to point users at the latest APK.
+
+### Self-hosted distribution
+
+Everything is configurable for a self-hosted install:
+
+- `EXPO_PUBLIC_API_URL` + `EXPO_PUBLIC_BACKEND_API_KEY` — point the app at your
+  own backend (see [`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md)).
+- `EXPO_PUBLIC_UPDATE_MANIFEST_URL` — host `version.json` + the APK anywhere;
+  the app and web page fall back to
+  `https://downloads.snowballons.com/version.json` if unset.
 
 ## Contact
 
