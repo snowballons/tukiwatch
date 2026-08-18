@@ -30,12 +30,8 @@ export function getRateLimitInfo(): RateLimitInfo | null {
   return latestRateLimitInfo;
 }
 
-const getRequestHeaders = async () => {
-  const config = await getBackendConfig();
-  return {
-    'X-API-Key': config.apiKey || '',
-    'Content-Type': 'application/json',
-  };
+const API_HEADERS = {
+  'Content-Type': 'application/json',
 };
 
 const getBaseUrl = async (): Promise<string> => {
@@ -65,19 +61,17 @@ export const getCacheStats = async (): Promise<any> => {
 
 export const resolveStream = async (url: string, bypassCache: boolean = false) => {
   const baseUrl = await getBaseUrl();
-  const headers = await getRequestHeaders();
   const params = new URLSearchParams({ url });
   if (bypassCache) {
     params.append('bypass_cache', 'true');
   }
   try {
-    const response = await axios.get(`${baseUrl}/api/resolve?${params}`, { headers });
+    const response = await axios.get(`${baseUrl}/api/resolve?${params}`, {
+      headers: API_HEADERS,
+    });
     updateRateLimitInfo(response.headers);
     return response.data;
   } catch (error: any) {
-    if (error.response?.status === 401) {
-      console.error('Unauthorized: Invalid API key during resolveStream');
-    }
     throw error;
   }
 };
@@ -86,12 +80,11 @@ export const streamService = {
   async checkBatchStatus(urls: string[], bypassCache: boolean = false): Promise<LiveStream[]> {
     try {
       const baseUrl = await getBaseUrl();
-      const headers = await getRequestHeaders();
       const params = bypassCache ? '?bypass_cache=true' : '';
       const response = await axios.post(
         `${baseUrl}/api/status-batch${params}`,
         { urls },
-        { headers }
+        { headers: API_HEADERS }
       );
       updateRateLimitInfo(response.headers);
       return response.data.results.map((result: any, index: number) => ({
@@ -117,10 +110,7 @@ export const streamService = {
 
       // Enhanced error handling based on HTTP status codes
       let errorMessage = 'Status check failed';
-      if (error.response?.status === 401) {
-        errorMessage = 'Unauthorized: Invalid API key';
-        console.error(errorMessage);
-      } else if (error.response?.status === 400) {
+      if (error.response?.status === 400) {
         errorMessage = error.response.data.detail || 'Invalid batch request';
         console.error('Invalid batch request:', errorMessage);
       } else if (error.response?.status === 429) {
