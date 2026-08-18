@@ -1,8 +1,8 @@
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getFavorites } from '../../lib/db';
 import { checkHealth, streamService } from '../services/engine';
-import type { Favorite, LiveStream } from '../types';
+import type { LiveStream } from '../types';
 
 const AUTO_REFRESH_INTERVAL = 300_000; // 5 minutes — matches backend status TTL
 
@@ -23,22 +23,14 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
 
   const refreshStreams = useCallback(async (bypassCache: boolean = false) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      const favorites = await getFavorites();
 
-      const { data: favorites } = await supabase
-        .from('favorites')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (!favorites || favorites.length === 0) {
+      if (favorites.length === 0) {
         setStreams([]);
         return;
       }
 
-      const urls = favorites.map((fav: Favorite) => fav.original_url);
+      const urls = favorites.map((fav) => fav.original_url);
       const statusResults = await streamService.checkBatchStatus(urls, bypassCache);
 
       const fetchedAt = Date.now();
