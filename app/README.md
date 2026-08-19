@@ -1,86 +1,135 @@
-# TukiWatch
+# TukiWatch App
 
-<p align="center">
-  <img src="https://tukiwatch.snowballons.com/logo.png" alt="TukiWatch Logo" width="200"/>
-</p>
+Expo (React Native) mobile client for [TukiWatch](../README.md) — a
+local-first app for tracking and watching live streams, powered by a
+[self-hostable FastAPI backend](../api/README.md).
 
-<h3 align="center">Track and Watch Your Favorite Live Streams Effortlessly</h3>
+- **Runtime:** [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/) ·
+  React Native 0.85 · React 19 · TypeScript
+- **Key libs:** [expo-video](https://docs.expo.dev/versions/latest/sdk/video/)
+  (playback), [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/)
+  (favorites), [expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/)
+  (QR connect), [React Navigation](https://reactnavigation.org/)
+- **Package manager:** [Bun](https://bun.sh/)
 
-<p align="center">
-  Your Ultimate Companion for Live Streaming Discovery and Viewing – No Ads, No Hassle
-</p>
+## Setup
 
-<p align="center">
-  <img src="https://tukiwatch.snowballons.com/preview.png" alt="TukiWatch App Preview" width="600"/>
-</p>
+```bash
+cd app
+cp .env.example .env   # optional — see Environment variables
+bun install
+bun run start          # Expo dev server
+```
 
-## What is TukiWatch?
+Other scripts (`package.json`): `bun run android` / `bun run ios` /
+`bun run web` for platform builds, `bun run lint` / `bun run format` /
+`bun run check` for local quality, and `bun run type-check` (`tsc --noEmit`).
 
-TukiWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface.
+## Environment variables
 
-### Main Benefits:
-- **Saves time** by automating stream tracking
-- **Ad-free viewing** options where possible
-- **Offline notifications** support
-- **Device media player integration** for a smooth experience
-- **Free and open-source** with no unnecessary data collection
-- **Privacy-focused** approach
+| Variable | Purpose | Default |
+| :--- | :--- | :--- |
+| `EXPO_PUBLIC_API_URL` | **Build-time default** backend URL the app connects to | `http://localhost:8000/` |
+| `EXPO_PUBLIC_UPDATE_MANIFEST_URL` | URL of the update manifest (`version.json`) used by "Check for Updates" | `https://downloads.snowballons.com/version.json` |
 
-## Key Features
+The build-time default is only a fallback. Published builds can switch backends
+at runtime (no rebuild) via **Settings → Backend → Scan QR Code** or a
+`tukiwatch://connect` deep link — see
+[`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md).
 
-- 🔄 **Real-Time Stream Tracking** - Add favorite channels or streamers and get instant notifications when they go live
-- 📱 **Integrated Viewing** - Watch streams directly in the app with optimal quality
-- 🔔 **Custom Alerts** - Set preferences for stream quality, categories (gaming, music, sports), and notification types
-- 🔍 **Discovery Tools** - Browse trending streams, search by platform or keyword, and explore recommendations
-- 🚫 **Ad-Free Experience** - Bypass ads on supported platforms
-- 🔗 **Cross-Platform Support** - Works with major streaming sites like Twitch, YouTube, Facebook Live, and more
-- 📴 **Offline Mode** - View saved stream info and history even without internet
-- 🔧 **Open-Source Customization** - Access the GitHub repo to modify or contribute to the app
+## Navigation & screens
 
-## Core Functionalities
+```
+App.tsx
+├─ CustomSplashScreen        (until AsyncStorage is read)
+├─ OnboardingScreen          (once; gated by onboarding_complete)
+└─ NavigationContainer       (deep links: tukiwatch://, https://…)
+   └─ Root Stack
+      ├─ MainTabs (bottom tabs)
+      │  ├─ Home      → HomeScreen       # "Live Now" — online favorites
+      │  ├─ My List   → LibraryScreen    # all favorites, add/remove
+      │  ├─ Add       → AddScreen        # 20+ platform picker + verify
+      │  └─ Settings  → SettingsScreen   # backend, updates, export/import
+      ├─ Player        (full-screen modal)
+      └─ Connect       (transient deep-link handler)
+```
 
-- Add streams to a favorites list
-- Set custom alerts and notifications
-- Browse popular and trending streams
-- Direct playback with quality selection
-- Support for multiple streaming platforms
-- Privacy-focused design with minimal data collection
+## Data layer
 
-## Get TukiWatch Now!
+Favorites are stored **on-device** in SQLite (`expo-sqlite`, WAL mode, DB
+`tukiwatch.db`):
 
-Ready to revolutionize your live streaming experience?
+```sql
+CREATE TABLE favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  streamer_name TEXT NOT NULL,
+  original_url TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
 
-[📥 Download APK (Android)](https://github.com/snowballons/tukiwatch/releases)
-[🔧 View on GitHub (Source & Instructions)](https://github.com/snowballons/tukiwatch)
-[🍎 App Store (Coming Soon)](#)
+`lib/db.ts` provides `addFavorite` (dedupes on `original_url`),
+`removeFavorite`, `getFavorites`, and `exportFavorites` / `importFavorites`
+(JSON payload via the share sheet / document picker).
 
-## Releasing a New Version
+`AsyncStorage` keys:
 
-Releases are built with EAS and published as GitHub Releases:
+| Key | Contents |
+| :--- | :--- |
+| `username` | Display name shown in Settings (`useProfile`); local only |
+| `backend_config` | Runtime backend override (`{ apiUrl, updateManifestUrl? }`) |
+| `onboarding_complete` | Gate for the onboarding carousel |
 
-1. **Trigger** the [`Android APK Release`](../.github/workflows/release-android.yml)
-   workflow (manual dispatch with a version like `1.0.6`, or push a `v*` tag).
-2. The workflow builds an Android APK via EAS, uploads it to a GitHub Release,
-   and commits a bumped `version.json` + `app.json`.
-3. The in-app **Check for Updates** and the [web download page](web/) read
-   `version.json` to point users at the latest APK.
+There is **no account system and no cloud sync** — everything is local.
 
-### Self-hosted distribution
+## Backend connectivity
 
-Everything is configurable for a self-hosted install:
+- `src/services/engine.ts` — axios client. `checkHealth` (`GET /health`),
+  `resolveStream` (`GET /api/resolve?url=…&bypass_cache=`), and
+  `streamService.checkBatchStatus` (`POST /api/status-batch`). Tracks
+  `x-ratelimit-*` headers and maps 400/429 to user-facing messages.
+- `src/context/StreamContext.tsx` — the app-wide provider. Reads favorites,
+  batch-checks their status, and auto-refreshes every 5 minutes (matches the
+  backend status-cache TTL).
+- `src/lib/backendConfig.ts` — AsyncStorage-backed config, plus the connect-URI
+  format:
 
-- `EXPO_PUBLIC_API_URL` — point the app at your own backend (see
-  [`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md)). This is the
-  **build-time default**; users of a published build can switch backend at
-  runtime via **Settings → Backend → Scan QR Code** without a rebuild.
-- `EXPO_PUBLIC_UPDATE_MANIFEST_URL` — host `version.json` + the APK anywhere;
-  the app and web page fall back to
-  `https://downloads.snowballons.com/version.json` if unset.
+```
+tukiwatch://connect?url=<backend-url>&updates=<manifest-url>
+```
 
-## Contact
+  `verifyBackend()` pings `/health` before a config is accepted; a plain URL in
+  the QR is also accepted (treated as the backend base URL).
 
-📧 Email: tukiwatch@snowballons.com
+## Update flow
 
----
+- `src/services/updateService.ts` fetches the manifest (`version.json`) and
+  reports an update when `manifest.versionCode > currentVersionCode`.
+- The manifest shape: `{ version, versionCode, apkUrl, releaseNotes, mandatory, minAndroidVersion }`.
+- "Check for Updates" in Settings downloads the APK via the manifest URL.
 
-© 2026 TukiWatch. All rights reserved.
+## Releasing a new version
+
+Trigger the **Android APK Release** workflow (manual dispatch with a version
+like `1.0.6`):
+
+1. EAS builds the Android APK (`eas build --platform android --profile production`).
+2. The workflow creates a GitHub Release with the APK and commits a bumped
+   `version.json` + `app.json` back to `main`.
+3. The in-app **Check for Updates** and the [web download page](../app/web/)
+   read `version.json` to point users at the latest APK.
+
+## Quality gates
+
+```bash
+bun install --frozen-lockfile
+bunx @biomejs/biome ci .
+bun run type-check
+```
+
+## See also
+
+- [TukiWatch](../README.md) — repository root
+- [TukiWatch API](../api/README.md) — the backend this app talks to
+- [Self-hosting guide](../docs/SELF_HOSTING.md) — run your own backend and wire
+  the app to it
