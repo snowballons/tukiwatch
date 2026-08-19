@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://tukiwatch.snowballons.com/logo.png" alt="TukiWatch logo" width="80">
+<img src="https://tukiwatch.snowballons.com/logo.svg" alt="TukiWatch logo" width="80">
 
 # TukiWatch
 
