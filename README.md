@@ -335,7 +335,7 @@ GitHub Actions workflows live in [`.github/workflows/`](.github/workflows):
 |:--------------------- |:------------------------------- |:------------------------------------------------------------------------------------------ |
 | `api.yml`             | Changes under `api/**`          | uv sync, ruff, pytest (Python 3.10–3.12)                                                   |
 | `app.yml`             | Changes under `app/**`          | bun install, biome ci, type-check                                                          |
-| `release-android.yml` | Manual dispatch (version input) | Builds an Android APK via EAS, creates a GitHub Release, bumps `version.json` + `app.json` |
+| `release-android.yml` | Manual dispatch (version, `force`) | Builds/creates an Android APK via EAS (reuses existing builds), creates a GitHub Release, bumps `version.json` + `app.json` |
 
 ---
 

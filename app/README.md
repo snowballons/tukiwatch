@@ -113,11 +113,22 @@ tukiwatch://connect?url=<backend-url>&updates=<manifest-url>
 Trigger the **Android APK Release** workflow (manual dispatch with a version
 like `1.0.6`):
 
-1. EAS builds the Android APK (`eas build --platform android --profile production`).
-2. The workflow creates a GitHub Release with the APK and commits a bumped
-   `version.json` + `app.json` back to `main`.
-3. The in-app **Check for Updates** and the [web download page](../app/web/)
+1. If a GitHub release `v<version>` already ships an APK, the workflow exits
+   without rebuilding (fully idempotent rerun).
+2. Otherwise, if a finished EAS Android build with the same `appVersion`
+   already exists (e.g. a previous run failed after the build), that APK is
+   **reused** instead of building again.
+3. Otherwise EAS builds a fresh APK
+   (`eas build --platform android --profile production`).
+4. The workflow downloads the APK, creates a GitHub Release, and commits a
+   bumped `version.json` + `app.json` back to `main`.
+5. The in-app **Check for Updates** and the [web download page](../app/web/)
    read `version.json` to point users at the latest APK.
+
+Pass the `force` input (`true`) to rebuild a version that is already
+released. Note: the `production` profile uses `autoIncrement`, so the actual
+`versionCode` of a build is set by EAS — the workflow records the real built
+code in `version.json`, not the one in `app.json`.
 
 ## Quality gates
 

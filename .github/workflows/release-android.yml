@@ -6,6 +6,11 @@
 # Triggered manually via workflow_dispatch. The tag (v*) path is intentionally
 # not supported: it checked out a detached HEAD, so the final version.json
 # commit+push could not succeed.
+#
+# Idempotent: re-running for a version that is already released (GitHub release
+# with an APK) does nothing. If only a finished EAS build exists for the version
+# (e.g. a previous run that failed after the build), that APK is reused instead
+# of building again. Pass `force` to rebuild anyway.
 
 name: Android APK Release
 
@@ -15,6 +20,10 @@ on:
       version:
         description: "Release version (e.g. 1.0.6)"
         required: true
+      force:
+        description: "Rebuild even if a release or finished EAS build already exists"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -55,7 +64,54 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Resolved release version: ${VERSION}"
 
+      - name: Check for existing release APK
+        id: check-release
+        if: github.event.inputs.force != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          APK_ASSET=$(gh release view "v${VERSION}" --json assets \
+            --jq '.assets[]? | select(.name | endswith(".apk")) | .name' 2>/dev/null || true)
+          if [ -n "${APK_ASSET}" ]; then
+            echo "Release v${VERSION} already ships '${APK_ASSET}' — nothing to do."
+            echo "existing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No release with an APK for v${VERSION}."
+            echo "existing=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reuse existing EAS build (same appVersion)
+        id: reuse
+        if: steps.check-release.outputs.existing == 'false'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          HIT=$(eas build:list --platform android --buildProfile production \
+              --status finished --json --non-interactive --limit 100 2>/dev/null \
+            | node -e "
+                const builds = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+                const v = '$VERSION';
+                const hit = (Array.isArray(builds) ? builds : [])
+                  .filter(b => String(b.status || '').toUpperCase() === 'FINISHED')
+                  .filter(b => String(b.appVersion || '') === v)
+                  .filter(b => b.artifacts && b.artifacts.buildUrl)
+                  .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
+                if (hit) console.log(JSON.stringify(hit));
+              " || true)
+          if [ -n "${HIT}" ]; then
+            BUILD_URL=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).artifacts.buildUrl)")
+            VERSION_CODE=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).appBuildVersion || '')")
+            echo "build-url=${BUILD_URL}" >> "$GITHUB_OUTPUT"
+            echo "version-code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+            echo "Reusing finished EAS build for v${VERSION} (versionCode ${VERSION_CODE:-?}) — skipping the EAS build."
+          else
+            echo "No reusable finished EAS build for v${VERSION} — a fresh build is required."
+          fi
+
       - name: Set app version in app.json
+        if: steps.check-release.outputs.existing != 'true'
         run: |
           node -e "
             const fs = require('fs');
@@ -65,28 +121,59 @@ jobs:
           "
 
       - name: Build Android APK
+        if: steps.check-release.outputs.existing != 'true' && steps.reuse.outputs.build-url == ''
         env:
           EXPO_PUBLIC_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/snowballons/tukiwatch/main/app/version.json
         run: eas build --platform android --profile production --non-interactive --json > build.json
 
       - name: Download APK artifact
+        if: steps.check-release.outputs.existing != 'true'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          BUILD_URL=$(node -e "const b=require('./build.json'); const a=b[b.length-1]; if(a.status!=='finished'){throw new Error('build status '+a.status)}; console.log(a.artifacts.buildUrl)")
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_URL="${{ steps.reuse.outputs.build-url }}"
+          if [ -z "${BUILD_URL}" ]; then
+            BUILD_URL=$(node -e "
+              const b = require('./build.json');
+              const builds = Array.isArray(b) ? b : [b];
+              const a = builds[builds.length - 1];
+              const status = String((a && a.status) || '').toUpperCase();
+              if (status !== 'FINISHED') throw new Error('build status ' + status);
+              if (!a || !a.artifacts || !a.artifacts.buildUrl) throw new Error('build.json has no buildUrl');
+              console.log(a.artifacts.buildUrl);
+            ")
+          fi
           mkdir -p build
-          curl -fL "$BUILD_URL" -o "build/tukiwatch-${{ steps.version.outputs.version }}.apk"
+          curl -fL -H "Authorization: Bearer ${EXPO_TOKEN}" "$BUILD_URL" -o "build/tukiwatch-${VERSION}.apk"
 
       - name: Read built versionCode
         id: versioncode
+        if: steps.check-release.outputs.existing != 'true'
         run: |
-          VERSION_CODE=$(node -e "
-            const cfg = JSON.parse(require('fs').readFileSync('app.json', 'utf8'));
-            console.log(cfg.expo.android?.versionCode ?? '');
-          ")
+          VERSION_CODE=""
+          if [ -f build.json ]; then
+            VERSION_CODE=$(node -e "
+              const b = require('./build.json');
+              const a = Array.isArray(b) ? b[b.length - 1] : b;
+              console.log((a && a.appBuildVersion) || '');
+            ")
+          fi
+          if [ -z "${VERSION_CODE}" ]; then
+            VERSION_CODE="${{ steps.reuse.outputs.version-code }}"
+          fi
+          if [ -z "${VERSION_CODE}" ]; then
+            VERSION_CODE=$(node -e "
+              const cfg = JSON.parse(require('fs').readFileSync('app.json', 'utf8'));
+              console.log(cfg.expo.android?.versionCode ?? '');
+            ")
+          fi
           echo "versionCode=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
           echo "Built versionCode: ${VERSION_CODE}"
 
       - name: Create GitHub Release
         id: release
+        if: steps.check-release.outputs.existing != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
@@ -95,12 +182,13 @@ jobs:
           generate_release_notes: true
 
       - name: Update version.json
+        if: steps.check-release.outputs.existing != 'true'
         run: |
           node -e "
             const fs = require('fs');
             const v = '${{ steps.version.outputs.version }}';
             const code = ${{ steps.versioncode.outputs.versionCode }};
-            const apk = 'https://github.com/${{ github.repository }}/releases/latest/download/' + fs.readdirSync('build').find(f => f.endsWith('.apk'));
+            const apk = 'https://github.com/${{ github.repository }}/releases/download/v' + v + '/' + fs.readdirSync('build').find(f => f.endsWith('.apk'));
             const manifest = {
               version: v,
               versionCode: code,
@@ -113,6 +201,7 @@ jobs:
           "
 
       - name: Commit version.json + app.json
+        if: steps.check-release.outputs.existing != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
