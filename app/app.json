@@ -2,7 +2,7 @@
   "expo": {
     "name": "TukiWatch",
     "slug": "streamwatch",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "dark",
@@ -12,7 +12,7 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0A0A0A"
       },
-      "versionCode": 4,
+      "versionCode": 5,
       "predictiveBackGestureEnabled": false,
       "package": "com.tukiwatch.app"
     },
@@ -36,42 +36,54 @@
               "intent": [
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "twitch"
                   }
                 },
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "vnd.youtube"
                   }
                 },
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "instagram"
                   }
                 },
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "fb"
                   }
                 },
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "tiktok"
                   }
                 },
                 {
                   "action": "VIEW",
-                  "category": ["BROWSABLE"],
+                  "category": [
+                    "BROWSABLE"
+                  ],
                   "data": {
                     "scheme": "vk"
                   }
@@ -92,7 +104,9 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["tukiwatch"]
+            "CFBundleURLSchemes": [
+              "tukiwatch"
+            ]
           }
         ],
         "LSApplicationQueriesSchemes": [
