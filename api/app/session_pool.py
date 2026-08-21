@@ -5,6 +5,6 @@ Thin shim over the canonical implementation in streamwatch-core. The global
 (``from app.session_pool import session_pool``) working unchanged.
 """
 
-from streamwatch_core.session_pool import StreamlinkSessionPool
+from tukiwatch_core.session_pool import StreamlinkSessionPool
 
 session_pool = StreamlinkSessionPool()

@@ -6,7 +6,7 @@ status codes and response detail dicts.
 """
 
 from fastapi import HTTPException
-from streamwatch_core.errors import (
+from tukiwatch_core.errors import (
     BROWSER_ERROR_KEYWORDS,
     is_browser_error,
 )

@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "streamwatch-core @ git+https://github.com/snowballons/streamwatch-core.git",
+    "tukiwatch-core==0.1.0",
     "streamlink>=8.5.0",
     "fastapi>=0.141.1",
     "uvicorn>=0.52.3",

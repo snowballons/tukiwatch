@@ -1099,7 +1099,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "redis" },
     { name = "streamlink" },
-    { name = "streamwatch-core" },
+    { name = "tukiwatch-core" },
     { name = "uvicorn" },
 ]
 
@@ -1121,7 +1121,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "streamlink", specifier = ">=8.5.0" },
-    { name = "streamwatch-core", git = "https://github.com/snowballons/streamwatch-core.git" },
+    { name = "tukiwatch-core", directory = "/home/jonnie/Projects/tukiwatch-org/tukiwatch-core" },
     { name = "uvicorn", specifier = ">=0.52.3" },
 ]
 
@@ -1134,15 +1134,6 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.4.0" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.16.3" },
-]
-
-[[package]]
-name = "streamwatch-core"
-version = "0.1.0"
-source = { git = "https://github.com/snowballons/streamwatch-core.git#36af81d81b5e8a0aa87fe7160eb46dcd1e04ba7e" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "streamlink" },
 ]
 
 [[package]]
@@ -1230,6 +1221,36 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d1/3c/8b4358e81f2f2cfe71b66a267f023a91db20a817b9425dd964873796980a/trio_websocket-0.12.2.tar.gz", hash = "sha256:22c72c436f3d1e264d0910a3951934798dcc5b00ae56fc4ee079d46c7cf20fae", size = 33549, upload-time = "2025-02-25T05:16:58.947Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/19/eb640a397bba49ba49ef9dbe2e7e5c04202ba045b6ce2ec36e9cadc51e04/trio_websocket-0.12.2-py3-none-any.whl", hash = "sha256:df605665f1db533f4a386c94525870851096a223adcb97f72a07e8b4beba45b6", size = 21221, upload-time = "2025-02-25T05:16:57.545Z" },
+]
+
+[[package]]
+name = "tukiwatch-core"
+version = "0.1.0"
+source = { directory = "/home/jonnie/Projects/tukiwatch-org/tukiwatch-core" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "streamlink" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.15.0" },
+    { name = "pydantic", specifier = ">=2.10.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.0" },
+    { name = "streamlink", specifier = ">=8.5.0" },
+]
+provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.15.0" },
+    { name = "pytest", specifier = ">=9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=1.0.0" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "ruff", specifier = ">=0.16.0" },
 ]
 
 [[package]]
