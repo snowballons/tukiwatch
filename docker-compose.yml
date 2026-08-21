@@ -1,6 +1,6 @@
 services:
   api:
-    image: ${TUWATCH_SERVER_IMAGE:-snowballons/tukiwatch-server:1.0.6}
+    image: ${TUKIWATCH_SERVER_IMAGE:-snowballons/tukiwatch-server:1.0.6}
     ports:
       - "8000:8000"
     environment:
