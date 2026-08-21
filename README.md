@@ -87,7 +87,7 @@ TukiWatch takes the opposite approach:
 - **Ad-free where the platform allows.** With a Twitch Turbo token configured on
   the backend, Twitch streams play without ads.
 - **Open and self-contained.** The app builds on the shared
-  [streamwatch-core](https://github.com/snowballons/streamwatch-core) domain
+  [tukiwatch-core](https://github.com/snowballons/tukiwatch-core) domain
   package, also used by [streamwatch-cli](https://github.com/snowballons/streamwatch-cli).
 
 ---
@@ -115,7 +115,11 @@ TukiWatch takes the opposite approach:
 
 | Platform | Preview                                                                                           |
 |:-------- |:------------------------------------------------------------------------------------------------- |
-| Android  | <img src="https://tukiwatch.snowballons.com/preview.png" alt="TukiWatch app preview" width="600"> |
+| Android  |![alt text](app/assets/empty-live-screen.png) |
+| Andriod  |![alt text](app/assets/add-stream.png)
+| Andriod  |![alt text](app/assets/intro1.png)
+| Android  |![alt text](app/assets/intro2.png)
+| Andriod  |![alt text](app/assets/live-screen.png)
 
 ---
 
