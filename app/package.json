@@ -21,7 +21,7 @@
     "@react-navigation/native-stack": "^7.18.8",
     "axios": "^1.19.0",
     "expo": "^56.0.0",
-    "expo-build-properties": "~56.0.26",
+    "expo-build-properties": "~57.0.13",
     "expo-camera": "~56.0.8",
     "expo-constants": "~56.0.24",
     "expo-document-picker": "~57.0.1",
