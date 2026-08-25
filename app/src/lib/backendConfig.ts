@@ -94,18 +94,6 @@ export function parseConnectUri(uri: string): BackendConfig | null {
   };
 }
 
-/**
- * Build the shareable connect URI for a config. The app only consumes this via
- * QR codes today, but the canonical form is reused for deep links.
- */
-export function buildConnectUri(config: BackendConfig): string {
-  const parts: string[] = [];
-  if (config.apiUrl) parts.push(`url=${encodeURIComponent(config.apiUrl)}`);
-  if (config.updateManifestUrl)
-    parts.push(`updates=${encodeURIComponent(config.updateManifestUrl)}`);
-  return `tukiwatch://connect?${parts.join('&')}`;
-}
-
 function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 5000): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
