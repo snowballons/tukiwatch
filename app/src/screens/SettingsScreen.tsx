@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { ChevronRight, QrCode, RotateCcw, Server, User } from 'lucide-react-native';
+import { ChevronRight, RotateCcw, Server, User } from 'lucide-react-native';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { exportFavorites, importFavorites } from '../../lib/db';
-import { QrScannerModal } from '../components/QrScannerModal';
 import { useStreams } from '../context/StreamContext';
 import { useProfile } from '../hooks/useProfile';
 import { parseConnectUri, useBackendConfig, verifyBackend } from '../lib/backendConfig';
@@ -55,36 +54,8 @@ export function SettingsScreen() {
   const { isBackendReachable, reconnect } = useStreams();
   const [showAbout, setShowAbout] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [scannerVisible, setScannerVisible] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationDetail, setVerificationDetail] = useState<string | null>(null);
-
-  const handleScanned = useCallback(
-    async (data: string) => {
-      setScannerVisible(false);
-      const parsed = parseConnectUri(data);
-      if (!parsed) {
-        Alert.alert('Invalid QR Code', 'That code is not a TukiWatch backend link.');
-        setVerifying(false);
-        return;
-      }
-
-      setVerifying(true);
-      setVerificationDetail(null);
-      const result = await verifyBackend(parsed);
-      if (result.ok) {
-        await save(parsed);
-        await reconnect();
-        setVerificationDetail('Connected');
-        Alert.alert('Connected', `Backend configured at ${parsed.apiUrl}.`);
-      } else {
-        setVerificationDetail(result.detail || 'Connection failed');
-        Alert.alert('Connection Failed', result.detail || 'Could not reach the backend.');
-      }
-      setVerifying(false);
-    },
-    [reconnect, save]
-  );
 
   const handleResetBackend = useCallback(() => {
     Alert.alert('Use Default Server', 'Reset to the default TukiWatch backend?', [
@@ -212,11 +183,6 @@ export function SettingsScreen() {
             </View>
           </View>
         </View>
-        <ListItem
-          label="Scan QR Code"
-          onPress={() => setScannerVisible(true)}
-          icon={<QrCode color={Palette.primary} size={18} />}
-        />
         {isCustom && (
           <ListItem
             label="Use Default Server"
@@ -226,11 +192,6 @@ export function SettingsScreen() {
         )}
       </Section>
 
-      <QrScannerModal
-        visible={scannerVisible}
-        onClose={() => setScannerVisible(false)}
-        onScanned={handleScanned}
-      />
       {verifying && (
         <View style={styles.verifyingOverlay}>
           <ActivityIndicator size="large" color={Palette.primary} />
