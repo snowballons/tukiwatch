@@ -65,15 +65,11 @@ export const resolveStream = async (url: string, bypassCache: boolean = false) =
   if (bypassCache) {
     params.append('bypass_cache', 'true');
   }
-  try {
-    const response = await axios.get(`${baseUrl}/api/resolve?${params}`, {
-      headers: API_HEADERS,
-    });
-    updateRateLimitInfo(response.headers);
-    return response.data;
-  } catch (error: any) {
-    throw error;
-  }
+  const response = await axios.get(`${baseUrl}/api/resolve?${params}`, {
+    headers: API_HEADERS,
+  });
+  updateRateLimitInfo(response.headers);
+  return response.data;
 };
 
 export const streamService = {

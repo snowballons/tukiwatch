@@ -1,6 +1,6 @@
 {
   "name": "tukiwatchapp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "index.ts",
   "scripts": {
     "prepare": "husky",
@@ -9,33 +9,32 @@
     "check": "biome check --write .",
     "check:ci": "biome ci .",
     "type-check": "tsc --noEmit",
-    "start": "npx expo start",
-    "android": "npx expo run:android",
-    "ios": "npx expo run:ios",
-    "web": "npx expo start --web"
+    "start": "bunx expo start",
+    "android": "bunx expo run:android",
+    "ios": "bunx expo run:ios",
+    "web": "bunx expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "3.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.18.16",
     "@react-navigation/native": "^7.3.16",
     "@react-navigation/native-stack": "^7.18.8",
     "axios": "^1.19.0",
-    "expo": "^56.0.0",
+    "expo": "^57.0.9",
     "expo-build-properties": "~57.0.13",
-    "expo-camera": "~56.0.8",
-    "expo-constants": "~56.0.24",
+    "expo-constants": "~57.0.14",
     "expo-document-picker": "~57.0.1",
     "expo-file-system": "~57.0.5",
-    "expo-linear-gradient": "~56.0.4",
-    "expo-sharing": "~56.0.25",
-    "expo-splash-screen": "~56.0.14",
-    "expo-sqlite": "~56.0.5",
-    "expo-video": "~56.1.4",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-sharing": "~57.0.15",
+    "expo-splash-screen": "~57.0.8",
+    "expo-sqlite": "~57.0.1",
+    "expo-video": "~57.0.2",
     "lucide-react-native": "^1.33.0",
     "react": "19.2.3",
-    "react-native": "0.87.0",
+    "react-native": "0.86.2",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.27.0",
+    "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4"
   },
   "devDependencies": {
@@ -43,6 +42,6 @@
     "@types/react": "~19.2.18",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
-    "typescript": "~7.0.2"
+    "typescript": "~6.0.3"
   }
 }
