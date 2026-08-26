@@ -45,13 +45,74 @@ Redis is optional — omit `REDIS_URL` to use the in-memory cache.
    - `ALLOWED_ORIGINS` — e.g. `*`
    - Optionally attach a Railway Redis plugin and set `REDIS_URL`
 
+### Railway with Redis (Recommended for Production)
+
+For horizontal scaling and shared rate limiting across replicas, attach a Redis
+plugin:
+
+1. In Railway, click **New** → **Database** → **Add Redis**
+2. Connect the Redis instance to your API service
+3. Railway automatically injects `REDIS_URL` — no manual config needed
+4. The API will use Redis for both **caching** and **distributed rate limiting**
+
+Without Redis, each Railway replica uses independent in-memory rate limiting
+and caching (fine for single-instance deployments).
+
+## Hosted on Railway (Managed Endpoint)
+
+For users who prefer not to self-host, a managed TukiWatch API is available at:
+
+```
+https://tukiwatch-api.up.railway.app
+```
+
+> **Note:** Replace with your actual Railway deployment URL.
+
+### Connecting the Mobile App to the Hosted Endpoint
+
+#### Option 1: QR Code (Recommended — No Rebuild Needed)
+
+Published builds can switch backends at runtime via **Settings → Backend → Scan QR Code**.
+
+Generate a QR code for the hosted endpoint:
+
+```bash
+qrencode -o hosted-backend.png 'tukiwatch://connect?url=https%3A%2F%2Ftukiwatch-api.up.railway.app&updates=https%3A%2F%2Ftukiwatch-api.up.railway.app%2Fversion.json'
+```
+
+Or use any online QR generator with this content:
+
+```
+tukiwatch://connect?url=https://tukiwatch-api.up.railway.app&updates=https://tukiwatch-api.up.railway.app/version.json
+```
+
+Scan the QR from the app's **Settings → Backend → Scan QR Code**. The app validates the backend (pings `/health`) before saving.
+
+#### Option 2: Deep Link
+
+Open this link on your phone to auto-connect:
+
+```
+tukiwatch://connect?url=https://tukiwatch-api.up.railway.app&updates=https://tukiwatch-api.up.railway.app/version.json
+```
+
+#### Option 3: Build-Time Default (Requires Rebuild)
+
+Set `EXPO_PUBLIC_API_URL` at build time:
+
+```bash
+EXPO_PUBLIC_API_URL=https://tukiwatch-api.up.railway.app eas build --platform android
+```
+
+This bakes the hosted endpoint as the default. Users can still override at runtime via QR code.
+
 ## What to configure
 
 | Variable | Required | Notes |
 |---|---|---|
 | `ALLOWED_ORIGINS` | No | Comma-separated CORS origins; default `*`. |
 | `TWITCH_OAUTH_TOKEN` | No | Ad-free Twitch (Twitch Turbo). |
-| `REDIS_URL` / `REDIS_*` | No | Ephemeral cache; omit for in-memory. |
+| `REDIS_URL` / `REDIS_*` | No | Ephemeral cache + distributed rate limiting; omit for in-memory. |
 
 ## Clients
 
@@ -99,3 +160,4 @@ backend base URL and connects directly. Connect URIs that still carry a
 - The API is **unauthenticated**: anyone who can reach your backend URL can use
   it. Rate limiting still applies, but protect the service at the network level
   (firewall / private tunnel) if you want to restrict access.
+- **Rate limiting**: Per IP, sliding window. Limits: `/resolve` 20/min, `/status-batch` 10/min, `/health` 200/min, default 100/min. With Redis, limits are shared across all Railway replicas.

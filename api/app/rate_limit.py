@@ -1,4 +1,3 @@
-
 from typing import ClassVar
 
 from fastapi import HTTPException
@@ -12,11 +11,13 @@ class RateLimitConfig:
         # General API endpoints
         "default": (100, 60),  # 100 requests per minute
         # Stream-specific endpoints (more restrictive)
-        "/resolve": (20, 60),  # 20 requests per minute for stream resolution
-        "/status-batch": (10, 60),  # 10 requests per minute for batch status
+        "/api/resolve": (20, 60),  # 20 requests per minute for stream resolution
+        "/api/status-batch": (10, 60),  # 10 requests per minute for batch status
         # Utility endpoints (more permissive)
         "/health": (200, 60),  # 200 requests per minute for health checks
         "/cache/stats": (50, 60),  # 50 requests per minute for cache stats
+        "/rate-limit/stats": (50, 60),  # 50 requests per minute for rate limit stats
+        "/session/stats": (50, 60),  # 50 requests per minute for session stats
     }
 
     @classmethod
