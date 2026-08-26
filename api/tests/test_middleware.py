@@ -3,7 +3,9 @@ Tests for app/middleware.py
 
 Covers:
 - CustomRateLimitMiddleware: within-limit, over-limit, rate-limit headers,
-  per-endpoint limits, IP extraction helpers, cleanup logic
+  per-endpoint limits, IP extraction helpers
+- InMemoryRateLimiter: internal rate limiting logic
+- RedisRateLimiter: (tested separately with mocking)
 """
 
 import time
@@ -13,6 +15,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.middleware import CustomRateLimitMiddleware
+from app.rate_limiter import InMemoryRateLimiter
 
 # ---------------------------------------------------------------------------
 # Helpers — build a minimal app with only the middleware under test
@@ -40,7 +43,7 @@ def _make_app_with_rate_limit_middleware() -> FastAPI:
 
 
 # ===========================================================================
-# CustomRateLimitMiddleware tests
+# CustomRateLimitMiddleware tests (integration via TestClient)
 # ===========================================================================
 
 
@@ -136,7 +139,7 @@ class TestCustomRateLimitMiddleware:
         )
 
     # -----------------------------------------------------------------------
-    # Unit tests for internal helpers
+    # Unit tests for IP extraction helpers
     # -----------------------------------------------------------------------
 
     def test_get_client_ip_from_x_forwarded_for(self):
@@ -169,37 +172,107 @@ class TestCustomRateLimitMiddleware:
         ip = middleware._get_client_ip(request)
         assert ip == "192.168.1.1"
 
-    def test_is_rate_limited_returns_false_within_limit(self):
-        """_is_rate_limited must return (False, 0) when under the limit."""
-        middleware = CustomRateLimitMiddleware(MagicMock())
-        limited, retry = middleware._is_rate_limited("1.2.3.4", "/test", (10, 60))
-        assert limited is False
-        assert retry == 0
 
-    def test_is_rate_limited_returns_true_when_exceeded(self):
-        """_is_rate_limited must return (True, >0) once the limit is hit."""
-        middleware = CustomRateLimitMiddleware(MagicMock())
+# ===========================================================================
+# InMemoryRateLimiter tests (unit tests for internal logic)
+# ===========================================================================
+
+
+class TestInMemoryRateLimiter:
+    """Tests for the in-memory rate limiter implementation."""
+
+    def test_check_limit_returns_allowed_within_limit(self):
+        """check_limit must return allowed=True when under the limit."""
+        limiter = InMemoryRateLimiter()
+        result = limiter.check_limit("1.2.3.4", "/test", (10, 60))
+        assert result.allowed is True
+        assert result.retry_after == 0
+        assert result.remaining == 9  # 10 - 1
+        assert result.limit == 10
+
+    def test_check_limit_returns_limited_when_exceeded(self):
+        """check_limit must return allowed=False once the limit is hit."""
+        limiter = InMemoryRateLimiter()
         limit = (3, 60)
         ip, endpoint = "1.2.3.4", "/test"
 
         for _ in range(3):
-            middleware._is_rate_limited(ip, endpoint, limit)
+            result = limiter.check_limit(ip, endpoint, limit)
+            assert result.allowed is True
 
-        limited, retry = middleware._is_rate_limited(ip, endpoint, limit)
-        assert limited is True
-        assert retry > 0
+        result = limiter.check_limit(ip, endpoint, limit)
+        assert result.allowed is False
+        assert result.retry_after > 0
+        assert result.remaining == 0
+
+    def test_different_ips_have_independent_limits(self):
+        """Rate limits must be tracked per IP independently."""
+        limiter = InMemoryRateLimiter()
+        limit = (2, 60)
+
+        # IP 1 makes 2 requests
+        limiter.check_limit("1.1.1.1", "/test", limit)
+        limiter.check_limit("1.1.1.1", "/test", limit)
+
+        # IP 2 should still be allowed
+        result = limiter.check_limit("2.2.2.2", "/test", limit)
+        assert result.allowed is True
+
+    def test_different_endpoints_have_independent_limits(self):
+        """Rate limits must be tracked per endpoint independently."""
+        limiter = InMemoryRateLimiter()
+        limit = (2, 60)
+
+        # Make 2 requests to endpoint A
+        limiter.check_limit("1.2.3.4", "/endpoint_a", limit)
+        limiter.check_limit("1.2.3.4", "/endpoint_a", limit)
+
+        # Endpoint B should still be allowed
+        result = limiter.check_limit("1.2.3.4", "/endpoint_b", limit)
+        assert result.allowed is True
 
     def test_cleanup_removes_old_entries(self):
-        """_cleanup_old_entries must purge timestamps older than 1 hour."""
-        middleware = CustomRateLimitMiddleware(MagicMock())
+        """Expired entries must be purged to prevent memory leaks."""
+        limiter = InMemoryRateLimiter()
 
-        # Inject a stale entry (2 hours ago)
-        stale_ts = time.time() - 7200
-        middleware.requests["1.2.3.4"] = {"/old": [(stale_ts, 1)]}
+        # Inject a stale entry (2 hours ago) directly into internal storage
+        stale_ts = int((time.time() - 7200) * 1000)
+        limiter._requests["1.2.3.4"] = {"/old": [(stale_ts, 1)]}
 
         # Force cleanup by backdating last_cleanup
-        middleware.last_cleanup = time.time() - 400
+        limiter._last_cleanup = time.time() - 400
 
-        middleware._cleanup_old_entries()
+        limiter._cleanup_old_entries()
 
-        assert "1.2.3.4" not in middleware.requests
+        assert "1.2.3.4" not in limiter._requests
+
+    def test_cleanup_preserves_recent_entries(self):
+        """Recent entries must survive cleanup."""
+        limiter = InMemoryRateLimiter()
+
+        # Add a recent entry
+        limiter.check_limit("1.2.3.4", "/test", (10, 60))
+
+        # Force cleanup
+        limiter._last_cleanup = time.time() - 400
+        limiter._cleanup_old_entries()
+
+        assert "1.2.3.4" in limiter._requests
+        assert "/test" in limiter._requests["1.2.3.4"]
+
+    def test_get_stats_returns_correct_info(self):
+        """get_stats must return type and key counts."""
+        limiter = InMemoryRateLimiter()
+        limiter.check_limit("1.2.3.4", "/test", (10, 60))
+        limiter.check_limit("5.6.7.8", "/test", (10, 60))
+
+        stats = limiter.get_stats()
+
+        assert stats["type"] == "InMemoryRateLimiter"
+        assert stats["tracked_ips"] == 2
+        assert stats["total_endpoints"] == 2
+
+    def test_backend_type_property(self):
+        """backend_type must return 'memory'."""
+        limiter = InMemoryRateLimiter()
+        assert limiter.backend_type == "memory"

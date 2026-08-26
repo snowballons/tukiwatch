@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware import CustomRateLimitMiddleware
+from app.rate_limiter import rate_limiter_factory
 from app.routers import streams
 from config import config
 
@@ -57,15 +58,7 @@ def cache_stats():
 @app.get("/rate-limit/stats")
 def rate_limit_stats():
     """Get rate limiting statistics"""
-    from app.middleware import CustomRateLimitMiddleware
-
-    # Find the rate limit middleware instance
-    for middleware in app.user_middleware:
-        if isinstance(middleware.cls, type) and issubclass(
-            middleware.cls, CustomRateLimitMiddleware
-        ):
-            # This is a bit tricky to access the instance, so we'll return general info
-            break
+    limiter_stats = rate_limiter_factory.get_stats()
 
     return {
         "rate_limits": {
@@ -74,7 +67,10 @@ def rate_limit_stats():
             "default": "100 requests per minute",
             "health": "200 requests per minute",
         },
+        "backend": limiter_stats.get("backend_type", "unknown"),
+        "redis_connected": limiter_stats.get("redis_connected", False),
         "service": "streamlink-api",
+        **limiter_stats,
     }
 
 
