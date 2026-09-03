@@ -6,8 +6,8 @@ from fastapi import HTTPException
 class RateLimitConfig:
     """Rate limiting configuration for different endpoints"""
 
-    # Rate limits: (requests, time_window_seconds)
-    LIMITS: ClassVar[dict[str, tuple[int, int]]] = {
+    # Free tier limits (IP-based)
+    FREE_LIMITS: ClassVar[dict[str, tuple[int, int]]] = {
         # General API endpoints
         "default": (100, 60),  # 100 requests per minute
         # Stream-specific endpoints (more restrictive)
@@ -20,20 +20,47 @@ class RateLimitConfig:
         "/session/stats": (50, 60),  # 50 requests per minute for session stats
     }
 
+    # Supporter tier limits (Token-based)
+    SUPPORTER_LIMITS: ClassVar[dict[str, tuple[int, int]]] = {
+        # General API endpoints
+        "default": (1000, 60),  # 1000 requests per minute
+        # Stream-specific endpoints (more restrictive but generous)
+        "/api/resolve": (200, 60),  # 200 requests per minute for stream resolution
+        "/api/status-batch": (100, 60),  # 100 requests per minute for batch status
+        # Utility endpoints (more permissive)
+        "/health": (500, 60),  # 500 requests per minute for health checks
+        "/cache/stats": (200, 60),  # 200 requests per minute for cache stats
+        "/rate-limit/stats": (200, 60),  # 200 requests per minute for rate limit stats
+        "/session/stats": (200, 60),  # 200 requests per minute for session stats
+    }
+
+    # Excluded paths (no rate limiting)
+    EXCLUDED_PATHS: ClassVar[set[str]] = {
+        "/health",
+        "/",
+    }
+
     @classmethod
-    def get_limit_for_path(cls, path: str) -> tuple[int, int]:
-        """Get rate limit for specific path"""
+    def get_limit_for_path(cls, path: str, is_supporter: bool = False) -> tuple[int, int]:
+        """Get rate limit for specific path and tier"""
+        limits = cls.SUPPORTER_LIMITS if is_supporter else cls.FREE_LIMITS
+
         # Check for exact match first
-        if path in cls.LIMITS:
-            return cls.LIMITS[path]
+        if path in limits:
+            return limits[path]
 
         # Check for path prefixes
-        for limit_path, limit in cls.LIMITS.items():
+        for limit_path, limit in limits.items():
             if path.startswith(limit_path):
                 return limit
 
         # Return default limit
-        return cls.LIMITS["default"]
+        return limits["default"]
+
+    @classmethod
+    def is_excluded(cls, path: str) -> bool:
+        """Check if path is excluded from rate limiting"""
+        return path in cls.EXCLUDED_PATHS
 
 
 def create_rate_limit_error(retry_after: int = 60) -> HTTPException:

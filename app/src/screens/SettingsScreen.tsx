@@ -18,6 +18,7 @@ import { useProfile } from '../hooks/useProfile';
 import { parseConnectUri, useBackendConfig, verifyBackend } from '../lib/backendConfig';
 import { checkForUpdate } from '../services/updateService';
 import { Palette, Spacing } from '../theme/Theme';
+import { BackendSettings } from './Settings/BackendSettings';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <View style={styles.section}>
@@ -190,6 +191,9 @@ export function SettingsScreen() {
             icon={<RotateCcw color={Palette.textMuted} size={18} />}
           />
         )}
+      </Section>
+      <Section title="Supporter">
+        <BackendSettings />
       </Section>
 
       {verifying && (

@@ -35,8 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# supporters router removed in Phase 0 (moved to session-based system in Phase 2)
 app.include_router(streams.router, prefix="/api")
-
 
 @app.get("/")
 def read_root():

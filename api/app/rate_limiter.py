@@ -23,18 +23,18 @@ class RateLimitResult:
 class BaseRateLimiter(ABC):
     """Abstract base class for rate limiters."""
 
-    @abstractmethod
-    def check_limit(self, client_ip: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
         """Check if request is within rate limit.
-        
+
         Args:
-            client_ip: Client IP address
+            client_key: Client tracking key (format: "ip:1.2.3.4" or "token:tw_supp_xxx")
             endpoint: API endpoint path
             limit: Tuple of (max_requests, time_window_seconds)
-            
+
         Returns:
             RateLimitResult with allowance decision and metadata
         """
+
 
     @abstractmethod
     def get_stats(self) -> dict:
@@ -144,21 +144,22 @@ class RedisRateLimiter(BaseRateLimiter):
             logger.warning("Redis rate limiter connection failed: %s", exc)
             raise
 
-    def _make_key(self, client_ip: str, endpoint: str) -> str:
+    def _make_key(self, client_key: str, endpoint: str) -> str:
         """Create Redis key for rate limiting."""
         # Normalize endpoint to match RateLimitConfig patterns
         normalized = endpoint.lstrip('/')
         if not normalized:
             normalized = 'root'
-        return f"ratelimit:{client_ip}:{normalized}"
+        # client_key already includes prefix (ip:xxx or token:xxx)
+        return f"ratelimit:{client_key}:{normalized}"
 
-    def check_limit(self, client_ip: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
         max_requests, time_window = limit
         now_ms = int(time.time() * 1000)
         window_start_ms = now_ms - (time_window * 1000)
         ttl = time_window + 10  # buffer for cleanup
 
-        key = self._make_key(client_ip, endpoint)
+        key = self._make_key(client_key, endpoint)
 
         try:
             result = self._script(
@@ -198,7 +199,7 @@ class InMemoryRateLimiter(BaseRateLimiter):
     """In-memory sliding window rate limiter (fallback)."""
 
     def __init__(self):
-        # {ip: {endpoint: [(timestamp_ms, count), ...]}}
+        # {client_key: {endpoint: [(timestamp_ms, count), ...]}}
         self._requests: dict[str, dict[str, list]] = {}
         self._cleanup_interval = 300  # 5 minutes
         self._last_cleanup = time.time()
@@ -211,22 +212,22 @@ class InMemoryRateLimiter(BaseRateLimiter):
 
         cutoff_time = current_time - 3600  # 1 hour ago
 
-        for ip in list(self._requests.keys()):
-            for endpoint in list(self._requests[ip].keys()):
-                self._requests[ip][endpoint] = [
+        for client_key in list(self._requests.keys()):
+            for endpoint in list(self._requests[client_key].keys()):
+                self._requests[client_key][endpoint] = [
                     (ts, count)
-                    for ts, count in self._requests[ip][endpoint]
+                    for ts, count in self._requests[client_key][endpoint]
                     if ts > cutoff_time * 1000
                 ]
-                if not self._requests[ip][endpoint]:
-                    del self._requests[ip][endpoint]
+                if not self._requests[client_key][endpoint]:
+                    del self._requests[client_key][endpoint]
 
-            if not self._requests[ip]:
-                del self._requests[ip]
+            if not self._requests[client_key]:
+                del self._requests[client_key]
 
         self._last_cleanup = current_time
 
-    def check_limit(self, client_ip: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
         self._cleanup_old_entries()
 
         max_requests, time_window = limit
@@ -234,26 +235,26 @@ class InMemoryRateLimiter(BaseRateLimiter):
         window_start_ms = now_ms - (time_window * 1000)
         reset_time = int(time.time() + time_window)
 
-        # Initialize tracking for this IP/endpoint if needed
-        if client_ip not in self._requests:
-            self._requests[client_ip] = {}
-        if endpoint not in self._requests[client_ip]:
-            self._requests[client_ip][endpoint] = []
+        # Initialize tracking for this client_key/endpoint if needed
+        if client_key not in self._requests:
+            self._requests[client_key] = {}
+        if endpoint not in self._requests[client_key]:
+            self._requests[client_key][endpoint] = []
 
         # Remove old entries outside the time window
-        self._requests[client_ip][endpoint] = [
+        self._requests[client_key][endpoint] = [
             (ts, count)
-            for ts, count in self._requests[client_ip][endpoint]
+            for ts, count in self._requests[client_key][endpoint]
             if ts > window_start_ms
         ]
 
         # Count current requests in the time window
-        current_count = sum(count for _, count in self._requests[client_ip][endpoint])
+        current_count = sum(count for _, count in self._requests[client_key][endpoint])
 
         # Check if limit exceeded
         if current_count >= max_requests:
             # Calculate retry after time
-            oldest_request = min(self._requests[client_ip][endpoint], key=lambda x: x[0])[0]
+            oldest_request = min(self._requests[client_key][endpoint], key=lambda x: x[0])[0]
             retry_after = int((oldest_request + (time_window * 1000) - now_ms) / 1000) + 1
             retry_after = max(retry_after, 1)
             return RateLimitResult(
@@ -265,7 +266,7 @@ class InMemoryRateLimiter(BaseRateLimiter):
             )
 
         # Add current request
-        self._requests[client_ip][endpoint].append((now_ms, 1))
+        self._requests[client_key][endpoint].append((now_ms, 1))
         remaining = max_requests - current_count - 1
 
         return RateLimitResult(
@@ -275,19 +276,20 @@ class InMemoryRateLimiter(BaseRateLimiter):
             limit=max_requests,
             reset_time=reset_time,
         )
-
     def get_stats(self) -> dict:
         self._cleanup_old_entries()
         total_keys = sum(len(v) for v in self._requests.values())
         return {
             "type": "InMemoryRateLimiter",
-            "tracked_ips": len(self._requests),
+            "tracked_keys": len(self._requests),
             "total_endpoints": total_keys,
         }
 
     @property
     def backend_type(self) -> str:
         return "memory"
+
+
 
 
 class RateLimiterFactory:
