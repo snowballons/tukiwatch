@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { Palette, Spacing } from '../../theme/Theme';
+import { StyleSheet, Text, View } from 'react-native';
 import { useBackendConfig } from '../../lib/backendConfig';
+import { Palette, Spacing } from '../../theme/Theme';
 
 export const BackendSettings: React.FC = () => {
   const { config } = useBackendConfig();
@@ -9,7 +9,8 @@ export const BackendSettings: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Backend Configuration</Text>
       <Text style={styles.description}>
-        Configure your TukiWatch backend server. Supporter tokens and session management are handled through Lemon Squeezy licensing.
+        Configure your TukiWatch backend server. Supporter tokens and session management are handled
+        through Lemon Squeezy licensing.
       </Text>
       {config ? (
         <View style={styles.statusBox}>

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 export interface BackendConfig {
   apiUrl: string;
   updateManifestUrl?: string;
-
 }
 export interface BackendVerification {
   ok: boolean;
