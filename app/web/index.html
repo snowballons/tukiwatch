@@ -1,242 +1,307 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Basic Meta Tags -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <!-- SEO Meta Tags -->
-    <title>TukiWatch - Free Android App for Live Stream Tracking | No Ads, Open Source</title>
-    <meta name="description" content="TukiWatch is the best free Android app for tracking live streams on Twitch, YouTube, Facebook Live. Get real-time notifications, watch ad-free, and discover trending streamers. Download the official APK.">
-    <meta name="keywords" content="stream tracking app, android streaming app, twitch tracker, youtube live notifications, facebook live viewer, free streaming app, ad-free streaming, live stream discovery, android apk, open source streaming">
-    <meta name="author" content="TukiWatch">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    <meta name="googlebot" content="index, follow">
-    <meta name="bingbot" content="index, follow">
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://tukiwatch.snowballons.com/">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://tukiwatch.snowballons.com/">
-    <meta property="og:title" content="TukiWatch - Free Android App for Live Stream Tracking">
-    <meta property="og:description" content="Track live streams from Twitch, YouTube, Facebook Live. Get notifications, watch ad-free. Download the official Android APK.">
-    <meta property="og:image" content="https://tukiwatch.snowballons.com/preview.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="TukiWatch App Preview - Android Live Stream Tracker">
-    <meta property="og:site_name" content="TukiWatch">
-    <meta property="og:locale" content="en_US">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://tukiwatch.snowballons.com/">
-    <meta name="twitter:title" content="TukiWatch - Free Android Live Stream Tracker">
-    <meta name="twitter:description" content="Track Twitch, YouTube Live streams. Get notifications, watch ad-free. Download APK.">
-    <meta name="twitter:image" content="https://tukiwatch.snowballons.com/preview.png">
-    <meta name="twitter:image:alt" content="TukiWatch App Preview">
-    
-    <!-- Additional SEO Meta -->
-    <meta name="theme-color" content="#0A0A0A">
-    <meta name="msapplication-TileColor" content="#0A0A0A">
-    <meta name="application-name" content="TukiWatch">
-    <meta name="apple-mobile-web-app-title" content="TukiWatch">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="https://tukiwatch.snowballons.com/logo.svg">
-    <link rel="icon" type="image/svg+xml" href="https://tukiwatch.snowballons.com/logo.svg">
-    <link rel="apple-touch-icon" href="https://tukiwatch.snowballons.com/logo.svg">
-    
-    <!-- Preconnect for Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "TukiWatch",
-        "description": "Free Android app for tracking and watching live streams from Twitch, YouTube Live, Facebook Live and more. Get real-time notifications and enjoy ad-free viewing.",
-        "url": "https://tukiwatch.snowballons.com/",
-        "applicationCategory": "EntertainmentApplication",
-        "operatingSystem": "Android",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-        },
-        "downloadUrl": "https://downloads.snowballons.com/tukiwatch-latest.apk",
-        "fileSize": "25MB",
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "ratingCount": "150"
-        },
-        "author": {
-            "@type": "Organization",
-            "name": "TukiWatch",
-            "url": "https://github.com/snowballons/streamwatch-api"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "TukiWatch"
-        },
-        "datePublished": "2026-02-11",
-        "version": "1.0.0",
-        "keywords": "stream tracking, live streaming, android app, twitch, youtube, notifications",
-        "screenshot": "https://tukiwatch.snowballons.com/preview.png",
-        "softwareHelp": {
-            "@type": "WebPage",
-            "url": "https://github.com/snowballons/streamwatch-api"
-        },
-        "featureList": [
-            "Real-time stream tracking",
-            "Ad-free viewing experience",
-            "Custom notifications",
-            "Multi-platform support",
-            "Offline mode",
-            "Open source"
-        ]
-    }
-    </script>
-    
-    <!-- Organization Schema -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "TukiWatch",
-        "url": "https://tukiwatch.snowballons.com/",
-        "logo": "https://tukiwatch.snowballons.com/logo.svg",
-        "contactPoint": {
-            "@type": "ContactPoint",
-            "email": "tukiwatch@snowballons.com",
-            "contactType": "customer service"
-        },
-        "sameAs": [
-            "https://github.com/snowballons/streamwatch-api"
-        ]
-    }
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>TukiWatch — Track Live Streams. Watch Ad-Free. No Account Required.</title>
+  <meta name="description" content="TukiWatch is a privacy-first Android app for tracking and watching live streams from Twitch, YouTube, Kick, and more. Real-time notifications, ad-free viewing, open-source.">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tukiwatch.snowballons.com/">
+  <meta property="og:title" content="TukiWatch — Track Live Streams">
+  <meta property="og:description" content="Track every live stream. Watch ad-free. No account needed.">
+  <meta property="og:image" content="https://tukiwatch.snowballons.com/assets/hero-phone.png">
+  <meta property="og:image:width" content="720">
+  <meta property="og:image:height" content="1640">
+  <meta property="og:site_name" content="TukiWatch">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TukiWatch — Track Live Streams">
+  <meta name="twitter:description" content="Track every live stream. Watch ad-free. No account needed.">
+  <meta name="twitter:image" content="https://tukiwatch.snowballons.com/assets/hero-phone.png">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TukiWatch",
+    "description": "Privacy-first Android app for tracking and watching live streams from Twitch, YouTube, Kick, and more.",
+    "url": "https://tukiwatch.snowballons.com/",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "Android",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "downloadUrl": "https://downloads.snowballons.com/tukiwatch-latest.apk",
+    "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "150" },
+    "featureList": ["Real-time stream tracking","Ad-free viewing","Custom notifications","Multi-platform support","Offline mode","Open source"]
+  }
+  </script>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <nav role="navigation" aria-label="Main Navigation">
-            <div class="logo">
-                <img src="https://tukiwatch.snowballons.com/logo.svg" alt="TukiWatch Logo - Live Stream Tracker App" width="40" height="40">
-                <span>TukiWatch</span>
-            </div>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
 
-    <main>
-        <section id="hero" class="hero">
-            <div class="hero-content">
-                <h1>TukiWatch - Track and Watch Your Favorite Live Streams Effortlessly</h1>
-                <p class="tagline">Your Ultimate Companion for Live Streaming Discovery and Viewing – No Ads, No Hassle</p>
-                <div class="cta-buttons">
-                    <a id="hero-download-btn" href="https://downloads.snowballons.com/tukiwatch-latest.apk" download class="btn primary-btn" aria-label="Download TukiWatch APK for Android">Download APK <span class="version-text"></span></a>
-                    <a href="https://github.com/snowballons/streamwatch-api" target="_blank" class="btn secondary-btn" aria-label="View TukiWatch source code on GitHub">View on GitHub</a>
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="https://tukiwatch.snowballons.com/preview.png" alt="TukiWatch Android App Interface - Live Stream Tracking and Notifications" width="600" height="400" loading="eager">
-            </div>
-        </section>
+<!-- ── Nav ─────────────────────────────────────────────────────────────────── -->
+<div class="nav" role="navigation" aria-label="Main">
+  <div class="nav__pill">
+    <a href="index.html" class="nav__brand">
+      <svg viewBox="0 0 250 250" aria-hidden="true"><path fill="currentColor" d="M125 10C62 10 10 62 10 125s52 115 115 115 115-52 115-115S188 10 125 10zm0 208c-51 0-93-41-93-93s42-93 93-93 93 41 93 93-42 93-93 93z"/><circle cx="125" cy="125" r="35"/></svg>
+      TUKIWATCH
+    </a>
+    <div class="nav__links">
+      <a href="#features" class="nav__link">Features</a>
+      <a href="#screenshots" class="nav__link">Screens</a>
+      <a href="#how-it-works" class="nav__link">How it works</a>
+      <a href="supporter.html" class="nav__link">Support</a>
+      <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="nav__link">GitHub</a>
+    </div>
+    <a id="nav-download" href="https://downloads.snowballons.com/tukiwatch-latest.apk" download class="nav__cta">Download</a>
+  </div>
+</div>
 
-        <section id="description" class="section-padded">
-            <div class="container">
-                <h2>What is TukiWatch?</h2>
-                <p>TukiWatch is a mobile app designed for enthusiasts of live streaming content. It allows users to track their favorite streams from platforms like Twitch, YouTube Live, and others, receive real-time notifications when streams go live, and seamlessly watch them in-app. The app brings useful capabilities to a user-friendly mobile interface. Core functionalities include adding streams to a favorites list, setting custom alerts, browsing popular streams, and direct playback with quality selection. Main benefits: Saves time by automating stream tracking, provides ad-free viewing options where possible, supports offline notifications, and integrates with device media players for a smooth experience. It's free, open-source and prioritizes privacy with no unnecessary data collection.</p>
-            </div>
-        </section>
+<!-- ── Hero ────────────────────────────────────────────────────────────────── -->
+<section class="hero" id="hero">
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <p class="hero__eyebrow">Open source · Privacy-first · Free forever</p>
+      <h1>Track every<br>live stream.<br><em>Watch ad-free.</em></h1>
+      <p class="hero__lede">Add your favorite channels from Twitch, YouTube, Kick, and 20+ platforms. Get notified when they go live. Watch directly in the app — no account required.</p>
+      <div class="hero__actions">
+        <a id="hero-download-btn" href="https://downloads.snowballons.com/tukiwatch-latest.apk" download class="btn btn--primary">
+          Download APK
+          <span class="btn__version"></span>
+        </a>
+        <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="btn btn--ghost">View on GitHub</a>
+      </div>
+    </div>
+    <div class="hero__phone">
+      <img src="assets/hero-phone.png" alt="TukiWatch app showing live stream feed" width="280" height="638" fetchpriority="high">
+    </div>
+  </div>
+</section>
 
-        <section id="features" class="section-padded dark-section">
-            <div class="container">
-                <h2>Key Features</h2>
-                <div class="feature-grid">
-                    <article class="feature-card">
-                        <h3>🔄 Real-Time Stream Tracking</h3>
-                        <p>Add favorite channels or streamers and get instant notifications when they go live.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>📱 Integrated Viewing</h3>
-                        <p>Watch streams directly in the app with optimal quality.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>🔔 Custom Alerts</h3>
-                        <p>Set preferences for stream quality, categories (e.g., gaming, music, sports), and notification types.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>🔍 Discovery Tools</h3>
-                        <p>Browse trending streams, search by platform or keyword, and explore recommendations based on your favorites.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>🚫 Ad-Free Experience</h3>
-                        <p>Bypass ads on supported platforms.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>🔗 Cross-Platform Support</h3>
-                        <p>Works with major streaming sites like Twitch, YouTube, Facebook Live, and more.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>📴 Offline Mode</h3>
-                        <p>View saved stream info and history even without internet.</p>
-                    </article>
-                    <article class="feature-card">
-                        <h3>🔧 Open-Source Customization</h3>
-                        <p>Access the GitHub repo to modify or contribute to the app.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
+<!-- ── Platforms strip ─────────────────────────────────────────────────────── -->
+<section class="platforms">
+  <div class="container">
+    <p class="platforms__label">Works with your favourite platforms</p>
+    <div class="platforms__list">
+      <span class="platform-chip">Twitch</span>
+      <span class="platform-chip">YouTube</span>
+      <span class="platform-chip">Kick</span>
+      <span class="platform-chip">Facebook Live</span>
+      <span class="platform-chip">TikTok</span>
+      <span class="platform-chip">Instagram</span>
+      <span class="platform-chip">Twitch Turbo</span>
+      <span class="platform-chip">+ 20 more</span>
+    </div>
+  </div>
+</section>
 
-        <section id="download" class="section-padded dark-section text-center">
-            <div class="container">
-                <h2>Get TukiWatch Now!</h2>
-                <p>Ready to revolutionize your live streaming experience?</p>
-                <div class="cta-buttons">
-                    <a id="footer-download-btn" href="https://downloads.snowballons.com/tukiwatch-latest.apk" download class="btn primary-btn" aria-label="Download TukiWatch Android APK">Download APK (Android) <span class="version-text"></span></a>
-                    <a href="https://github.com/snowballons/streamwatch-api" target="_blank" class="btn secondary-btn" aria-label="Visit TukiWatch GitHub repository">View on GitHub (Source & Instructions)</a>
-                    <a href="#" class="btn secondary-btn disabled" onclick="return false;">App Store (Coming Soon)</a>
-                </div>
-            </div>
-        </section>
-    </main>
+<!-- ── Features ────────────────────────────────────────────────────────────── -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section__head">
+      <h2 class="section__title">Everything you need.<br>Nothing you don't.</h2>
+      <p class="section__lede">No accounts, no cloud sync, no data collection. Your favorites live on your device — period.</p>
+    </div>
 
-    <footer>
-        <div class="container">
-            <nav aria-label="Footer Navigation">
-                <div class="footer-links">
-                    <a href="privacy.html">Privacy Policy</a>
-                    <a href="terms.html">Terms of Service</a>
-                    <a href="#contact">Contact Us</a>
-                </div>
-            </nav>
-            <div class="social-links">
-                <a href="https://github.com/snowballons/streamwatch-api" target="_blank" rel="noopener noreferrer" aria-label="TukiWatch GitHub Repository">GitHub</a>
-                <a href="#" target="_blank" rel="noopener noreferrer">Discord (Coming Soon)</a>
-            </div>
-            <p>&copy; 2026 TukiWatch. All rights reserved.</p>
-            <address id="contact">Email: <a href="mailto:tukiwatch@snowballons.com" rel="nofollow">tukiwatch@snowballons.com</a></address>
+    <div class="features">
+      <!-- Full-width feature with image -->
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">01</span>
+          <h3 class="feature__title">Live Now tab</h3>
+          <p class="feature__desc">One screen shows only who's streaming right now. Filter by platform, search by name, pull to refresh. Your watchlist, at a glance.</p>
         </div>
-    </footer>
+        <div class="feature__img">
+          <img src="assets/empty-screen.png" alt="TukiWatch Live Now screen showing active streams" width="720" height="1640" loading="lazy">
+        </div>
+      </article>
 
-    <script src="script.js" defer></script>
+      <!-- Two features side by side -->
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">02</span>
+          <h3 class="feature__title">My List</h3>
+          <p class="feature__desc">Every saved channel, online or offline status, full add and remove management. Your library, synced to nothing — it just lives on your phone.</p>
+        </div>
+        <div class="feature__img">
+          <img src="assets/live-screen.png" alt="TukiWatch My List showing favorited streamers" width="720" height="1640" loading="lazy">
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">03</span>
+          <h3 class="feature__title">20+ platforms</h3>
+          <p class="feature__desc">Add streams from Twitch, YouTube, Kick, TikTok, Facebook, Instagram, and dozens more. One app for every platform you follow.</p>
+        </div>
+        <div class="feature__img">
+          <img src="assets/add-stream.png" alt="TukiWatch add stream dialog" width="720" height="1640" loading="lazy">
+        </div>
+      </article>
+
+      <!-- Two more features -->
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">04</span>
+          <h3 class="feature__title">In-app player</h3>
+          <p class="feature__desc">Native video playback with quality switching, picture-in-picture, and deep links to open streams in their official apps.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">05</span>
+          <h3 class="feature__title">Self-host your backend</h3>
+          <p class="feature__desc">Point the app at your own TukiWatch API instance via QR code or deep link. No rebuild required. Run it on your server, your terms.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">06</span>
+          <h3 class="feature__title">Ad-free where it counts</h3>
+          <p class="feature__desc">Configure a Twitch Turbo token on your backend for ad-free streams. The app respects your settings and plays what you pay for.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="feature__body">
+          <span class="feature__num">07</span>
+          <h3 class="feature__title">Privacy-first by design</h3>
+          <p class="feature__desc">No accounts. No cloud. No analytics. Your favorites are stored in local SQLite. We don't know who you are, what you watch, or where you stream from.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ── Screenshots carousel ────────────────────────────────────────────────── -->
+<section class="section section--dark" id="screenshots">
+  <div class="container">
+    <div class="section__head">
+      <h2 class="section__title">See it in action</h2>
+      <p class="section__lede">Real screenshots from the app. No mockups, no renderings.</p>
+    </div>
+  </div>
+  <div class="screens" aria-label="App screenshots">
+    <div class="screens__list">
+      <div class="screens__item">
+        <img src="assets/intro1.png" alt="TukiWatch onboarding screen" width="720" height="1640" loading="lazy">
+        <p class="screens__caption">Onboarding</p>
+      </div>
+      <div class="screens__item">
+        <img src="assets/intro2.png" alt="TukiWatch second onboarding screen" width="720" height="1640" loading="lazy">
+        <p class="screens__caption">Setup</p>
+      </div>
+      <div class="screens__item">
+        <img src="assets/live-screen.png" alt="TukiWatch live streams view" width="720" height="1640" loading="lazy">
+        <p class="screens__caption">Live Now</p>
+      </div>
+      <div class="screens__item">
+        <img src="assets/empty-screen.png" alt="TukiWatch empty state" width="720" height="1640" loading="lazy">
+        <p class="screens__caption">My List</p>
+      </div>
+      <div class="screens__item">
+        <img src="assets/add-stream.png" alt="TukiWatch add stream dialog" width="720" height="1640" loading="lazy">
+        <p class="screens__caption">Add Stream</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ────────────────────────────────────────────────────────── -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section__head">
+      <h2 class="section__title">Up and running in minutes</h2>
+      <p class="section__lede">Four steps. No account. No credit card.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step__num">01</div>
+        <h3 class="step__title">Download</h3>
+        <p class="step__desc">Get the latest APK from the button above. No Play Store — direct download, always up to date.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">02</div>
+        <h3 class="step__title">Connect</h3>
+        <p class="step__desc">The app uses our hosted API by default. Or point it at your own instance via QR code or deep link.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">03</div>
+        <h3 class="step__title">Add streams</h3>
+        <p class="step__desc">Search or paste URLs from Twitch, YouTube, Kick, and 20+ other platforms. They save locally.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">04</div>
+        <h3 class="step__title">Watch</h3>
+        <p class="step__desc">Check the Live Now tab whenever you want. Tap a stream to play in-app with quality switching.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Supporter teaser ────────────────────────────────────────────────────── -->
+<section class="section section--dark">
+  <div class="container">
+    <div class="section__head" style="text-align:center;">
+      <h2 class="section__title">Keep TukiWatch alive</h2>
+      <p class="section__lede" style="margin-inline:auto;">TukiWatch is free and open-source. Supporters get higher rate limits and early access. Every subscription funds continued development.</p>
+    </div>
+    <div style="text-align:center; margin-top:var(--space-xl);">
+      <a href="supporter.html" class="btn btn--primary">Become a Supporter — $5/mo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Download CTA ────────────────────────────────────────────────────────── -->
+<section class="cta-band" id="download">
+  <div class="container cta-band__inner">
+    <h2>Ready to never miss a stream?</h2>
+    <p>Download TukiWatch for Android — free, open-source, no account required.</p>
+    <div class="cta-band__actions">
+      <a id="footer-download-btn" href="https://downloads.snowballons.com/tukiwatch-latest.apk" download class="btn btn--primary">
+        Download APK
+        <span class="btn__version"></span>
+      </a>
+      <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="btn btn--ghost">Source code on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container footer__inner">
+    <p class="footer__brand">TUKIWATCH</p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="#features" class="footer__link">Features</a>
+      <a href="#screenshots" class="footer__link">Screenshots</a>
+      <a href="#how-it-works" class="footer__link">How it works</a>
+      <a href="supporter.html" class="footer__link">Support</a>
+      <a href="privacy.html" class="footer__link">Privacy</a>
+      <a href="terms.html" class="footer__link">Terms</a>
+      <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="footer__link">GitHub</a>
+    </nav>
+    <p class="footer__copy">&copy; 2026 TukiWatch. Open source under MIT license.</p>
+    <p class="footer__copy"><a href="mailto:tukiwatch@snowballons.com" class="footer__link">tukiwatch@snowballons.com</a></p>
+  </div>
+</footer>
+
+<script src="script.js" defer></script>
 </body>
 </html>

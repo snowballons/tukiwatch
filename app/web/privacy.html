@@ -1,86 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - TukiWatch</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Privacy Policy — TukiWatch</title>
+  <meta name="description" content="TukiWatch privacy policy. No accounts, no cloud, no data collection. Your favorites live on your device.">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">
-                <img src="logo.svg" alt="TukiWatch Logo">
-                <span>TukiWatch</span>
-            </div>
-            <ul>
-                <li><a href="index.html#features">Features</a></li>
-                <li><a href="index.html#about">About</a></li>
-                <li><a href="index.html#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
 
-    <main class="section-padded container">
-        <h1>Privacy Policy</h1>
-        <p><strong>Effective Date:</strong> February 9, 2026</p>
+<div class="nav" role="navigation" aria-label="Main">
+  <div class="nav__pill">
+    <a href="index.html" class="nav__brand">
+      <svg viewBox="0 0 250 250" aria-hidden="true"><path fill="currentColor" d="M125 10C62 10 10 62 10 125s52 115 115 115 115-52 115-115S188 10 125 10zm0 208c-51 0-93-41-93-93s42-93 93-93 93 41 93 93-42 93-93 93z"/><circle cx="125" cy="125" r="35"/></svg>
+      TUKIWATCH
+    </a>
+    <div class="nav__links">
+      <a href="index.html#features" class="nav__link">Features</a>
+      <a href="index.html#screenshots" class="nav__link">Screens</a>
+      <a href="supporter.html" class="nav__link">Support</a>
+      <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="nav__link">GitHub</a>
+    </div>
+    <a href="index.html#download" class="nav__cta">Download</a>
+  </div>
+</div>
 
-        <p>At TukiWatch, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.</p>
+<main class="section" style="padding-block:var(--space-3xl);">
+  <div class="container" style="max-width:720px;">
+    <a href="index.html" style="font-family:var(--font-display);font-size:var(--text-xs);color:var(--color-ink-3);letter-spacing:0.08em;text-transform:uppercase;display:inline-block;margin-bottom:var(--space-xl);">&larr; Back</a>
+    <h1 style="font-size:var(--text-3xl);margin-bottom:var(--space-xl);">Privacy Policy</h1>
+    <p style="color:var(--color-ink-3);font-size:var(--text-sm);margin-bottom:var(--space-2xl);"><strong>Effective Date:</strong> February 9, 2026</p>
 
-        <h2>1. Information We Collect</h2>
-        <p>We believe in collecting only minimal data necessary for the app's functionality. When you use TukiWatch, we may collect:</p>
-        <ul>
-            <li><strong>Stream Preferences:</strong> Information about your favorited channels, platforms, and viewing preferences are stored locally on your device. This data is used to personalize your experience and provide relevant notifications.</li>
-            <li><strong>User Settings:</strong> Your customized alert settings, theme preferences, and other in-app configurations are also stored locally on your device.</li>
-            <li><strong>Anonymous Usage Data (Optional):</strong> We may collect anonymized, aggregated usage statistics to understand how the app is used, identify popular features, and improve performance. This data does not identify you personally. You will have the option to opt-out of this collection.</li>
-        </ul>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">1. What We Collect</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We believe in collecting only what is necessary. TukiWatch stores your favorited channels, platforms, and preferences <strong>locally on your device</strong>. This data never leaves your phone unless you explicitly choose to use a self-hosted backend.</p>
 
-        <h2>2. How We Use Your Information</h2>
-        <p>The information we collect is used exclusively to:</p>
-        <ul>
-            <li>Provide and maintain the TukiWatch service.</li>
-            <li>Personalize your app experience, including stream recommendations and notifications.</li>
-            <li>Improve the functionality and performance of the app.</li>
-            <li>Communicate with you regarding updates or support (if you choose to contact us).</li>
-        </ul>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">2. What We Don't Collect</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We do not collect, store, or transmit: your stream history, viewing habits, device identifiers, location data, or any personally identifiable information. The app is designed to be invisible to us.</p>
 
-        <h2>3. Data Storage and Security</h2>
-        <p>Most of your personal preferences and stream data are stored locally on your device. We do not store your favorited streams or personal preferences on our servers unless explicitly stated for specific features (which will require your consent).</p>
-        <p>We are inspired by open-source principles and prioritize privacy. We employ reasonable security measures to protect against unauthorized access, alteration, disclosure, or destruction of any information under our control. However, no method of transmission over the Internet or method of electronic storage is 100% secure.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">3. The Backend API</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">When you use our hosted API, requests are processed statelessly. Rate-limit data is cached briefly in memory (or Redis if configured) and never associated with an identity. No logs are retained beyond the cache TTL.</p>
 
-        <h2>4. Sharing Your Information</h2>
-        <p>We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties. This excludes trusted third parties who assist us in operating our application, conducting our business, or servicing you, so long as those parties agree to keep this information confidential.</p>
-        <p>We may also release your information when we believe release is appropriate to comply with the law, enforce our site policies, or protect ours or others' rights, property, or safety.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">4. Self-Hosted Backends</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">If you run your own TukiWatch API instance, your data stays on your server. We have no access to it. The app connects via QR code or deep link — we are not involved in that connection.</p>
 
-        <h2>5. Third-Party Links</h2>
-        <p>Our app may contain links to third-party streaming platforms or services. These third-party sites have separate and independent privacy policies. We therefore have no responsibility or liability for the content and activities of these linked sites. Nonetheless, we seek to protect the integrity of our app and welcome any feedback about these sites.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">5. Third-Party Platforms</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch accesses public streaming data from platforms like Twitch, YouTube, and Kick. Your interaction with those platforms is governed by their own privacy policies. TukiWatch does not authenticate with them on your behalf.</p>
 
-        <h2>6. Children's Privacy</h2>
-        <p>TukiWatch is not intended for use by children under the age of 13. We do not knowingly collect personally identifiable information from children under 13. If we become aware that we have collected personal data from a child under the age of 13 without verification of parental consent, we take steps to remove that information from our servers.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">6. Children's Privacy</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch is not intended for children under 13. We do not knowingly collect data from children. If we become aware of it, we will remove it.</p>
 
-        <h2>7. Changes to This Privacy Policy</h2>
-        <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Effective Date" at the top of this Privacy Policy. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">7. Changes</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We may update this policy. Material changes will be noted here with a new effective date. Check back periodically.</p>
 
-        <h2>8. Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy, please contact us at: <a href="mailto:tukiwatch@snowballons.com">tukiwatch@snowballons.com</a></p>
-    </main>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">8. Contact</h2>
+    <p style="color:var(--color-ink-2);">Questions? Email <a href="mailto:tukiwatch@snowballons.com" style="color:var(--color-accent);">tukiwatch@snowballons.com</a></p>
+  </div>
+</main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-links">
-                <a href="privacy.html">Privacy Policy</a>
-                <a href="terms.html">Terms of Service</a>
-                <a href="index.html#contact">Contact Us</a>
-            </div>
-            <div class="social-links">
-                <a href="https://github.com/snowballons/streamwatch-api" target="_blank">GitHub</a>
-                <a href="#" target="_blank">Discord (Coming Soon)</a>
-            </div>
-            <p>&copy; 2026 TukiWatch. All rights reserved.</p>
-            <p>Email: tukiwatch@snowballons.com</p>
-        </div>
-    </footer>
-    <script src="script.js"></script>
+<footer class="footer">
+  <div class="container footer__inner">
+    <p class="footer__brand">TUKIWATCH</p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="index.html" class="footer__link">Home</a>
+      <a href="index.html#features" class="footer__link">Features</a>
+      <a href="privacy.html" class="footer__link">Privacy</a>
+      <a href="terms.html" class="footer__link">Terms</a>
+      <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="footer__link">GitHub</a>
+    </nav>
+    <p class="footer__copy">&copy; 2026 TukiWatch. Open source under MIT license.</p>
+  </div>
+</footer>
+<script src="script.js" defer></script>
 </body>
 </html>
