@@ -19,6 +19,14 @@ node_modules/
 web-build/
 *.apk
 
+# ======================
+# dev files
+# =======================
+new-implementation.md
+revised-plan.md
+WEBSITE_PLAN.md
+
+
 # =========================
 # Environment Variables
 # =========================

@@ -76,6 +76,10 @@ h1, h2, h3, h4 {
   height: 20px;
   fill: var(--color-accent);
 }
+.nav__logo {
+  width: 25px;
+  height: 25px;
+}
 .nav__links {
   display: flex;
   align-items: center;
