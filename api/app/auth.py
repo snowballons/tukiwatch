@@ -9,7 +9,6 @@ async def get_supporter_info(request: Request) -> dict:
 
     Returns dict with 'is_supporter' and 'tier' fields.
     """
-    token = request.headers.get("X-Supporter-Token")
     is_supporter = False
     tier = "free"
 
