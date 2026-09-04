@@ -1,83 +1,375 @@
 import Constants from 'expo-constants';
-import { ChevronRight, RotateCcw, Server, User } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Loader,
+  Monitor,
+  RefreshCw,
+  RotateCcw,
+  Shield,
+  User,
+} from 'lucide-react-native';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { exportFavorites, importFavorites } from '../../lib/db';
-import { useStreams } from '../context/StreamContext';
-import { useProfile } from '../hooks/useProfile';
-import { parseConnectUri, useBackendConfig, verifyBackend } from '../lib/backendConfig';
-import { checkForUpdate } from '../services/updateService';
-import { Palette, Spacing } from '../theme/Theme';
-import { BackendSettings } from './Settings/BackendSettings';
+import { useStreams } from '../../src/context/StreamContext';
+import { setUsername, useProfile } from '../../src/hooks/useProfile';
+import { setBackendConfig, useBackendConfig } from '../../src/lib/backendConfig';
+import { checkForUpdate } from '../../src/services/updateService';
+import { Palette, Spacing } from '../../src/theme/Theme';
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionContent}>{children}</View>
-  </View>
-);
+const TABS = ['Profile', 'Supporter', 'System'] as const;
+type Tab = (typeof TABS)[number];
 
-const ListItem: React.FC<{
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  isDestructive?: boolean;
-  icon?: React.ReactNode;
-}> = ({ label, value, onPress, isDestructive, icon }) => (
-  <TouchableOpacity onPress={onPress} style={styles.listItem} disabled={!onPress}>
-    {icon && <View style={styles.listItemIcon}>{icon}</View>}
-    <Text style={[styles.listItemLabel, isDestructive && styles.destructiveText]}>{label}</Text>
-    <View style={styles.listItemValueContainer}>
-      {value && <Text style={styles.listItemValue}>{value}</Text>}
-      {onPress && !isDestructive && <ChevronRight color={Palette.textMuted} size={18} />}
-    </View>
-  </TouchableOpacity>
-);
-
-// Read the app version from the built app config so it can't drift.
-// versionCode comes from app.json / EAS remote (with autoIncrement).
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const APP_VERSION_CODE = Constants.expoConfig?.android?.versionCode ?? 0;
 
-export function SettingsScreen() {
-  const { profile } = useProfile();
-  const { config, isCustom, loading: configLoading, save, reset } = useBackendConfig();
-  const { isBackendReachable, reconnect } = useStreams();
-  const [showAbout, setShowAbout] = useState(false);
-  const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [verificationDetail, setVerificationDetail] = useState<string | null>(null);
+// ─── Shared sub-components ──────────────────────────────────────────────────
 
-  const handleResetBackend = useCallback(() => {
-    Alert.alert('Use Default Server', 'Reset to the default TukiWatch backend?', [
+const SectionTitle: React.FC<{ children: string }> = ({ children }) => (
+  <Text style={styles.sectionTitle}>{children}</Text>
+);
+
+const Card: React.FC<{ children: React.ReactNode; style?: object }> = ({ children, style }) => (
+  <View style={[styles.card, style]}>{children}</View>
+);
+
+const CardRow: React.FC<{
+  label: string;
+  value: string;
+  onPress?: () => void;
+  right?: React.ReactNode;
+}> = ({ label, value, onPress, right }) => (
+  <TouchableOpacity style={styles.cardRow} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
+    <View style={styles.cardRowLeft}>
+      <Text style={styles.cardRowLabel}>{label}</Text>
+      <Text style={styles.cardRowValue}>{value}</Text>
+    </View>
+    {right ?? <ChevronRight color={Palette.textMuted} size={18} />}
+  </TouchableOpacity>
+);
+
+// ─── Profile Tab ────────────────────────────────────────────────────────────
+
+function ProfileTab() {
+  const { profile, refetch } = useProfile();
+  const { streams } = useStreams();
+  const [editing, setEditing] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const openEdit = useCallback(() => {
+    setTempName(profile?.username ?? '');
+    setEditing(true);
+  }, [profile]);
+
+  const saveName = useCallback(async () => {
+    const trimmed = tempName.trim();
+    if (!trimmed || trimmed === profile?.username) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await setUsername(trimmed);
+      await refetch();
+    } catch {
+      Alert.alert('Error', 'Failed to save name.');
+    } finally {
+      setSaving(false);
+      setEditing(false);
+    }
+  }, [tempName, profile, refetch]);
+
+  const stats = useMemo(() => {
+    const live = streams.filter((s) => s.status === 'online');
+    const platforms = new Set(live.map((s) => s.platform).filter(Boolean)).size;
+    return { total: streams.length, platforms, live: live.length };
+  }, [streams]);
+
+  return (
+    <>
+      {/* Avatar + name */}
+      <View style={styles.avatarSection}>
+        <TouchableOpacity onPress={openEdit} activeOpacity={0.8}>
+          <View style={styles.avatarRing}>
+            <View style={styles.avatarCircle}>
+              <User color={Palette.text} size={28} />
+            </View>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={openEdit} activeOpacity={0.8}>
+          <View style={styles.nameRow}>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {profile?.username ?? 'Local User'}
+            </Text>
+            <ChevronRight color={Palette.textMuted} size={16} />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Stats */}
+      <Card style={styles.statsCard}>
+        <View style={styles.statsRow}>
+          {[
+            { label: 'Tracked', value: String(stats.total) },
+            { label: 'Platforms', value: String(stats.platforms) },
+            { label: 'Live Now', value: String(stats.live) },
+          ].map((s) => (
+            <View key={s.label} style={styles.statCell}>
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </View>
+          ))}
+        </View>
+      </Card>
+
+      {/* Data */}
+      <View style={styles.gapMd} />
+      <SectionTitle>DATA</SectionTitle>
+      <Card>
+        <CardRow
+          label="Export Library"
+          value=""
+          onPress={async () => {
+            try {
+              const shared = await exportFavorites();
+              if (!shared)
+                Alert.alert('No Share App', 'No app available to share the backup file.');
+            } catch {
+              Alert.alert('Error', 'Failed to export data.');
+            }
+          }}
+        />
+        <View style={styles.divider} />
+        <CardRow
+          label="Import Library"
+          value=""
+          onPress={() =>
+            Alert.alert(
+              'Import Data',
+              'This will add streams from a backup file to your library.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Import',
+                  onPress: async () => {
+                    try {
+                      const { imported, skipped } = await importFavorites();
+                      if (imported > 0) {
+                        Alert.alert(
+                          'Import Complete',
+                          `${imported} stream${imported === 1 ? '' : 's'} imported.${skipped > 0 ? ` ${skipped} skipped.` : ''}`
+                        );
+                      } else {
+                        Alert.alert('Nothing Imported', 'No new streams found in the backup file.');
+                      }
+                    } catch (err: unknown) {
+                      const msg =
+                        err instanceof Error ? err.message : 'Could not read the backup file.';
+                      Alert.alert('Import Failed', msg);
+                    }
+                  },
+                },
+              ]
+            )
+          }
+        />
+      </Card>
+
+      {/* Edit name modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={editing}
+        onRequestClose={() => setEditing(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEditing(false)}
+        >
+          <TouchableOpacity style={styles.modalCard} activeOpacity={1}>
+            <Text style={styles.modalTitle}>Edit Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder="Enter your name"
+              placeholderTextColor={Palette.textMuted}
+              autoFocus
+              maxLength={30}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setEditing(false)}>
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtnSave, saving && styles.modalBtnSaveDisabled]}
+                onPress={saveName}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color={Palette.text} />
+                ) : (
+                  <Text style={styles.modalBtnSaveText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+}
+
+// ─── Supporter Tab ──────────────────────────────────────────────────────────
+
+function SupporterTab() {
+  const { config, isCustom, loading: configLoading, reset, reload } = useBackendConfig();
+  const { isBackendReachable, reconnect } = useStreams();
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = useCallback(async () => {
+    Alert.alert('Reset Server', 'Reset to the default TukiWatch backend?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Reset',
         style: 'destructive',
         onPress: async () => {
-          await reset();
-          await reconnect();
-          setVerificationDetail('Reset to default');
+          setResetting(true);
+          try {
+            await reset();
+            await reconnect();
+          } finally {
+            setResetting(false);
+          }
         },
       },
     ]);
-  }, [reconnect, reset]);
+  }, [reset, reconnect]);
 
-  const checkForUpdates = useCallback(async (isManual: boolean = false) => {
+  const handleEditServer = useCallback(() => {
+    Alert.prompt(
+      'Change Server',
+      'Enter the API URL of your TukiWatch backend.',
+      async (url) => {
+        if (!url) return;
+        try {
+          await setBackendConfig({ apiUrl: url.replace(/\/+$/, '') });
+          await reload();
+        } catch {
+          Alert.alert('Error', 'Failed to update server configuration.');
+        }
+      },
+      'plain-text',
+      config?.apiUrl
+    );
+  }, [config, reload]);
+
+  return (
+    <>
+      {/* Connection status */}
+      <Card>
+        <Text style={styles.cardSectionLabel}>CONNECTION</Text>
+        {configLoading ? (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" color={Palette.textMuted} />
+            <Text style={styles.loadingText}>Loading…</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.statusRow}>
+              <View
+                style={[
+                  styles.statusDot,
+                  isBackendReachable ? styles.statusDotOk : styles.statusDotErr,
+                ]}
+              />
+              <View style={styles.statusTexts}>
+                <Text style={styles.statusTextPrimary}>
+                  {isBackendReachable ? 'Connected' : 'Unreachable'}
+                </Text>
+                <Text style={styles.statusTextSub}>
+                  {isCustom ? 'Custom server' : 'Default server'}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.divider} />
+            <CardRow label="Server URL" value={config?.apiUrl ?? ''} />
+            <View style={styles.divider} />
+            <TouchableOpacity style={styles.editServerRow} onPress={handleEditServer}>
+              <Text style={styles.editServerText}>Change Server</Text>
+              <ChevronRight color={Palette.textMuted} size={18} />
+            </TouchableOpacity>
+          </>
+        )}
+      </Card>
+
+      {/* Supporter CTA */}
+      <View style={styles.gapMd} />
+      <Card style={styles.supporterCard}>
+        <View style={styles.supporterHeader}>
+          <View style={styles.supporterBadge}>
+            <Text style={styles.supporterBadgeText}>FREE</Text>
+          </View>
+          <Text style={styles.supporterTitle}>Supporter Access</Text>
+        </View>
+        <Text style={styles.supporterDesc}>
+          Supporter tokens and session management are handled through Lemon Squeezy licensing.
+        </Text>
+        <TouchableOpacity
+          style={styles.supporterBtn}
+          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/pricing')}
+        >
+          <Text style={styles.supporterBtnText}>Get Supporter Access</Text>
+        </TouchableOpacity>
+      </Card>
+
+      {/* Reset */}
+      <View style={styles.gapMd} />
+      <Card>
+        <TouchableOpacity
+          style={styles.destructiveRow}
+          onPress={handleReset}
+          disabled={resetting}
+          activeOpacity={0.7}
+        >
+          <View style={styles.destructiveRowLeft}>
+            <RotateCcw color="#EF4444" size={18} />
+            <Text style={styles.destructiveText}>Reset to Default Server</Text>
+          </View>
+          {resetting ? (
+            <ActivityIndicator size="small" color="#EF4444" />
+          ) : (
+            <ChevronRight color="#EF4444" size={18} />
+          )}
+        </TouchableOpacity>
+      </Card>
+    </>
+  );
+}
+
+// ─── System Tab ─────────────────────────────────────────────────────────────
+
+function SystemTab() {
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+
+  const checkForUpdates = useCallback(async (isManual: boolean) => {
     if (isManual) setCheckingUpdate(true);
     try {
       const result = await checkForUpdate(APP_VERSION_CODE);
-
       if (result.available && result.manifest) {
         const { version, apkUrl, releaseNotes, mandatory } = result.manifest;
         Alert.alert('Update Available', `Version ${version} is ready.\n\n${releaseNotes}`, [
@@ -87,282 +379,581 @@ export function SettingsScreen() {
       } else if (isManual) {
         Alert.alert('Up to Date', `You are running the latest version (${APP_VERSION}).`);
       }
-    } catch (_error) {
-      if (isManual) {
-        Alert.alert('Error', 'Failed to check for updates. Please check your internet connection.');
-      }
+    } catch {
+      if (isManual) Alert.alert('Error', 'Failed to check for updates.');
     } finally {
       if (isManual) setCheckingUpdate(false);
     }
   }, []);
 
   useEffect(() => {
-    // Silently check for updates on mount
     checkForUpdates(false);
   }, [checkForUpdates]);
 
-  const handleCopyrightPress = () => {
-    Linking.openURL('https://snowballons.com');
-  };
-
-  const handleExportData = async () => {
-    try {
-      const shared = await exportFavorites();
-      if (!shared) {
-        Alert.alert('No Share App', 'No app available to share the backup file with.');
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      Alert.alert('Error', 'Failed to export data.');
-    }
-  };
-
-  const handleImportData = () => {
-    Alert.alert('Import Data', 'This will add streams from a backup file to your library.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Import',
-        onPress: async () => {
-          try {
-            const { imported, skipped } = await importFavorites();
-            if (imported > 0) {
-              Alert.alert(
-                'Import Complete',
-                `${imported} stream${imported === 1 ? '' : 's'} imported.${
-                  skipped > 0 ? ` ${skipped} skipped (already in library).` : ''
-                }`
-              );
-            } else {
-              Alert.alert('Nothing Imported', 'No new streams were found in the backup file.');
-            }
-          } catch (error: any) {
-            Alert.alert('Import Failed', error.message || 'Could not read the backup file.');
-          }
-        },
-      },
-    ]);
-  };
-
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-
-      {profile && (
-        <Section title="Account">
-          <View style={styles.profileCard}>
-            <View style={styles.avatarContainer}>
-              <User color={Palette.text} size={24} />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.username}>{profile.username}</Text>
-            </View>
+    <>
+      {/* About card */}
+      <Card>
+        <View style={styles.aboutHeader}>
+          <View style={styles.aboutIconWrap}>
+            <Monitor color={Palette.primary} size={24} />
           </View>
-        </Section>
-      )}
-
-      <Section title="Backend">
-        <View style={styles.listItem}>
-          <View style={styles.backendStatusContainer}>
-            <Server color={Palette.textMuted} size={18} />
-            <View style={styles.backendStatusText}>
-              <Text style={styles.listItemLabel}>
-                {configLoading || !config ? 'Loading...' : config.apiUrl}
-              </Text>
-              <Text
-                style={[
-                  styles.backendStatusDetail,
-                  !isBackendReachable && styles.backendStatusDetailError,
-                ]}
-              >
-                {!isBackendReachable
-                  ? 'Backend unreachable'
-                  : isCustom
-                    ? 'Custom backend · connected'
-                    : 'Default backend · connected'}
-                {verificationDetail ? ` · ${verificationDetail}` : ''}
-              </Text>
-            </View>
+          <View style={styles.aboutInfo}>
+            <Text style={styles.aboutTitle}>TukiWatch</Text>
+            <Text style={styles.aboutVersion}>v{APP_VERSION}</Text>
           </View>
         </View>
-        {isCustom && (
-          <ListItem
-            label="Use Default Server"
-            onPress={handleResetBackend}
-            icon={<RotateCcw color={Palette.textMuted} size={18} />}
-          />
-        )}
-      </Section>
-      <Section title="Supporter">
-        <BackendSettings />
-      </Section>
-
-      {verifying && (
-        <View style={styles.verifyingOverlay}>
-          <ActivityIndicator size="large" color={Palette.primary} />
-          <Text style={styles.verifyingText}>Connecting to backend...</Text>
-        </View>
-      )}
-
-      <Section title="About">
-        <ListItem label="About TukiWatch" onPress={() => setShowAbout(!showAbout)} />
-        {showAbout && (
-          <Text style={styles.aboutText}>
-            Dive into a world of live entertainment! TukiWatch is your personal portal to endless
-            streams, bringing all your favorite content directly to your screen. Experience
-            seamless, high-quality viewing of live events, gaming, music, and more, all in one
-            place.
-          </Text>
-        )}
-      </Section>
-
-      <Section title="Information">
+        <Text style={styles.aboutDesc}>
+          Your personal portal to live streams. Gaming, music, events — all in one place.
+        </Text>
         <TouchableOpacity
-          onPress={() => checkForUpdates(true)}
-          style={styles.listItem}
-          disabled={checkingUpdate}
+          style={styles.copyrightRow}
+          onPress={() => Linking.openURL('https://snowballons.com')}
         >
-          <Text style={styles.listItemLabel}>Check for Updates</Text>
-          <View style={styles.listItemValueContainer}>
+          <Text style={styles.copyrightText}>© 2026 snowballons</Text>
+        </TouchableOpacity>
+      </Card>
+
+      {/* App */}
+      <View style={styles.gapMd} />
+      <SectionTitle>APP</SectionTitle>
+      <Card>
+        <TouchableOpacity
+          style={styles.listRow}
+          onPress={() => checkForUpdates(true)}
+          disabled={checkingUpdate}
+          activeOpacity={0.7}
+        >
+          <View style={styles.listRowLeft}>
+            <RefreshCw color={Palette.textMuted} size={18} />
+            <Text style={styles.listRowLabel}>Check for Updates</Text>
+          </View>
+          <View style={styles.listRowRight}>
             {checkingUpdate ? (
               <ActivityIndicator size="small" color={Palette.textMuted} />
             ) : (
-              <>
-                <Text style={styles.listItemValue}>v{APP_VERSION}</Text>
-                <ChevronRight color={Palette.textMuted} size={18} />
-              </>
+              <Text style={styles.listRowValue}>v{APP_VERSION}</Text>
             )}
+            <ChevronRight color={Palette.textMuted} size={18} />
           </View>
         </TouchableOpacity>
-        <ListItem label="© 2026 snowballons" onPress={handleCopyrightPress} />
-      </Section>
+        <View style={styles.divider} />
+        <TouchableOpacity
+          style={styles.listRow}
+          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/terms')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.listRowLeft}>
+            <Shield color={Palette.textMuted} size={18} />
+            <Text style={styles.listRowLabel}>Terms of Service</Text>
+          </View>
+          <ChevronRight color={Palette.textMuted} size={18} />
+        </TouchableOpacity>
+        <View style={styles.divider} />
+        <TouchableOpacity
+          style={styles.listRow}
+          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/privacy')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.listRowLeft}>
+            <Shield color={Palette.textMuted} size={18} />
+            <Text style={styles.listRowLabel}>Privacy Policy</Text>
+          </View>
+          <ChevronRight color={Palette.textMuted} size={18} />
+        </TouchableOpacity>
+      </Card>
 
-      <Section title="Data">
-        <ListItem label="Export Data" onPress={handleExportData} />
-        <ListItem label="Import Data" onPress={handleImportData} />
-      </Section>
-    </ScrollView>
+      {/* Developer */}
+      <View style={styles.gapMd} />
+      <SectionTitle>DEVELOPER</SectionTitle>
+      <Card>
+        <TouchableOpacity
+          style={styles.destructiveRow}
+          onPress={() =>
+            Alert.alert(
+              'Clear Cache',
+              'Cache clearing is not yet available. It will be added in a future update.'
+            )
+          }
+          activeOpacity={0.7}
+        >
+          <View style={styles.destructiveRowLeft}>
+            <Loader color="#EF4444" size={18} />
+            <Text style={styles.destructiveText}>Clear Cache</Text>
+          </View>
+          <ChevronRight color="#EF4444" size={18} />
+        </TouchableOpacity>
+      </Card>
+    </>
   );
 }
+
+// ─── Main ───────────────────────────────────────────────────────────────────
+
+export function SettingsScreen() {
+  const [activeTab, setActiveTab] = useState<Tab>('Profile');
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.headerTitle}>Settings</Text>
+      <View style={styles.tabBar}>
+        {TABS.map((tab) => {
+          const active = activeTab === tab;
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={styles.tab}
+              onPress={() => setActiveTab(tab)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{tab}</Text>
+              {active && <View style={styles.tabIndicator} />}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {activeTab === 'Profile' && <ProfileTab />}
+        {activeTab === 'Supporter' && <SupporterTab />}
+        {activeTab === 'System' && <SystemTab />}
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─── Styles ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Palette.background,
+  },
+  headerTitle: {
+    color: Palette.text,
+    fontSize: 28,
+    fontWeight: 'bold',
+    paddingHorizontal: Spacing.lg,
     paddingTop: 60,
+    paddingBottom: Spacing.md,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.border,
     paddingHorizontal: Spacing.lg,
   },
-  title: {
-    color: Palette.text,
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: Spacing.xl,
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    position: 'relative',
   },
-  section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    color: Palette.textMuted,
-    fontSize: 14,
+  tabLabel: {
+    fontSize: 15,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: Spacing.md,
+    color: Palette.textMuted,
   },
-  sectionContent: {
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    overflow: 'hidden',
+  tabLabelActive: {
+    color: Palette.primary,
   },
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-  },
-  avatarContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  tabIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: 16,
+    right: 16,
+    height: 2,
     backgroundColor: Palette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 1,
   },
-  profileInfo: {
-    marginLeft: Spacing.md,
+  scroll: {
     flex: 1,
   },
-  username: {
-    color: Palette.text,
-    fontSize: 18,
-    fontWeight: '600',
+  gapMd: {
+    marginTop: Spacing.lg,
   },
-  aboutText: {
-    color: Palette.text,
-    fontSize: 15,
-    lineHeight: 22,
-    padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Palette.border,
+
+  // Card
+  card: {
+    backgroundColor: Palette.card,
+    borderRadius: 12,
+    marginHorizontal: Spacing.lg,
+    overflow: 'hidden',
   },
-  listItem: {
+  cardSectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Palette.textMuted,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.8,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  cardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Palette.border,
   },
-  listItemLabel: {
-    color: Palette.text,
-    fontSize: 16,
-  },
-  listItemValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  listItemValue: {
-    color: Palette.textMuted,
-    fontSize: 16,
-  },
-  destructiveText: {
-    color: '#EF4444',
-  },
-  listItemIcon: {
+  cardRowLeft: {
+    flex: 1,
     marginRight: Spacing.md,
   },
-  backendStatusContainer: {
+  cardRowLabel: {
+    fontSize: 12,
+    color: Palette.textMuted,
+    marginBottom: 2,
+  },
+  cardRowValue: {
+    fontSize: 15,
+    color: Palette.text,
+    fontFamily: 'monospace',
+  },
+  editServerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  editServerText: {
+    fontSize: 15,
+    color: Palette.primary,
+    fontWeight: '600',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Palette.textMuted,
+  },
+
+  // Status
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: Spacing.sm,
+  },
+  statusDotOk: {
+    backgroundColor: Palette.live,
+  },
+  statusDotErr: {
+    backgroundColor: '#EF4444',
+  },
+  statusTexts: {
+    flex: 1,
+  },
+  statusTextPrimary: {
+    fontSize: 15,
+    color: Palette.text,
+    fontWeight: '600',
+  },
+  statusTextSub: {
+    fontSize: 13,
+    color: Palette.textMuted,
+    marginTop: 2,
+  },
+
+  // Supporter
+  supporterCard: {
+    backgroundColor: Palette.card,
+    borderRadius: 12,
+    marginHorizontal: Spacing.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Palette.border,
+  },
+  supporterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  supporterBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: 'rgba(43, 53, 255, 0.15)',
+  },
+  supporterBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Palette.primary,
+    letterSpacing: 0.5,
+  },
+  supporterTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+  supporterDesc: {
+    fontSize: 13,
+    color: Palette.textMuted,
+    lineHeight: 20,
+    marginBottom: Spacing.md,
+  },
+  supporterBtn: {
+    backgroundColor: Palette.primary,
+    borderRadius: 8,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+  },
+  supporterBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+
+  // Destructive row
+  destructiveRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  destructiveRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  destructiveText: {
+    fontSize: 15,
+    color: '#EF4444',
+    fontWeight: '500',
+  },
+
+  // Divider
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Palette.border,
+    marginLeft: Spacing.md,
+    marginRight: Spacing.md,
+  },
+
+  // Section title
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Palette.textMuted,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.8,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+
+  // Avatar section
+  avatarSection: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  avatarRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Palette.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  avatarCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+
+  // Stats
+  statsCard: {
+    marginHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  statsRow: {
+    flexDirection: 'row',
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Palette.textMuted,
+    marginTop: 2,
+  },
+
+  // About
+  aboutHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    flex: 1,
+    paddingBottom: Spacing.md,
   },
-  backendStatusText: {
-    flex: 1,
-  },
-  backendStatusDetail: {
-    color: Palette.live,
-    fontSize: 13,
-    marginTop: 2,
-  },
-  backendStatusDetailError: {
-    color: '#EF4444',
-  },
-  verifyingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+  aboutIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(43, 53, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
   },
-  verifyingText: {
-    color: '#fff',
-    marginTop: Spacing.md,
+  aboutInfo: {
+    flex: 1,
+  },
+  aboutTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Palette.text,
+  },
+  aboutVersion: {
+    fontSize: 13,
+    color: Palette.textMuted,
+    marginTop: 2,
+  },
+  aboutDesc: {
+    fontSize: 14,
+    color: Palette.textMuted,
+    lineHeight: 22,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  copyrightRow: {
+    borderTopWidth: 1,
+    borderTopColor: Palette.border,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  copyrightText: {
+    fontSize: 13,
+    color: Palette.textMuted,
+  },
+
+  // List row
+  listRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  listRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  listRowLabel: {
+    fontSize: 15,
+    color: Palette.text,
+  },
+  listRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  listRowValue: {
+    fontSize: 14,
+    color: Palette.textMuted,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalCard: {
+    backgroundColor: Palette.card,
+    borderRadius: 16,
+    padding: Spacing.lg,
+    width: '100%',
+    maxWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Palette.text,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
+  },
+  modalInput: {
+    backgroundColor: Palette.background,
+    borderRadius: 10,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     fontSize: 16,
+    color: Palette.text,
+    borderWidth: 1,
+    borderColor: Palette.border,
+    marginBottom: Spacing.md,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  modalBtnCancel: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: 10,
+    backgroundColor: Palette.secondary,
+    alignItems: 'center',
+  },
+  modalBtnCancelText: {
+    fontSize: 15,
+    color: Palette.textMuted,
+    fontWeight: '600',
+  },
+  modalBtnSave: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: 10,
+    backgroundColor: Palette.primary,
+    alignItems: 'center',
+  },
+  modalBtnSaveDisabled: {
+    opacity: 0.5,
+  },
+  modalBtnSaveText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  bottomSpacer: {
+    height: 40,
   },
 });
