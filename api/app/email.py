@@ -3,6 +3,8 @@
 import logging
 
 logger = logging.getLogger(__name__)
+
+
 class EmailService:
     """Service for sending supporter notifications via email."""
 
@@ -25,8 +27,11 @@ class EmailService:
         """
         logger.warning(
             "Supporter notifications are now handled through Lemon Squeezy webhook notifications. "
-            "Email sending for %s disabled.", email
+            "Email sending for %s disabled.",
+            email,
         )
         return False
+
+
 # Global instance
 email_service = EmailService()

@@ -50,6 +50,7 @@ def _make_app_with_rate_limit_middleware() -> FastAPI:
 
 class TestCustomRateLimitMiddleware:
     """Tests for the per-endpoint rate limiting middleware."""
+
     def test_requests_within_limit_are_allowed(self):
         """The first N requests within the window must all succeed."""
         app = _make_app_with_rate_limit_middleware()
@@ -225,7 +226,7 @@ class TestInMemoryRateLimiter:
 
         limiter.check_limit("ip:1.2.3.4", "/test", limit)
         limiter.check_limit("ip:1.2.3.4", "/test", limit)
-        
+
         # Should be limited now
         result = limiter.check_limit("ip:1.2.3.4", "/test", limit)
         assert result.allowed is False
@@ -236,7 +237,6 @@ class TestInMemoryRateLimiter:
         # After cleanup, should be allowed again
         result = limiter.check_limit("ip:1.2.3.4", "/test", limit)
         assert result.allowed is True
-
 
     def test_backend_type_returns_correct_string(self):
         """backend_type should return 'memory' for in-memory limiter."""

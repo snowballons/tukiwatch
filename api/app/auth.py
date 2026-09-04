@@ -1,6 +1,5 @@
 """Authentication utilities for supporter token validation."""
 
-
 from fastapi import Request
 
 
@@ -18,7 +17,11 @@ async def get_supporter_info(request: Request) -> dict:
     tier = "free"
 
     return {"is_supporter": is_supporter, "tier": tier}
-def get_client_key(request: Request, is_supporter: bool, token: str | None = None) -> str:
+
+
+def get_client_key(
+    request: Request, is_supporter: bool, token: str | None = None
+) -> str:
     """Generate rate limiting tracking key based on authentication tier."""
     if is_supporter and token:
         return f"token:{token}"

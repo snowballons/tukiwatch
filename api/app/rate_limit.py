@@ -41,7 +41,9 @@ class RateLimitConfig:
     }
 
     @classmethod
-    def get_limit_for_path(cls, path: str, is_supporter: bool = False) -> tuple[int, int]:
+    def get_limit_for_path(
+        cls, path: str, is_supporter: bool = False
+    ) -> tuple[int, int]:
         """Get rate limit for specific path and tier"""
         limits = cls.SUPPORTER_LIMITS if is_supporter else cls.FREE_LIMITS
 

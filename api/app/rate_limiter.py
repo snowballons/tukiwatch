@@ -13,17 +13,20 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RateLimitResult:
     """Result of a rate limit check."""
+
     allowed: bool
     retry_after: int  # seconds until next request allowed (0 if allowed)
-    remaining: int    # requests remaining in current window
-    limit: int        # max requests in window
-    reset_time: int   # unix timestamp when window resets
+    remaining: int  # requests remaining in current window
+    limit: int  # max requests in window
+    reset_time: int  # unix timestamp when window resets
 
 
 class BaseRateLimiter(ABC):
     """Abstract base class for rate limiters."""
 
-    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(
+        self, client_key: str, endpoint: str, limit: tuple[int, int]
+    ) -> RateLimitResult:
         """Check if request is within rate limit.
 
         Args:
@@ -34,7 +37,6 @@ class BaseRateLimiter(ABC):
         Returns:
             RateLimitResult with allowance decision and metadata
         """
-
 
     @abstractmethod
     def get_stats(self) -> dict:
@@ -49,7 +51,7 @@ class BaseRateLimiter(ABC):
 # Lua script for atomic sliding window rate limiting in Redis
 # KEYS[1] = rate limit key (ratelimit:{ip}:{endpoint})
 # ARGV[1] = current timestamp (milliseconds)
-# ARGV[2] = window start timestamp (milliseconds) 
+# ARGV[2] = window start timestamp (milliseconds)
 # ARGV[3] = max requests
 # ARGV[4] = window size (milliseconds)
 # ARGV[5] = TTL (seconds)
@@ -147,13 +149,15 @@ class RedisRateLimiter(BaseRateLimiter):
     def _make_key(self, client_key: str, endpoint: str) -> str:
         """Create Redis key for rate limiting."""
         # Normalize endpoint to match RateLimitConfig patterns
-        normalized = endpoint.lstrip('/')
+        normalized = endpoint.lstrip("/")
         if not normalized:
-            normalized = 'root'
+            normalized = "root"
         # client_key already includes prefix (ip:xxx or token:xxx)
         return f"ratelimit:{client_key}:{normalized}"
 
-    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(
+        self, client_key: str, endpoint: str, limit: tuple[int, int]
+    ) -> RateLimitResult:
         max_requests, time_window = limit
         now_ms = int(time.time() * 1000)
         window_start_ms = now_ms - (time_window * 1000)
@@ -164,7 +168,7 @@ class RedisRateLimiter(BaseRateLimiter):
         try:
             result = self._script(
                 keys=[key],
-                args=[now_ms, window_start_ms, max_requests, time_window * 1000, ttl]
+                args=[now_ms, window_start_ms, max_requests, time_window * 1000, ttl],
             )
             allowed, retry_after, remaining, limit_val, reset_time = result
             return RateLimitResult(
@@ -227,7 +231,9 @@ class InMemoryRateLimiter(BaseRateLimiter):
 
         self._last_cleanup = current_time
 
-    def check_limit(self, client_key: str, endpoint: str, limit: tuple[int, int]) -> RateLimitResult:
+    def check_limit(
+        self, client_key: str, endpoint: str, limit: tuple[int, int]
+    ) -> RateLimitResult:
         self._cleanup_old_entries()
 
         max_requests, time_window = limit
@@ -254,8 +260,12 @@ class InMemoryRateLimiter(BaseRateLimiter):
         # Check if limit exceeded
         if current_count >= max_requests:
             # Calculate retry after time
-            oldest_request = min(self._requests[client_key][endpoint], key=lambda x: x[0])[0]
-            retry_after = int((oldest_request + (time_window * 1000) - now_ms) / 1000) + 1
+            oldest_request = min(
+                self._requests[client_key][endpoint], key=lambda x: x[0]
+            )[0]
+            retry_after = (
+                int((oldest_request + (time_window * 1000) - now_ms) / 1000) + 1
+            )
             retry_after = max(retry_after, 1)
             return RateLimitResult(
                 allowed=False,
@@ -276,6 +286,7 @@ class InMemoryRateLimiter(BaseRateLimiter):
             limit=max_requests,
             reset_time=reset_time,
         )
+
     def get_stats(self) -> dict:
         self._cleanup_old_entries()
         total_keys = sum(len(v) for v in self._requests.values())
@@ -288,8 +299,6 @@ class InMemoryRateLimiter(BaseRateLimiter):
     @property
     def backend_type(self) -> str:
         return "memory"
-
-
 
 
 class RateLimiterFactory:
@@ -317,7 +326,8 @@ class RateLimiterFactory:
                 return self._limiter
             except Exception as exc:
                 logger.warning(
-                    "Redis unavailable (%s), falling back to in-memory rate limiter", exc
+                    "Redis unavailable (%s), falling back to in-memory rate limiter",
+                    exc,
                 )
                 self._redis_connected = False
 

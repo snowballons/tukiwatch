@@ -9,13 +9,14 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
-import { Home, Library, PlusCircle, Settings } from 'lucide-react-native';
+import { Home, Library, PlusCircle, Search, Settings } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { StreamProvider } from './src/context/StreamContext';
 import { AddScreen } from './src/screens/AddScreen';
 import { ConnectScreen } from './src/screens/ConnectScreen';
+import { DiscoveryScreen } from './src/screens/DiscoveryScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
@@ -32,6 +33,7 @@ type MainTabsParamList = {
   Home: undefined;
   'My List': undefined;
   Add: undefined;
+  Discovery: undefined;
   Settings: undefined;
 };
 
@@ -50,6 +52,7 @@ const linking: LinkingOptions<RootStackParamList> = {
           Home: 'home',
           'My List': 'library',
           Add: 'add',
+          Discovery: 'discovery',
           Settings: 'settings',
         },
       },
@@ -96,6 +99,13 @@ function TabNavigator() {
             </View>
           ),
           tabBarLabel: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Discovery"
+        component={DiscoveryScreen}
+        options={{
+          tabBarIcon: ({ color }) => <Search color={color} size={24} />,
         }}
       />
       <Tab.Screen

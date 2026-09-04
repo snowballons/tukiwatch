@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware import CustomRateLimitMiddleware
 from app.rate_limiter import rate_limiter_factory
-from app.routers import streams
+from app.routers import discovery, streams
 from config import config
 
 # Configure logging
@@ -36,7 +36,9 @@ app.add_middleware(
 )
 
 # supporters router removed in Phase 0 (moved to session-based system in Phase 2)
+app.include_router(discovery.router, prefix="/api/discover")
 app.include_router(streams.router, prefix="/api")
+
 
 @app.get("/")
 def read_root():

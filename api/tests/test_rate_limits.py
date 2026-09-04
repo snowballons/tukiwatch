@@ -10,17 +10,17 @@ def test_free_tier_rate_limit(client):
     try:
         # Reset rate limiter state to ensure clean slate
         limiter = rate_limiter_factory.create()
-        if hasattr(limiter, '_requests'):
+        if hasattr(limiter, "_requests"):
             limiter._requests.clear()
 
         # Set low limits for testing
-        RateLimitConfig.FREE_LIMITS = {'default': (1, 60)}
+        RateLimitConfig.FREE_LIMITS = {"default": (1, 60)}
 
         test_url = "https://twitch.tv/testchannel"
 
         # Free tier should hit limit after 1 request
-        free_resp1 = client.get('/api/resolve', params={'url': test_url})
-        free_resp2 = client.get('/api/resolve', params={'url': test_url})
+        free_resp1 = client.get("/api/resolve", params={"url": test_url})
+        free_resp2 = client.get("/api/resolve", params={"url": test_url})
         assert free_resp1.status_code == 200
         assert free_resp2.status_code == 429
     finally:
