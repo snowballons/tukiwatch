@@ -1,8 +1,8 @@
 import Constants from 'expo-constants';
 import {
   ChevronRight,
+  Info,
   Loader,
-  Monitor,
   RefreshCw,
   RotateCcw,
   Shield,
@@ -240,6 +240,29 @@ function SupporterTab() {
   const { config, isCustom, loading: configLoading, reset, reload } = useBackendConfig();
   const { isBackendReachable, reconnect } = useStreams();
   const [resetting, setResetting] = useState(false);
+  const [editingServer, setEditingServer] = useState(false);
+  const [tempServerUrl, setTempServerUrl] = useState('');
+
+  const openEditServer = useCallback(() => {
+    setTempServerUrl(config?.apiUrl ?? '');
+    setEditingServer(true);
+  }, [config]);
+
+  const saveServer = useCallback(async () => {
+    const trimmed = tempServerUrl.trim();
+    if (!trimmed || trimmed === config?.apiUrl) {
+      setEditingServer(false);
+      return;
+    }
+    try {
+      await setBackendConfig({ apiUrl: trimmed.replace(/\/+$/, '') });
+      await reload();
+    } catch {
+      Alert.alert('Error', 'Failed to update server configuration.');
+    } finally {
+      setEditingServer(false);
+    }
+  }, [tempServerUrl, config, reload]);
 
   const handleReset = useCallback(async () => {
     Alert.alert('Reset Server', 'Reset to the default TukiWatch backend?', [
@@ -259,24 +282,6 @@ function SupporterTab() {
       },
     ]);
   }, [reset, reconnect]);
-
-  const handleEditServer = useCallback(() => {
-    Alert.prompt(
-      'Change Server',
-      'Enter the API URL of your TukiWatch backend.',
-      async (url) => {
-        if (!url) return;
-        try {
-          await setBackendConfig({ apiUrl: url.replace(/\/+$/, '') });
-          await reload();
-        } catch {
-          Alert.alert('Error', 'Failed to update server configuration.');
-        }
-      },
-      'plain-text',
-      config?.apiUrl
-    );
-  }, [config, reload]);
 
   return (
     <>
@@ -309,7 +314,7 @@ function SupporterTab() {
             <View style={styles.divider} />
             <CardRow label="Server URL" value={config?.apiUrl ?? ''} />
             <View style={styles.divider} />
-            <TouchableOpacity style={styles.editServerRow} onPress={handleEditServer}>
+            <TouchableOpacity style={styles.editServerRow} onPress={openEditServer}>
               <Text style={styles.editServerText}>Change Server</Text>
               <ChevronRight color={Palette.textMuted} size={18} />
             </TouchableOpacity>
@@ -357,6 +362,45 @@ function SupporterTab() {
           )}
         </TouchableOpacity>
       </Card>
+
+      {/* Server edit modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={editingServer}
+        onRequestClose={() => setEditingServer(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setEditingServer(false)}
+        >
+          <TouchableOpacity style={styles.modalCard} activeOpacity={1}>
+            <Text style={styles.modalTitle}>Change Server URL</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={tempServerUrl}
+              onChangeText={setTempServerUrl}
+              placeholder="https://api.tukiwatch.com"
+              placeholderTextColor={Palette.textMuted}
+              autoCorrect={false}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalBtnCancel}
+                onPress={() => setEditingServer(false)}
+              >
+                <Text style={styles.modalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnSave} onPress={saveServer}>
+                <Text style={styles.modalBtnSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }
@@ -396,7 +440,7 @@ function SystemTab() {
       <Card>
         <View style={styles.aboutHeader}>
           <View style={styles.aboutIconWrap}>
-            <Monitor color={Palette.primary} size={24} />
+            <Info color={Palette.primary} size={24} />
           </View>
           <View style={styles.aboutInfo}>
             <Text style={styles.aboutTitle}>TukiWatch</Text>
@@ -432,9 +476,11 @@ function SystemTab() {
             {checkingUpdate ? (
               <ActivityIndicator size="small" color={Palette.textMuted} />
             ) : (
-              <Text style={styles.listRowValue}>v{APP_VERSION}</Text>
+              <>
+                <Text style={styles.listRowValue}>v{APP_VERSION}</Text>
+                <ChevronRight color={Palette.textMuted} size={18} />
+              </>
             )}
-            <ChevronRight color={Palette.textMuted} size={18} />
           </View>
         </TouchableOpacity>
         <View style={styles.divider} />
