@@ -84,7 +84,7 @@ export function HomeScreen() {
   if (loading) {
   
   // Update greeting every minute
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setGreeting(getTimeGreeting());
     }, 60000);
@@ -101,7 +101,7 @@ export function HomeScreen() {
 
 
   // Update greeting every minute
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setGreeting(getTimeGreeting());
     }, 60000);
