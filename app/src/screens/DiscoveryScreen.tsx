@@ -38,7 +38,7 @@ export function DiscoveryScreen() {
 
   const handleStreamPress = useCallback(
     (stream: DiscoveryStream) => {
-      navigation.navigate('Player', { streamData: null, url: stream.url });
+      navigation.navigate('Player', { streamData: { best_quality: stream.url, original_url: stream.url, platform: 'twitch' }, url: stream.url });
     },
     [navigation]
   );
