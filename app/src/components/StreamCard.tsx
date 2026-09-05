@@ -58,9 +58,6 @@ export function StreamCard({
   const handlePress = () => {
     if (onPress) {
       onPress();
-    } else {
-      // Default behavior - could navigate to player
-      console.log('Playing stream:', url);
     }
   };
 
