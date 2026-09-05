@@ -123,7 +123,7 @@ export function ConnectionTab() {
         </Text>
         <TouchableOpacity
           style={styles.accessBtn}
-          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/pricing')}
+          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/supporter')}
         >
           <Text style={styles.accessBtnText}>Manage Access</Text>
         </TouchableOpacity>

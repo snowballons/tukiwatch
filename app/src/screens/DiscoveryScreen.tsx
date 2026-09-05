@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { Filter, Play, RefreshCw } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,10 +13,10 @@ import {
   View,
 } from 'react-native';
 import { addFavorite } from '../../lib/db';
+import { useStreamResolver } from '../hooks/useStreamResolver';
 import { useTwitchTrackerDiscovery } from '../hooks/useTwitchTrackerDiscovery';
 import { Palette, PlatformColors, Spacing } from '../theme/Theme';
 import type { DiscoveryStream } from '../types';
-
 
 const LANGUAGES = [
   { key: 'all', label: 'All' },
@@ -31,18 +31,32 @@ export function DiscoveryScreen() {
   const [selectedPlatform, setSelectedPlatform] = useState('twitch');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const navigation = useNavigation<any>(); // eslint-disable-line
-
-  const { streams, loading, refreshing, error, hasMore, refresh, loadMore } = useTwitchTrackerDiscovery({
-    language: selectedLanguage === 'all' ? undefined : selectedLanguage,
-  });
+  const { resolve } = useStreamResolver();
+  const isResolvingRef = useRef(false);
+  const { streams, loading, refreshing, error, hasMore, refresh, loadMore } =
+    useTwitchTrackerDiscovery({
+      language: selectedLanguage === 'all' ? undefined : selectedLanguage,
+    });
 
   const handleStreamPress = useCallback(
-    (stream: DiscoveryStream) => {
-      navigation.navigate('Player', { streamData: { best_quality: stream.url, original_url: stream.url, platform: 'twitch' }, url: stream.url });
+    async (stream: DiscoveryStream) => {
+      if (isResolvingRef.current) return;
+      isResolvingRef.current = true;
+      try {
+        const data = await resolve(stream.url);
+        if (data && data.status === 'online') {
+          navigation.navigate('Player', { streamData: data, url: stream.url });
+        } else if (data) {
+          Alert.alert('Offline', data.error || 'Stream is not live.');
+        } else {
+          Alert.alert('Error', 'Could not connect to engine.');
+        }
+      } finally {
+        isResolvingRef.current = false;
+      }
     },
-    [navigation]
+    [navigation, resolve]
   );
-
   const handleAddToLibrary = useCallback(async (stream: DiscoveryStream) => {
     const success = await addFavorite(stream.author, stream.url);
     if (success) {
@@ -88,9 +102,7 @@ export function DiscoveryScreen() {
               </Text>
             )}
             {item.viewer_count !== undefined && (
-              <Text style={styles.viewers}>
-                {item.viewer_count.toLocaleString()} viewers
-              </Text>
+              <Text style={styles.viewers}>{item.viewer_count.toLocaleString()} viewers</Text>
             )}
           </View>
 
@@ -165,17 +177,11 @@ export function DiscoveryScreen() {
           {LANGUAGES.map((lang) => (
             <TouchableOpacity
               key={lang.key}
-              style={[
-                styles.chip,
-                selectedLanguage === lang.key && styles.chipActive,
-              ]}
+              style={[styles.chip, selectedLanguage === lang.key && styles.chipActive]}
               onPress={() => setSelectedLanguage(lang.key)}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  selectedLanguage === lang.key && styles.chipTextActive,
-                ]}
+                style={[styles.chipText, selectedLanguage === lang.key && styles.chipTextActive]}
               >
                 {lang.label}
               </Text>
