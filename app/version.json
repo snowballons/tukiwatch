@@ -1,8 +1,8 @@
 {
   "version": "1.1.2",
-  "versionCode": 8,
+  "versionCode": 9,
   "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.2/tukiwatch-1.1.2.apk",
-  "releaseNotes": "Fixes Discovery: live stream browsing now uses the correct API endpoint.",
+  "releaseNotes": "Released via GitHub Actions.",
   "mandatory": false,
   "minAndroidVersion": 8
 }
