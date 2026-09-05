@@ -1,8 +1,8 @@
 {
   "version": "1.1.1",
-  "versionCode": 6,
+  "versionCode": 7,
   "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.1/tukiwatch-1.1.1.apk",
-  "releaseNotes": "Discover live streams, redesigned Settings, hosted backend by default, and reliability fixes.",
+  "releaseNotes": "Released via GitHub Actions.",
   "mandatory": false,
   "minAndroidVersion": 8
 }
