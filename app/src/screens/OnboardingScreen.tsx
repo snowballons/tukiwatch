@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ChevronRight } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -362,9 +363,10 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           onPress={goNext}
           accessibilityLabel={index === SLIDES.length - 1 ? 'Get Started' : 'Next slide'}
         >
-          <Text style={styles.ctaText}>
-            {index === SLIDES.length - 1 ? 'Get Started' : 'Next →'}
-          </Text>
+          <Text style={styles.ctaText}>{index === SLIDES.length - 1 ? 'Get Started' : 'Next'}</Text>
+          {index !== SLIDES.length - 1 && (
+            <ChevronRight color={Palette.text} size={18} style={{ marginLeft: 8 }} />
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
