@@ -2,7 +2,7 @@
   "expo": {
     "name": "TukiWatch",
     "slug": "streamwatch",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "dark",
@@ -12,7 +12,7 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0A0A0A"
       },
-      "versionCode": 6,
+      "versionCode": 7,
       "predictiveBackGestureEnabled": false,
       "package": "com.tukiwatch.app"
     },
