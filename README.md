@@ -113,13 +113,9 @@ TukiWatch takes the opposite approach:
 
 ### Screenshots
 
-| Platform | Preview                                                                                           |
-|:-------- |:------------------------------------------------------------------------------------------------- |
-| Android  |![alt text](app/assets/empty-live-screen.png) |
-| Andriod  |![alt text](app/assets/add-stream.png)
-| Andriod  |![alt text](app/assets/intro1.png)
-| Android  |![alt text](app/assets/intro2.png)
-| Andriod  |![alt text](app/assets/live-screen.png)
+| Onboarding | Onboarding | Home (empty) | Home (live) | Add stream |
+|:----------:|:----------:|:------------:|:-----------:|:----------:|
+| <img src="app/assets/intro1.png" width="150" alt="Onboarding screen" /> | <img src="app/assets/intro2.png" width="150" alt="Onboarding screen continued" /> | <img src="app/assets/empty-live-screen.png" width="150" alt="Home screen with no live streams" /> | <img src="app/assets/live-screen.png" width="150" alt="Home screen showing live streams" /> | <img src="app/assets/add-stream.png" width="150" alt="Add a new stream" /> |
 
 ---
 
