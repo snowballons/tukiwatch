@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { Search, X } from 'lucide-react-native';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
