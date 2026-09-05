@@ -28,6 +28,16 @@ GitHub Releases with the APK attached.
 - Docs restructured into per-area READMEs (`app/`, `api/`) and a self-hosting
   guide; the root README now follows the repo's documented template.
 
+## [1.1.2] — 2026-09-05
+
+### Fixed
+
+- Discovery screen failed with "failed to fetch streams: 404" — the
+  discovery API fallback URL pointed at the TwitchTracker website instead of
+  the `live-steams-api` wrapper. Default is now
+  `https://live-steams-api.vercel.app` (build-time
+  `EXPO_PUBLIC_TWITCH_TRACKER_URL` still overrides it).
+
 ## [1.1.1] — 2026-09-05
 
 ### Added
@@ -78,7 +88,8 @@ GitHub Releases with the APK attached.
 - Initial public release of the TukiWatch mobile app and FastAPI backend.
   Track favorite streams, check live status, and watch in-app.
 
-[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/snowballons/tukiwatch/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/snowballons/tukiwatch/compare/v1.0.6...v1.1.1
 [1.0.5]: https://github.com/snowballons/tukiwatch/releases/tag/v1.0.5
 [1.0.1]: https://github.com/snowballons/tukiwatch/releases/tag/v1.0.1
