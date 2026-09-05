@@ -107,7 +107,7 @@ export function DiscoveryScreen() {
           <RefreshCw
             color={refreshing ? Palette.textMuted : Palette.primary}
             size={20}
-            style={{ transform: refreshing ? [{ rotate: '180deg' }] : [] }}
+            style={refreshing ? { transform: [{ rotate: '180deg' }] } : undefined}
           />
         </TouchableOpacity>
       </View>
