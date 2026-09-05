@@ -17,10 +17,19 @@ import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
 
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+
 export function HomeScreen() {
   const { streams, loading, refreshStreams } = useStreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [greeting, setGreeting] = useState(getTimeGreeting);
   const [filterPlatform, setFilterPlatform] = useState('all');
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<any>();
@@ -73,7 +82,16 @@ export function HomeScreen() {
   };
 
   if (loading) {
-    return (
+  
+  // Update greeting every minute
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setGreeting(getTimeGreeting());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={Palette.primary} />
         <Text style={styles.loadingText}>Checking your favorites...</Text>
@@ -81,10 +99,19 @@ export function HomeScreen() {
     );
   }
 
+
+  // Update greeting every minute
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setGreeting(getTimeGreeting());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Good Evening</Text>
+        <Text style={styles.welcomeText}>{greeting}</Text>
         <Text style={styles.title}>Live Now</Text>
       </View>
 
