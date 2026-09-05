@@ -26,8 +26,8 @@ class EmailService:
             bool: True if email sent successfully, False otherwise
         """
         logger.warning(
-            "Supporter notifications are now handled through Lemon Squeezy webhook notifications. "
-            "Email sending for %s disabled.",
+            "Supporter notifications are not implemented yet "
+            "(payment provider integration planned). Email sending for %s disabled.",
             email,
         )
         return False

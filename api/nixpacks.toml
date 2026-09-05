@@ -13,5 +13,7 @@ aptPkgs = [
 cmds = ["pip install -r requirements.txt"]
 
 [phases.start]
-# Start the FastAPI application
-cmd = "gunicorn main:app --host 0.0.0.0 --port $PORT --workers 2"
+# Start the FastAPI application (must match railway.json deploy.startCommand).
+# The uvicorn worker class is required: gunicorn's default sync workers cannot
+# serve an ASGI app.
+cmd = "gunicorn main:app --host 0.0.0.0 --port $PORT --workers 2 --worker-class uvicorn.workers.UvicornWorker"
