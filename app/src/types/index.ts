@@ -68,6 +68,10 @@ export interface DiscoveryStream extends LiveStream {
   platform: 'twitch' | 'youtube' | 'kick' | string; // Extensible for future platforms
   // For pagination
   cursor?: string;
+  // TwitchTracker-specific fields
+  _twitchTrackerRank?: number;
+  _shareOfGame?: string;
+  _shareOfTwitch?: string;
 }
 
 export interface DiscoveryResponse {

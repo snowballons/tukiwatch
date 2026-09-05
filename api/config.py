@@ -13,9 +13,6 @@ class Config:
     TWITCH_OAUTH_TOKEN = os.getenv(
         "TWITCH_OAUTH_TOKEN", ""
     )  # For ad-free streams (Twitch Turbo)
-    # Twitch Helix API for Discovery (App Access Token flow)
-    TWITCH_CLIENT_ID = os.getenv("TWITCH_CLIENT_ID", "")
-    TWITCH_CLIENT_SECRET = os.getenv("TWITCH_CLIENT_SECRET", "")
     # Redis configuration
     REDIS_URL = os.getenv("REDIS_URL", "")
     REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

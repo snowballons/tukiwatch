@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { addFavorite } from '../../lib/db';
 import { StreamCard } from '../components/StreamCard';
-import { useDiscovery } from '../hooks/useDiscovery';
+import { useTwitchTrackerDiscovery } from '../hooks/useTwitchTrackerDiscovery';
 import { Palette, PlatformColors, Spacing } from '../theme/Theme';
 import type { DiscoveryStream } from '../types';
 
@@ -34,8 +34,7 @@ export function DiscoveryScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const navigation = useNavigation<any>();
 
-  const { streams, loading, refreshing, error, hasMore, refresh, loadMore } = useDiscovery({
-    platform: selectedPlatform,
+  const { streams, loading, refreshing, error, hasMore, refresh, loadMore } = useTwitchTrackerDiscovery({
     language: selectedLanguage === 'all' ? undefined : selectedLanguage,
   });
 
