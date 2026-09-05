@@ -81,6 +81,15 @@ export function HomeScreen() {
     }
   };
 
+
+  // Update greeting every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGreeting(getTimeGreeting());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
   
 
