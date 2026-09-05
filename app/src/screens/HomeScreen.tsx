@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Search, X } from 'lucide-react-native';
-import { useMemo, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,10 +13,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '../../App';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
+import type { LiveStream } from '../types';
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
@@ -24,7 +27,6 @@ function getTimeGreeting(): string {
   return 'Good Evening';
 }
 
-
 export function HomeScreen() {
   const { streams, loading, refreshStreams } = useStreams();
   const [refreshing, setRefreshing] = useState(false);
@@ -32,7 +34,7 @@ export function HomeScreen() {
   const [greeting, setGreeting] = useState(getTimeGreeting);
   const [filterPlatform, setFilterPlatform] = useState('all');
   const { resolve, resolving } = useStreamResolver();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isResolvingRef = useRef(false);
 
   const platforms = useMemo(() => {
@@ -64,7 +66,7 @@ export function HomeScreen() {
     setRefreshing(false);
   };
 
-  const handleStreamPress = async (stream: any) => {
+  const handleStreamPress = async (stream: LiveStream) => {
     if (isResolvingRef.current) return;
     isResolvingRef.current = true;
     try {
@@ -81,7 +83,6 @@ export function HomeScreen() {
     }
   };
 
-
   // Update greeting every minute
   useEffect(() => {
     const interval = setInterval(() => {
@@ -91,17 +92,13 @@ export function HomeScreen() {
   }, []);
 
   if (loading) {
-  
-
-  return (
+    return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={Palette.primary} />
         <Text style={styles.loadingText}>Checking your favorites...</Text>
       </View>
     );
   }
-
-
 
   return (
     <View style={styles.container}>

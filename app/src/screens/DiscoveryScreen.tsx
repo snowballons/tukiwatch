@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Filter, Play, RefreshCw } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -12,10 +13,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '../../App';
 import { addFavorite } from '../../lib/db';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { useTwitchTrackerDiscovery } from '../hooks/useTwitchTrackerDiscovery';
-import { Palette, PlatformColors, Spacing } from '../theme/Theme';
+import { Palette, Spacing } from '../theme/Theme';
 import type { DiscoveryStream } from '../types';
 
 const LANGUAGES = [
@@ -28,9 +30,8 @@ const LANGUAGES = [
 ];
 
 export function DiscoveryScreen() {
-  const [selectedPlatform, setSelectedPlatform] = useState('twitch');
   const [selectedLanguage, setSelectedLanguage] = useState('all');
-  const navigation = useNavigation<any>(); // eslint-disable-line
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { resolve } = useStreamResolver();
   const isResolvingRef = useRef(false);
   const { streams, loading, refreshing, error, hasMore, refresh, loadMore } =

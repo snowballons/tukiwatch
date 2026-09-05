@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Search, X } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -13,16 +14,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '../../App';
 import { removeFavorite } from '../../lib/db';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
+import type { LiveStream } from '../types';
 
 export function LibraryScreen() {
   const { streams, loading, refreshStreams } = useStreams();
   const { resolve, resolving } = useStreamResolver();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -59,7 +62,7 @@ export function LibraryScreen() {
     setRefreshing(false);
   };
 
-  const handleStreamPress = async (stream: any) => {
+  const handleStreamPress = async (stream: LiveStream) => {
     if (isResolvingRef.current) return;
     isResolvingRef.current = true;
     try {

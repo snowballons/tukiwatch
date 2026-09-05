@@ -41,16 +41,18 @@ export interface TwitchTrackerDiscoveryFilters {
   limit?: number;
 }
 
+interface TwitchTrackerTrack {
+  rank: number;
+  name: string;
+  url: string;
+  game: string;
+  viewers: number;
+  shareOfGame: string;
+  shareOfTwitch: string;
+}
+
 function mapTwitchTrackerToDiscoveryStream(
-  track: {
-    rank: number;
-    name: string;
-    url: string;
-    game: string;
-    viewers: number;
-    shareOfGame: string;
-    shareOfTwitch: string;
-  },
+  track: TwitchTrackerTrack,
   language?: string
 ): DiscoveryStream {
   return {
@@ -115,15 +117,12 @@ export function useTwitchTrackerDiscovery(
           params.set('_t', Date.now().toString());
         }
 
-        const response = await fetch(
-          `${baseUrl}/api/live?${params.toString()}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        const response = await fetch(`${baseUrl}/api/live?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch streams: ${response.status}`);
@@ -135,7 +134,7 @@ export function useTwitchTrackerDiscovery(
 
         if (!isMountedRef.current) return;
 
-        const mappedStreams: DiscoveryStream[] = newTracks.map((track: any) =>
+        const mappedStreams: DiscoveryStream[] = newTracks.map((track: TwitchTrackerTrack) =>
           mapTwitchTrackerToDiscoveryStream(track, lang)
         );
 

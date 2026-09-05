@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronDown, Link, Plus, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
@@ -14,10 +15,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '../../App';
 import { addFavorite } from '../../lib/db';
 import { StreamCard } from '../components/StreamCard';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
+import type { StreamResolution } from '../types';
 
 // Platform configuration based on backend supported domains
 const PLATFORMS = [
@@ -159,12 +162,12 @@ const constructStreamUrl = (platformKey: string, identifier: string): string => 
 };
 
 export function AddScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [identifier, setIdentifier] = useState('');
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
   const { resolve, resolving } = useStreamResolver();
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<StreamResolution | null>(null);
   const [constructedUrl, setConstructedUrl] = useState('');
 
   // Update constructed URL whenever platform or identifier changes
@@ -218,9 +221,12 @@ export function AddScreen() {
 
       Alert.alert('Saved', 'Added to your library.');
       handleClear(); // Reset after successful save
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Save error:', error);
-      Alert.alert('Error', error.message || 'Failed to add stream to library.');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to add stream to library.'
+      );
     }
   };
 
@@ -343,8 +349,8 @@ export function AddScreen() {
           </View>
 
           <StreamCard
-            title={previewData.title}
-            streamer={previewData.author}
+            title={previewData.title ?? 'Live Stream'}
+            streamer={previewData.author ?? 'Unknown'}
             thumbnail={previewData.thumbnail}
             isLive={true}
             url={constructedUrl}

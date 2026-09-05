@@ -19,10 +19,11 @@ export interface LiveStream {
   // Cache indicator
   _cached?: boolean;
   _fetchedAt?: number;
-  // Error details from backend
+  // Error details from backend (free-form dict server-side)
   error?: string;
   error_details?: {
     type?: string;
+    error?: string;
     message?: string;
     reason?: string;
     alternative?: string;
@@ -45,9 +46,10 @@ export interface StreamResolution {
   stream_types?: string[];
   // Cache indicator
   _cached?: boolean;
-  // Error details from backend
+  // Error details from backend (free-form dict server-side)
   error_details?: {
     type?: string;
+    error?: string;
     message?: string;
     reason?: string;
     alternative?: string;

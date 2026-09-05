@@ -23,11 +23,12 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { Palette } from './src/theme/Theme';
+import type { StreamResolution } from './src/types';
 
 SplashScreen.preventAutoHideAsync();
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator<MainTabsParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type MainTabsParamList = {
   Home: undefined;
@@ -37,9 +38,9 @@ type MainTabsParamList = {
   Settings: undefined;
 };
 
-type RootStackParamList = {
+export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabsParamList>;
-  Player: undefined;
+  Player: { streamData: StreamResolution | null; url: string };
   Connect: { url?: string };
 };
 

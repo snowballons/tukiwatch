@@ -1,3 +1,4 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { ChevronDown, ChevronRight, ExternalLink, X } from 'lucide-react-native';
 import { useState } from 'react';
@@ -12,14 +13,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import type { RootStackParamList } from '../../App';
 import { Palette, PlatformColors, Spacing } from '../theme/Theme';
+import type { StreamResolution } from '../types';
 import { getPlatformName, openInOfficialApp } from '../utils/platformLinks';
 
 const { width } = Dimensions.get('window');
 
-export function PlayerScreen({ route, navigation }: any) {
+type PlayerScreenProps = NativeStackScreenProps<RootStackParamList, 'Player'>;
+
+export function PlayerScreen({ route, navigation }: PlayerScreenProps) {
   const { streamData, url } = route.params;
-  const sources = streamData || { best_quality: url };
+  const sources: Pick<
+    StreamResolution,
+    'title' | 'author' | 'thumbnail' | 'best_quality' | 'all_qualities' | 'category' | 'platform'
+  > & { original_url?: string } = streamData ?? { best_quality: url };
   // Ensure original_url and platform are available for the "Open in App" button
   const originalUrl = sources.original_url || url || '';
   const platformKey = sources.platform || 'unknown';
@@ -27,7 +35,7 @@ export function PlayerScreen({ route, navigation }: any) {
   const [isChanging, setIsChanging] = useState(false);
   const [showQualityPicker, setShowQualityPicker] = useState(false);
 
-  const player = useVideoPlayer(sources.best_quality, (p) => {
+  const player = useVideoPlayer(sources.best_quality ?? url, (p) => {
     p.loop = false;
     p.play();
   });
@@ -132,7 +140,7 @@ export function PlayerScreen({ route, navigation }: any) {
                         styles.qualityOption,
                         currentQuality === name && styles.qualityOptionSelected,
                       ]}
-                      onPress={() => changeQuality(name, url as string)}
+                      onPress={() => changeQuality(name, url)}
                     >
                       <Text
                         style={[

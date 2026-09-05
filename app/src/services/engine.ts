@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 import { getBackendConfig } from '../lib/backendConfig';
 import type { LiveStream } from '../types';
@@ -12,11 +12,12 @@ export interface RateLimitInfo {
 
 let latestRateLimitInfo: RateLimitInfo | null = null;
 
-function updateRateLimitInfo(headers: any) {
-  if (!headers) return;
-  const limit = headers['x-ratelimit-limit'];
-  const remaining = headers['x-ratelimit-remaining'];
-  const reset = headers['x-ratelimit-reset'];
+function updateRateLimitInfo(headers: unknown) {
+  if (!headers || typeof headers !== 'object') return;
+  const record = headers as Record<string, string | undefined>;
+  const limit = record['x-ratelimit-limit'];
+  const remaining = record['x-ratelimit-remaining'];
+  const reset = record['x-ratelimit-reset'];
   if (limit !== undefined && remaining !== undefined && reset !== undefined) {
     latestRateLimitInfo = {
       limit: parseInt(limit, 10),
@@ -49,7 +50,7 @@ export const checkHealth = async (): Promise<boolean> => {
   }
 };
 
-export const getCacheStats = async (): Promise<any> => {
+export const getCacheStats = async (): Promise<Record<string, unknown> | null> => {
   try {
     const baseUrl = await getBaseUrl();
     const response = await axios.get(`${baseUrl}/cache/stats`);
@@ -72,6 +73,20 @@ export const resolveStream = async (url: string, bypassCache: boolean = false) =
   return response.data;
 };
 
+interface StatusBatchResultItem {
+  title?: string;
+  author?: string;
+  thumbnail?: string;
+  url: string;
+  status: LiveStream['status'];
+  category?: string;
+  stream_id?: string;
+  platform?: string;
+  _cached?: boolean;
+  error?: string;
+  error_details?: LiveStream['error_details'];
+}
+
 export const streamService = {
   async checkBatchStatus(urls: string[], bypassCache: boolean = false): Promise<LiveStream[]> {
     try {
@@ -83,7 +98,8 @@ export const streamService = {
         { headers: API_HEADERS }
       );
       updateRateLimitInfo(response.headers);
-      return response.data.results.map((result: any, index: number) => ({
+      const items = (response.data?.results ?? []) as StatusBatchResultItem[];
+      return items.map((result, index) => ({
         id: index,
         title: result.title || 'Unknown Stream',
         author: result.author || 'Unknown Streamer',
@@ -100,17 +116,22 @@ export const streamService = {
         error: result.error || '',
         error_details: result.error_details || null,
       }));
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = isAxiosError(error) ? error : undefined;
       // Update rate limit info from error response headers too
-      updateRateLimitInfo(error.response?.headers);
+      updateRateLimitInfo(axiosError?.response?.headers);
 
       // Enhanced error handling based on HTTP status codes
       let errorMessage = 'Status check failed';
-      if (error.response?.status === 400) {
-        errorMessage = error.response.data.detail || 'Invalid batch request';
+      const status = axiosError?.response?.status;
+      const data = axiosError?.response?.data as
+        | { detail?: string; retry_after?: number }
+        | undefined;
+      if (status === 400) {
+        errorMessage = data?.detail || 'Invalid batch request';
         console.error('Invalid batch request:', errorMessage);
-      } else if (error.response?.status === 429) {
-        const retryAfter = error.response.data.retry_after || 60;
+      } else if (status === 429) {
+        const retryAfter = data?.retry_after || 60;
         errorMessage = `Rate limited. Retry after ${retryAfter} seconds`;
         console.warn(errorMessage);
       } else {
