@@ -83,13 +83,6 @@ export function HomeScreen() {
 
   if (loading) {
   
-  // Update greeting every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGreeting(getTimeGreeting());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
       <View style={[styles.container, styles.centered]}>
@@ -100,13 +93,6 @@ export function HomeScreen() {
   }
 
 
-  // Update greeting every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGreeting(getTimeGreeting());
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <View style={styles.container}>
