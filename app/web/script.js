@@ -46,6 +46,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fetchLatestRelease();
 
+  // Post-checkout success banner (supporter.html only).
+  // Polar redirects here with ?checkout=success&checkout_id={CHECKOUT_ID}.
+  (function showCheckoutSuccess() {
+    const banner = document.getElementById('checkout-success');
+    if (!banner) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') !== 'success') return;
+    banner.hidden = false;
+    const checkoutId = (params.get('checkout_id') || '').trim();
+    if (checkoutId) {
+      const ref = document.getElementById('checkout-ref');
+      const idSpan = document.getElementById('checkout-id');
+      // textContent only — never inject URL input as HTML.
+      if (ref && idSpan) {
+        idSpan.textContent = checkoutId;
+        ref.hidden = false;
+      }
+    }
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  })();
+
   // Intersection observer for fade-in sections
   const observer = new IntersectionObserver(
     (entries) => {

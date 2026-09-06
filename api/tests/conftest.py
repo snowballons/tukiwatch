@@ -20,6 +20,14 @@ from fastapi.testclient import TestClient
 os.environ.setdefault("REDIS_URL", "")
 os.environ.setdefault("REDIS_HOST", "localhost")
 
+# Fake Polar credentials so service modules never need real secrets in tests.
+os.environ.setdefault("POLAR_ACCESS_TOKEN", "polar_oat_test")
+os.environ.setdefault("POLAR_ORG_ID", "org_test")
+os.environ.setdefault("POLAR_PRODUCT_ID", "prod_test")
+os.environ.setdefault("POLAR_BENEFIT_ID", "ben_test")
+os.environ.setdefault("POLAR_WEBHOOK_SECRET", "whsec_test")
+os.environ.setdefault("POLAR_API_BASE", "https://api.polar.sh")
+
 
 # ---------------------------------------------------------------------------
 # App fixture
@@ -42,6 +50,22 @@ def client(app):
     """Return a synchronous TestClient for the FastAPI app."""
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
+
+
+# ---------------------------------------------------------------------------
+# In-memory supporter session store (hermetic — never touches real Redis)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def memory_sessions():
+    """Return a SessionService pinned to its in-memory backend."""
+    from app.session_service import SessionService
+
+    svc = SessionService()
+    svc._redis_tried = True
+    svc._redis = None
+    return svc
 
 
 # ---------------------------------------------------------------------------

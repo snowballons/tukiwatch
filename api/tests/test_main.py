@@ -201,6 +201,16 @@ class TestAppInitialisation:
         assert app.url_path_for("get_stream_url") == "/api/resolve"
         assert app.url_path_for("get_batch_status") == "/api/status-batch"
 
+    def test_license_routes_are_registered(self, app):
+        """The license activate/validate/deactivate routes must be registered."""
+        assert app.url_path_for("activate_license") == "/api/license/activate"
+        assert app.url_path_for("validate_session") == "/api/license/validate"
+        assert app.url_path_for("deactivate_license") == "/api/license/deactivate"
+
+    def test_webhook_route_is_registered(self, app):
+        """The Polar webhook route must be registered."""
+        assert app.url_path_for("handle_polar_webhook") == "/webhooks/polar"
+
     def test_utility_routes_are_registered(self, app):
         """The /, /health, /cache/stats, /rate-limit/stats, /session/stats routes must exist."""
         expected = {

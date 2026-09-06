@@ -14,6 +14,13 @@ import {
 } from 'react-native';
 import { useStreams } from '../../context/StreamContext';
 import { setBackendConfig, useBackendConfig } from '../../lib/backendConfig';
+import {
+  activateLicense,
+  deactivateSession,
+  LicenseApiError,
+  validateSession,
+} from '../../lib/licenseApi';
+import { clearSessionToken, setSessionToken } from '../../lib/sessionToken';
 import { checkForUpdate } from '../../services/updateService';
 import { Palette, Spacing } from '../../theme/Theme';
 import { Card, CardRow, SectionTitle, sharedSettingsStyles } from './SharedSettingsComponents';
@@ -21,12 +28,70 @@ import { Card, CardRow, SectionTitle, sharedSettingsStyles } from './SharedSetti
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const APP_VERSION_CODE = Constants.expoConfig?.android?.versionCode ?? 0;
 
+const SUPPORTER_URL = 'https://tukiwatch.snowballons.com/supporter';
+
+type SupporterUiState = 'checking' | 'free' | 'activating' | 'supporter';
+
+function formatSessionExpiry(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString();
+}
+
 export function ConnectionTab() {
   const { config, isCustom, loading: configLoading, reset, reload } = useBackendConfig();
   const { isBackendReachable, reconnect } = useStreams();
   const [resetting, setResetting] = useState(false);
   const [editingServer, setEditingServer] = useState(false);
   const [tempServerUrl, setTempServerUrl] = useState('');
+  const [supporterState, setSupporterState] = useState<SupporterUiState>('checking');
+  const [licenseKeyInput, setLicenseKeyInput] = useState('');
+  const [supporterDetail, setSupporterDetail] = useState<string | null>(null);
+  const [supporterError, setSupporterError] = useState<string | null>(null);
+
+  const refreshSupporterStatus = useCallback(async () => {
+    setSupporterState('checking');
+    setSupporterError(null);
+    const status = await validateSession();
+    if (status.valid) {
+      setSupporterDetail(status.expiresAt ? formatSessionExpiry(status.expiresAt) : null);
+      setSupporterState('supporter');
+    } else {
+      setSupporterDetail(null);
+      setSupporterState('free');
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSupporterStatus();
+  }, [refreshSupporterStatus]);
+
+  const handleActivate = useCallback(async () => {
+    const key = licenseKeyInput.trim();
+    if (!key) {
+      setSupporterError('Enter your license key.');
+      return;
+    }
+    setSupporterState('activating');
+    setSupporterError(null);
+    try {
+      const result = await activateLicense(key);
+      await setSessionToken(result.sessionToken);
+      setLicenseKeyInput('');
+      await refreshSupporterStatus();
+    } catch (error) {
+      setSupporterState('free');
+      setSupporterError(error instanceof LicenseApiError ? error.message : 'Activation failed.');
+    }
+  }, [licenseKeyInput, refreshSupporterStatus]);
+
+  const handleSignOut = useCallback(async () => {
+    await deactivateSession();
+    await clearSessionToken();
+    setSupporterDetail(null);
+    setSupporterError(null);
+    setSupporterState('free');
+  }, []);
 
   const openEditServer = useCallback(() => {
     setTempServerUrl(config?.apiUrl ?? '');
@@ -41,6 +106,11 @@ export function ConnectionTab() {
     }
     try {
       await setBackendConfig({ apiUrl: trimmed.replace(/\/+$/, '') });
+      // Sessions belong to one backend — drop the old one on switch.
+      await clearSessionToken();
+      setSupporterDetail(null);
+      setSupporterError(null);
+      setSupporterState('free');
       await reload();
     } catch {
       Alert.alert('Error', 'Failed to update server configuration.');
@@ -109,7 +179,7 @@ export function ConnectionTab() {
         )}
       </Card>
 
-      {/* Access card (Seamless CTA) */}
+      {/* Supporter access card */}
       <View style={sharedSettingsStyles.gapMd} />
       <Card style={styles.accessCard}>
         <View style={styles.accessHeader}>
@@ -118,15 +188,69 @@ export function ConnectionTab() {
           </View>
           <Text style={styles.accessTitle}>Supporter Access</Text>
         </View>
-        <Text style={styles.accessDesc}>
-          Get full access to all platforms and priority features by supporting TukiWatch.
-        </Text>
-        <TouchableOpacity
-          style={styles.accessBtn}
-          onPress={() => Linking.openURL('https://tukiwatch.snowballons.com/supporter')}
-        >
-          <Text style={styles.accessBtnText}>Manage Access</Text>
-        </TouchableOpacity>
+        {supporterState === 'checking' ? (
+          <View style={sharedSettingsStyles.loadingRow}>
+            <ActivityIndicator size="small" color={Palette.textMuted} />
+            <Text style={sharedSettingsStyles.loadingText}>Checking…</Text>
+          </View>
+        ) : supporterState === 'supporter' ? (
+          <>
+            <Text style={styles.accessDesc}>
+              Supporter active
+              {supporterDetail ? ` · session valid until ${supporterDetail}` : ''}. You get higher
+              rate limits on all requests.
+            </Text>
+            <TouchableOpacity
+              style={styles.accessBtn}
+              onPress={() => Linking.openURL(SUPPORTER_URL)}
+            >
+              <Text style={styles.accessBtnText}>Manage Subscription</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.signOutRow} onPress={handleSignOut} activeOpacity={0.7}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.accessDesc}>
+              Get full access to all platforms and priority features by supporting TukiWatch. Paste
+              your license key below.
+            </Text>
+            <TextInput
+              style={sharedSettingsStyles.modalInput}
+              value={licenseKeyInput}
+              onChangeText={(text) => {
+                setLicenseKeyInput(text);
+                setSupporterError(null);
+              }}
+              placeholder="TUKI_…"
+              placeholderTextColor={Palette.textMuted}
+              autoCorrect={false}
+              autoCapitalize="none"
+              editable={supporterState !== 'activating'}
+            />
+            {supporterError ? <Text style={styles.errorText}>{supporterError}</Text> : null}
+            <TouchableOpacity
+              style={styles.accessBtn}
+              onPress={handleActivate}
+              disabled={supporterState === 'activating'}
+              activeOpacity={0.7}
+            >
+              {supporterState === 'activating' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.accessBtnText}>Activate</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.signOutRow}
+              onPress={() => Linking.openURL(SUPPORTER_URL)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.signOutText}>Get a license</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </Card>
 
       {/* Reset */}
@@ -368,6 +492,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#fff',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#EF4444',
+    marginBottom: Spacing.sm,
+  },
+  signOutRow: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Palette.textMuted,
   },
 
   // About card

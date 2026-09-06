@@ -206,18 +206,42 @@ class TestInMemoryRateLimiter:
         result = limiter.check_limit("ip:1.2.3.4", "/endpoint_b", limit)
         assert result.allowed is True
 
-    def test_token_and_ip_keys_are_independent(self):
-        """Token keys and IP keys must be tracked independently."""
+    def test_session_and_ip_keys_are_independent(self):
+        """Session keys and IP keys must be tracked independently."""
         limiter = InMemoryRateLimiter()
         limit = (2, 60)
 
-        # Make 2 requests with token
-        limiter.check_limit("token:tw_supp_test1", "/test", limit)
-        limiter.check_limit("token:tw_supp_test1", "/test", limit)
+        # Make 2 requests with a session key
+        limiter.check_limit("session:abc123def4567890", "/test", limit)
+        limiter.check_limit("session:abc123def4567890", "/test", limit)
 
         # Same IP should still be allowed (different key)
         result = limiter.check_limit("ip:1.2.3.4", "/test", limit)
         assert result.allowed is True
+
+    def test_bearer_session_gets_supporter_limits(self, memory_sessions):
+        """A valid Bearer session selects supporter limits + tier header."""
+        token = memory_sessions.create_session("lic_mw")
+        app = _make_app_with_rate_limit_middleware()
+        with (
+            patch("app.auth.session_service", memory_sessions),
+            TestClient(app, raise_server_exceptions=False) as client,
+        ):
+            response = client.get(
+                "/api/other", headers={"Authorization": f"Bearer {token}"}
+            )
+        assert response.status_code == 200
+        assert response.headers["X-RateLimit-Limit"] == "1000"
+        assert response.headers["X-Supporter-Tier"] == "supporter"
+
+    def test_request_without_session_gets_free_limits(self):
+        """Requests without a session stay on free limits with no tier header."""
+        app = _make_app_with_rate_limit_middleware()
+        with TestClient(app, raise_server_exceptions=False) as client:
+            response = client.get("/api/other")
+        assert response.status_code == 200
+        assert response.headers["X-RateLimit-Limit"] == "100"
+        assert "X-Supporter-Tier" not in response.headers
 
     def test_cleanup_removes_old_entries(self):
         """Expired entries must be purged to prevent memory leaks."""

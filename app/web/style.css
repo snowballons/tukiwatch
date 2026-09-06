@@ -587,6 +587,38 @@ h1, h2, h3, h4 {
   margin-top: var(--space-md);
 }
 
+/* ── Supporter page: post-checkout success banner (hidden until ?checkout=success) */
+.success-banner {
+  max-width: 640px;
+  margin-inline: auto;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+}
+.success-banner__title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-sm);
+}
+.success-banner__steps {
+  margin: var(--space-md) 0;
+  padding-left: var(--space-xl);
+  color: var(--color-ink-2);
+  font-size: var(--text-md);
+}
+.success-banner__steps li { margin-bottom: var(--space-sm); }
+.success-banner__steps code {
+  background: var(--color-paper-3);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.9em;
+}
+.success-banner__ref {
+  font-size: var(--text-xs);
+  color: var(--color-ink-3);
+}
+
 /* ── Supporter page: comparison table ─────────────────────────────────────── */
 .compare-table {
   max-width: 640px;
