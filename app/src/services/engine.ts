@@ -50,6 +50,7 @@ const getAuthHeaders = async (): Promise<Record<string, string>> => {
 export const checkHealth = async (): Promise<boolean> => {
   try {
     const baseUrl = await getBaseUrl();
+    if (!baseUrl) return false;
     const response = await axios.get(`${baseUrl}/health`, { timeout: 5000 });
     return response.data?.status === 'healthy';
   } catch {
@@ -60,6 +61,7 @@ export const checkHealth = async (): Promise<boolean> => {
 export const getCacheStats = async (): Promise<Record<string, unknown> | null> => {
   try {
     const baseUrl = await getBaseUrl();
+    if (!baseUrl) return null;
     const response = await axios.get(`${baseUrl}/cache/stats`, {
       headers: await getAuthHeaders(),
     });
@@ -71,6 +73,9 @@ export const getCacheStats = async (): Promise<Record<string, unknown> | null> =
 
 export const resolveStream = async (url: string, bypassCache: boolean = false) => {
   const baseUrl = await getBaseUrl();
+  if (!baseUrl) {
+    throw new Error('Backend URL is not configured. Please set a server URL in Settings.');
+  }
   const params = new URLSearchParams({ url });
   if (bypassCache) {
     params.append('bypass_cache', 'true');
@@ -100,6 +105,9 @@ export const streamService = {
   async checkBatchStatus(urls: string[], bypassCache: boolean = false): Promise<LiveStream[]> {
     try {
       const baseUrl = await getBaseUrl();
+      if (!baseUrl) {
+        throw new Error('Backend URL is not configured.');
+      }
       const params = bypassCache ? '?bypass_cache=true' : '';
       const response = await axios.post(
         `${baseUrl}/api/status-batch${params}`,

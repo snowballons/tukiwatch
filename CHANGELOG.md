@@ -11,13 +11,24 @@ GitHub Releases with the APK attached.
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-09-06
+
 ### Added
 
+- Supporter tier integration backed by Polar: license key validation, short-lived
+  Bearer session management in Redis, and automated webhook lifecycle sync.
+- Rate-limiting differentiation: free tier is IP-based while supporters receive
+  higher rate limits identified by hashed session tokens.
 - Runtime backend switching via QR code / deep link (`tukiwatch://connect`) —
   point a published build at any self-hosted backend without a rebuild.
 
 ### Changed
 
+- Decoupled hardcoded backend, update manifest, and discovery URLs from source
+  code for open-source safety; URLs are now injected via build-time environment
+  variables (`EXPO_PUBLIC_*`).
+- Added defensive offline and unconfigured-server guards across stream engine
+  and discovery services.
 - App migrated to Expo SDK 56 / React Native 0.85 / React 19 (Expo plugin
   config).
 - API authentication (API key middleware) removed — the backend is
@@ -88,7 +99,8 @@ GitHub Releases with the APK attached.
 - Initial public release of the TukiWatch mobile app and FastAPI backend.
   Track favorite streams, check live status, and watch in-app.
 
-[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/snowballons/tukiwatch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/snowballons/tukiwatch/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/snowballons/tukiwatch/compare/v1.0.6...v1.1.1
 [1.0.5]: https://github.com/snowballons/tukiwatch/releases/tag/v1.0.5

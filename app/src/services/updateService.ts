@@ -15,10 +15,11 @@ export interface UpdateResult {
 
 export async function checkForUpdate(currentVersionCode: number): Promise<UpdateResult> {
   const config = await getBackendConfig();
-  const manifestUrl =
-    config.updateManifestUrl ||
-    process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL ||
-    'https://downloads.snowballons.com/version.json';
+  const manifestUrl = config.updateManifestUrl || process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL;
+
+  if (!manifestUrl) {
+    return { available: false };
+  }
 
   const response = await fetch(manifestUrl, {
     headers: { 'Cache-Control': 'no-cache' },
