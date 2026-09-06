@@ -1,8 +1,8 @@
 {
-  "version": "1.1.2",
+  "version": "1.1.3",
   "versionCode": 9,
-  "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.2/tukiwatch-1.1.2.apk",
-  "releaseNotes": "Released via GitHub Actions.",
+  "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.3/tukiwatch-1.1.3.apk",
+  "releaseNotes": "Supporter subscription with Polar licensing, decoupled backend URLs, and connectivity reliability improvements.",
   "mandatory": false,
   "minAndroidVersion": 8
 }

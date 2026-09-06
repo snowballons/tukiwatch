@@ -13,10 +13,8 @@ export interface BackendVerification {
 
 const CONFIG_KEY = 'backend_config';
 
-export const DEFAULT_BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'https://streaming.snowballons.com';
-export const DEFAULT_UPDATE_MANIFEST_URL =
-  process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL || 'https://downloads.snowballons.com/version.json';
+export const DEFAULT_BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || '';
+export const DEFAULT_UPDATE_MANIFEST_URL = process.env.EXPO_PUBLIC_UPDATE_MANIFEST_URL || undefined;
 
 export function getDefaultBackendConfig(): BackendConfig {
   return {

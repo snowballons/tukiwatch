@@ -98,8 +98,12 @@ export function useTwitchTrackerDiscovery(
       setError(null);
 
       try {
-        const trackerUrl =
-          process.env.EXPO_PUBLIC_TWITCH_TRACKER_URL || 'https://live-steams-api.vercel.app';
+        const trackerUrl = process.env.EXPO_PUBLIC_TWITCH_TRACKER_URL;
+        if (!trackerUrl) {
+          setStreams([]);
+          setHasMore(false);
+          return;
+        }
         const baseUrl = trackerUrl.replace(/\/+$/, '');
 
         const params = new URLSearchParams();

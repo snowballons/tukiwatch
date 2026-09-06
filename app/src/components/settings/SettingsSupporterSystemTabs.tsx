@@ -292,7 +292,7 @@ export function ConnectionTab() {
               style={sharedSettingsStyles.modalInput}
               value={tempServerUrl}
               onChangeText={setTempServerUrl}
-              placeholder="https://api.tukiwatch.com"
+              placeholder="https://api.example.com"
               placeholderTextColor={Palette.textMuted}
               autoCorrect={false}
               autoCapitalize="none"
