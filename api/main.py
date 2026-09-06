@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware import CustomRateLimitMiddleware
 from app.rate_limiter import rate_limiter_factory
+from app.routers import license as license_router
 from app.routers import streams
 from config import config
 
@@ -36,6 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(streams.router, prefix="/api")
+app.include_router(license_router.router)
 
 
 @app.get("/")

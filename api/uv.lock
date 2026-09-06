@@ -1096,6 +1096,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "gunicorn" },
+    { name = "httpx" },
     { name = "python-dotenv" },
     { name = "redis" },
     { name = "streamlink" },
@@ -1105,7 +1106,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "lxml" },
     { name = "memory-profiler" },
     { name = "pytest" },
@@ -1118,6 +1118,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.141.1" },
     { name = "gunicorn", specifier = ">=26.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "redis", specifier = ">=8.1.0" },
     { name = "streamlink", specifier = ">=8.5.0" },
@@ -1127,7 +1128,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "httpx", specifier = ">=0.28.1" },
     { name = "lxml", specifier = ">=6.1.1" },
     { name = "memory-profiler", specifier = ">=0.61.0" },
     { name = "pytest", specifier = ">=9.1.1" },
