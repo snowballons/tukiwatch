@@ -48,6 +48,22 @@
   </div>
 </section>
 
+<!-- ── Post-checkout success banner (shown when ?checkout=success is present) ── -->
+<section class="section" id="checkout-success" hidden>
+  <div class="container">
+    <div class="success-banner" role="status">
+      <h2 class="success-banner__title">Payment successful — welcome aboard!</h2>
+      <p>Your supporter subscription is active. Activate it in the app:</p>
+      <ol class="success-banner__steps">
+        <li>Find your <code>TUKI_…</code> license key in your email receipt (or the Polar customer portal).</li>
+        <li>Open TukiWatch → <strong>Settings → Supporter Access</strong>.</li>
+        <li>Paste the key and tap <strong>Activate</strong> — done, higher limits apply immediately.</li>
+      </ol>
+      <p class="success-banner__ref" id="checkout-ref" hidden>Order reference: <span id="checkout-id"></span> — quote this if you need help.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ── Pricing card ────────────────────────────────────────────────────────── -->
 <section class="section" id="pricing">
   <div class="container" style="display:flex; justify-content:center;">
@@ -83,20 +99,13 @@
         </li>
       </ul>
 
-      <!--
-        Lemon Squeezy checkout link — replace with your actual store/product URL
-        Current placeholder: update once Lemon Squeezy product is created
-      -->
-      <a href="https://your-store.lemonsqueezy.com/buy/[product-id]"
-         target="_blank"
-         rel="noopener noreferrer"
-         class="btn btn--primary"
+      <a class="btn btn--primary"
+         href="https://buy.polar.sh/polar_cl_N4LUuCMNSIytod6oSrel0d9mKNMVWrJcyKk781TB8te"
          style="width:100%; justify-content:center; margin-top:var(--space-xl);"
          id="supporter-checkout">
         Become a Supporter
-        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M6 2l7 6-7 6V9H1V7h5V2z"/></svg>
       </a>
-      <p class="pricing-card__note">Secure checkout via Lemon Squeezy. License key sent to your email after purchase.</p>
+      <p class="pricing-card__note">Secure checkout via Polar. Cancel anytime.</p>
     </div>
   </div>
 </section>
@@ -157,7 +166,7 @@
       <details class="faq__item">
         <summary class="faq__question">Can I cancel anytime?</summary>
         <div class="faq__answer">
-          <p>Yes. Cancel from your Lemon Squeezy dashboard at any time. Your supporter benefits continue until the end of your current billing period. No questions asked.</p>
+          <p>Yes. Cancel anytime from your billing dashboard. Your supporter benefits continue until the end of your current billing period. No questions asked.</p>
         </div>
       </details>
       <details class="faq__item">
@@ -169,7 +178,7 @@
       <details class="faq__item">
         <summary class="faq__question">How do I activate my supporter status?</summary>
         <div class="faq__answer">
-          <p>After purchasing, Lemon Squeezy emails you a license key. Open TukiWatch, go to Settings &gt; Backend Settings, and enter your license key. The API validates it and issues a session token. That's it.</p>
+          <p>After checkout you'll receive a license key (<code>TUKI_…</code>) by email. Open the app → <strong>Settings → Supporter Access</strong>, paste the key and tap <strong>Activate</strong>. It takes under a minute — your higher limits apply immediately.</p>
         </div>
       </details>
       <details class="faq__item">
@@ -187,7 +196,7 @@
       <details class="faq__item">
         <summary class="faq__question">Is there a refund policy?</summary>
         <div class="faq__answer">
-          <p>Refunds are handled by Lemon Squeezy. If you're not satisfied, contact them within 14 days of purchase. We trust our product — most supporters stick around because they find it useful.</p>
+          <p>Yes. Contact us within 14 days of purchase if you're not satisfied and we'll refund you. You can also cancel anytime — your benefits continue until the end of the current billing period. We trust our product — most supporters stick around because they find it useful.</p>
         </div>
       </details>
     </div>

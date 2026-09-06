@@ -1,6 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 
 import { getBackendConfig } from '../lib/backendConfig';
+import { getSessionToken } from '../lib/sessionToken';
 import type { LiveStream } from '../types';
 
 // Rate limit tracking
@@ -40,6 +41,12 @@ const getBaseUrl = async (): Promise<string> => {
   return config.apiUrl.replace(/\/+$/, '');
 };
 
+/** Auth headers for rate-limited calls: Bearer session when supporter. */
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  const token = await getSessionToken();
+  return token ? { ...API_HEADERS, Authorization: `Bearer ${token}` } : { ...API_HEADERS };
+};
+
 export const checkHealth = async (): Promise<boolean> => {
   try {
     const baseUrl = await getBaseUrl();
@@ -53,7 +60,9 @@ export const checkHealth = async (): Promise<boolean> => {
 export const getCacheStats = async (): Promise<Record<string, unknown> | null> => {
   try {
     const baseUrl = await getBaseUrl();
-    const response = await axios.get(`${baseUrl}/cache/stats`);
+    const response = await axios.get(`${baseUrl}/cache/stats`, {
+      headers: await getAuthHeaders(),
+    });
     return response.data;
   } catch {
     return null;
@@ -67,7 +76,7 @@ export const resolveStream = async (url: string, bypassCache: boolean = false) =
     params.append('bypass_cache', 'true');
   }
   const response = await axios.get(`${baseUrl}/api/resolve?${params}`, {
-    headers: API_HEADERS,
+    headers: await getAuthHeaders(),
   });
   updateRateLimitInfo(response.headers);
   return response.data;
@@ -95,7 +104,7 @@ export const streamService = {
       const response = await axios.post(
         `${baseUrl}/api/status-batch${params}`,
         { urls },
-        { headers: API_HEADERS }
+        { headers: await getAuthHeaders() }
       );
       updateRateLimitInfo(response.headers);
       const items = (response.data?.results ?? []) as StatusBatchResultItem[];
