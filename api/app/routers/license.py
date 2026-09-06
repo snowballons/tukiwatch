@@ -82,6 +82,7 @@ async def activate_license(request: ActivateRequest):
     session_token = session_service.create_session(
         license_id=license_data.get("key_id") or "unknown",
         tier="supporter",
+        customer_id=license_data.get("customer_id"),
     )
     return ActivateResponse(
         session_token=session_token,

@@ -44,6 +44,9 @@ Redis is optional — omit `REDIS_URL` to use the in-memory cache.
 4. Add a `PORT` variable (Railway provides it automatically) and set:
    - `ALLOWED_ORIGINS` — e.g. `*`
    - Optionally attach a Railway Redis plugin and set `REDIS_URL`
+   - For supporter licensing, set the `POLAR_*` variables (see "Supporter
+     licensing (Polar)" below) — without them the deployment serves free tier
+     only
 
 ### Railway with Redis (Recommended for Production)
 
@@ -113,6 +116,29 @@ This bakes the hosted endpoint as the default. Users can still override at runti
 | `ALLOWED_ORIGINS` | No | Comma-separated CORS origins; default `*`. |
 | `TWITCH_OAUTH_TOKEN` | No | Ad-free Twitch (Twitch Turbo). |
 | `REDIS_URL` / `REDIS_*` | No | Ephemeral cache + distributed rate limiting; omit for in-memory. |
+| `POLAR_ACCESS_TOKEN` / `POLAR_ORG_ID` / `POLAR_PRODUCT_ID` / `POLAR_BENEFIT_ID` | For supporter licensing | Your own Polar org/product/benefit (see below). Omit to serve the free tier only. |
+| `POLAR_WEBHOOK_SECRET` | For supporter licensing | Signing secret for `POST /webhooks/polar`. |
+| `POLAR_API_BASE` | No | Default `https://api.polar.sh`. |
+| `SESSION_TTL_HOURS` / `SESSION_AUDIT_TTL_DAYS` | No | Session lifetime / audit retention; defaults 24h / 7d. |
+
+## Supporter licensing (Polar)
+
+The managed endpoint includes supporter licensing out of the box. Self-hosters
+who want it must bring their own [Polar](https://polar.sh) setup:
+
+1. Create a Polar organization, a recurring product (e.g. "TukiWatch
+   Supporter"), and a **License Keys** benefit attached to it.
+2. Create an Organization Access Token and a webhook signing secret.
+3. Set the `POLAR_*` variables above (Railway: service **Variables** tab).
+4. Register the webhook endpoint in Polar: `https://<your-host>/webhooks/polar`
+   (Raw JSON; subscribe to `customer.state_changed`, `subscription.revoked`,
+   `benefit_grant.created`/`benefit_grant.revoked`, `order.paid`,
+   `order.refunded`).
+
+Without `POLAR_*` the instance serves the free tier for everyone — license
+endpoints answer "invalid" and rate limits stay IP-based. No Polar customer
+data is stored: sessions are TTL'd hashes and the raw license key is never
+persisted.
 
 ## Clients
 
@@ -155,9 +181,14 @@ backend base URL and connects directly. Connect URIs that still carry a
 
 ## Notes
 
-- Redis holds only cached status results; it is **not** persistent storage.
-- No user data is stored server-side — favorites live on-device in the app.
-- The API is **unauthenticated**: anyone who can reach your backend URL can use
-  it. Rate limiting still applies, but protect the service at the network level
-  (firewall / private tunnel) if you want to restrict access.
-- **Rate limiting**: Per IP, sliding window. Limits: `/resolve` 20/min, `/status-batch` 10/min, `/health` 200/min, default 100/min. With Redis, limits are shared across all Railway replicas.
+- Redis holds only cached status results (plus TTL'd supporter sessions when
+  licensing is enabled); it is **not** persistent storage.
+- No accounts and no PII are stored server-side — favorites live on-device in
+  the app, sessions are opaque hashes linked to Polar license/customer UUIDs.
+- The API is **account-free**: anyone who can reach your backend URL gets the
+  free tier. Rate limiting still applies, but protect the service at the
+  network level (firewall / private tunnel) if you want to restrict access.
+- **Rate limiting**: sliding window — per IP for free (`/resolve` 20/min,
+  `/status-batch` 10/min, default 100/min), per session-hash for supporters
+  (`/resolve` 200/min, `/status-batch` 100/min, default 1000/min). With Redis,
+  limits are shared across all Railway replicas.

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 TOKEN_PREFIX = "tw_sess_"
 AUDIT_PREFIX = "session_audit:"
 LICENSE_INDEX_PREFIX = "license_sessions:"
+CUSTOMER_INDEX_PREFIX = "customer_sessions:"
 
 
 class SessionService:
@@ -32,6 +33,8 @@ class SessionService:
         self._memory: dict[str, tuple[dict[str, str], float]] = {}
         # license_id -> set of tokens (webhook revocation index)
         self._memory_index: dict[str, set[str]] = {}
+        # customer_id -> set of tokens (webhook revocation index)
+        self._memory_customer_index: dict[str, set[str]] = {}
         self._last_cleanup = time.time()
 
     # -- Redis plumbing ---------------------------------------------------
@@ -87,8 +90,17 @@ class SessionService:
 
     # -- Public API -------------------------------------------------------
 
-    def create_session(self, license_id: str, tier: str = "supporter") -> str:
-        """Mint a new session token linked to a Polar license id."""
+    def create_session(
+        self,
+        license_id: str,
+        tier: str = "supporter",
+        customer_id: str | None = None,
+    ) -> str:
+        """Mint a new session token linked to a Polar license id.
+
+        ``customer_id`` is an opaque Polar UUID (no PII) used only as a
+        webhook revocation index.
+        """
         token = f"{TOKEN_PREFIX}{secrets.token_hex(8)}"
         now = datetime.now(timezone.utc)
         expires_at = now + self._ttl()
@@ -118,10 +130,14 @@ class SessionService:
                     },
                 )
                 redis_client.expire(audit_key, self._audit_ttl())
-                # Reverse index for webhook-driven revocation (§5.5).
+                # Reverse indexes for webhook-driven revocation (§5.5).
                 index_key = f"{LICENSE_INDEX_PREFIX}{license_id}"
                 redis_client.sadd(index_key, token)
                 redis_client.expire(index_key, self._audit_ttl())
+                if customer_id:
+                    customer_key = f"{CUSTOMER_INDEX_PREFIX}{customer_id}"
+                    redis_client.sadd(customer_key, token)
+                    redis_client.expire(customer_key, self._audit_ttl())
                 return token
             except Exception as exc:
                 logger.warning("Redis session write failed (%s); using memory", exc)
@@ -130,6 +146,8 @@ class SessionService:
         self._cleanup_memory()
         self._memory[token] = (dict(data), expires_at.timestamp())
         self._memory_index.setdefault(license_id, set()).add(token)
+        if customer_id:
+            self._memory_customer_index.setdefault(customer_id, set()).add(token)
         return token
 
     def validate_session(self, session_token: str) -> dict[str, Any] | None:
@@ -246,6 +264,34 @@ class SessionService:
             if self.revoke_session(token):
                 count += 1
         self._memory_index.pop(license_id, None)
+        return count
+
+
+    def revoke_sessions_for_customer(self, customer_id: str) -> int:
+        """Revoke every session linked to a Polar customer id.
+
+        Used by the Polar webhook handler (§5.5) on subscription revocation.
+        Returns the number of sessions revoked.
+        """
+        if not customer_id:
+            return 0
+        count = 0
+        redis_client = self._get_redis()
+        if redis_client is not None:
+            try:
+                index_key = f"{CUSTOMER_INDEX_PREFIX}{customer_id}"
+                tokens = redis_client.smembers(index_key) or set()
+                for token in tokens:
+                    if self.revoke_session(str(token)):
+                        count += 1
+                redis_client.delete(index_key)
+                return count
+            except Exception as exc:
+                logger.warning("Redis customer-index revoke failed (%s)", exc)
+        for token in list(self._memory_customer_index.get(customer_id, set())):
+            if self.revoke_session(token):
+                count += 1
+        self._memory_customer_index.pop(customer_id, None)
         return count
 
 

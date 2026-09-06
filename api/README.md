@@ -7,9 +7,13 @@ status across platforms (Twitch, YouTube, Kick, and more) via
 [streamwatch-core](https://github.com/snowballons/streamwatch-core) package.
 
 - **Stateless** — no database. State is limited to an ephemeral cache (Redis or
-  an in-memory fallback) and a recycled streamlink session pool.
-- **Unauthenticated** — anyone who can reach the URL can use it (rate limits
-  still apply; protect at the network level if needed).
+  an in-memory fallback), short-lived supporter sessions (24h TTL), and a
+  recycled streamlink session pool.
+- **Account-free** — no usernames or passwords. Anyone who can reach the URL
+  can use it on the free tier (rate limits still apply; protect at the network
+  level if needed). Supporters unlock higher limits with a Polar license key,
+  exchanged once for a short-lived session token
+  (`Authorization: Bearer tw_sess_*`).
 - Built for self-hosting: [Docker](../docs/SELF_HOSTING.md), Railway, or plain
   `uv run uvicorn`.
 
@@ -39,6 +43,10 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8000
 | `GET` | `/cache/stats` | Cache statistics |
 | `GET` | `/rate-limit/stats` | Rate-limit configuration summary |
 | `GET` | `/session/stats` | Streamlink session-pool statistics |
+| `POST` | `/api/license/activate` | Exchange a Polar license key for a session token; body `{"license_key": "TUKI_…"}` |
+| `POST` | `/api/license/validate` | Validate a session (`Authorization: Bearer tw_sess_*`) → `{"valid": true/false, …}` |
+| `POST` | `/api/license/deactivate` | Revoke a session (logout); body `{"session_token": "tw_sess_…"}` |
+| `POST` | `/webhooks/polar` | Polar webhook receiver (subscriptions, benefit grants, orders) |
 
 `bypass_cache=true` clears the cache entry before serving a fresh result.
 
@@ -91,19 +99,37 @@ Response — one entry per URL; per-entry `status` is `online`, `offline`, or
 | `TWITCH_OAUTH_TOKEN` | Twitch OAuth token for ad-free streams (Twitch Turbo) | No | — |
 | `REDIS_URL` | Redis connection string (shared cache) | No | in-memory cache |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` / `REDIS_PASSWORD` | Redis connection details when `REDIS_URL` is not set | No | localhost / 6379 / 0 / — |
+| `POLAR_ACCESS_TOKEN` | Polar Organization Access Token (license validation) | No¹ | — |
+| `POLAR_ORG_ID` | Polar organization ID | No¹ | — |
+| `POLAR_PRODUCT_ID` | Polar "TukiWatch Supporter" product ID | No¹ | — |
+| `POLAR_BENEFIT_ID` | Polar license-keys benefit ID | No¹ | — |
+| `POLAR_WEBHOOK_SECRET` | Polar webhook signing secret | No¹ | — |
+| `POLAR_API_BASE` | Polar API base URL | No | `https://api.polar.sh` |
+| `SESSION_TTL_HOURS` | Supporter session lifetime (hours) | No | `24` |
+| `SESSION_AUDIT_TTL_DAYS` | Session audit record retention (days) | No | `7` |
+
+¹Required only to enable supporter licensing. Without them the API serves the
+free tier for everyone and license endpoints return "invalid".
 
 Copy `.env.example` → `.env` and fill in the values. Redis is an ephemeral
-cache only — no data lives there permanently.
+cache only — no data lives there permanently. Supporter sessions are likewise
+ephemeral (TTL'd hashes; the raw Polar key is never stored).
 
 ## Internals
 
 - **Cache TTLs** (`app/cache.py`): status results 120s, status errors 30s,
   full resolution 300s, offline resolution 60s.
-- **Rate limits** (`app/rate_limit.py`, per IP):
-  `/resolve` 20/min · `/status-batch` 10/min · `/health` 200/min ·
-  `/cache/stats` 50/min · default 100/min. Responses carry
-  `X-RateLimit-Limit/Remaining/Reset` headers; over-limit returns `429` with a
-  `retry_after`.
+- **Rate limits** (`app/rate_limit.py`): free tier is tracked per IP
+  (`/resolve` 20/min · `/status-batch` 10/min · default 100/min); supporter
+  tier is tracked per session hash (`/resolve` 200/min · `/status-batch`
+  100/min · default 1000/min). Responses carry
+  `X-RateLimit-Limit/Remaining/Reset` headers (plus `X-Supporter-Tier` for
+  supporters); over-limit returns `429` with a `retry_after`.
+- **Supporter licensing** (`app/polar_service.py`, `app/session_service.py`,
+  `app/routers/license.py`, `app/webhooks.py`): Polar owns keys, billing, tax
+  and dunning; the API exchanges a `TUKI_` key once for a `tw_sess_*` session
+  and syncs revocations via `POST /webhooks/polar` (revoke only on
+  `benefit_grant.revoked` / `subscription.revoked`).
 - **Session pool** (`app/session_pool.py`): recycled streamlink sessions avoid
   connection overhead; Twitch sessions get low-latency options and an optional
   OAuth header for ad-free playback.

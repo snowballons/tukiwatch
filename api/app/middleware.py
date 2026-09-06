@@ -2,7 +2,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.auth import get_client_key, get_supporter_info
+from app.auth import extract_bearer_token, get_client_key, get_supporter_info
 from app.rate_limit import RateLimitConfig, create_rate_limit_error
 from app.rate_limiter import rate_limiter_factory
 
@@ -28,8 +28,8 @@ class CustomRateLimitMiddleware(BaseHTTPMiddleware):
         is_supporter = supporter_info["is_supporter"]
         tier = supporter_info["tier"]
 
-        # Get token from headers for client key generation
-        token = request.headers.get("X-Supporter-Token")
+        # Get session token from headers for client key generation
+        token = extract_bearer_token(request)
 
         # Generate client key (token:xxx or ip:xxx.xxx)
         client_key = get_client_key(request, is_supporter, token)
