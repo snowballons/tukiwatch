@@ -13,12 +13,16 @@ import {
 import { exportFavorites, importFavorites } from '../../../lib/db';
 import { useStreams } from '../../context/StreamContext';
 import { setUsername, useProfile } from '../../hooks/useProfile';
-import { Palette, Spacing } from '../../theme/Theme';
-import { Card, CardRow, SectionTitle, sharedSettingsStyles } from './SharedSettingsComponents';
+import { Spacing, type ThemeColors } from '../../theme/Theme';
+import { useTheme } from '../../theme/ThemeContext';
+import { Card, CardRow, SectionTitle, useSharedSettingsStyles } from './SharedSettingsComponents';
 
 export function ProfileTab() {
   const { profile, refetch } = useProfile();
   const { streams } = useStreams();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const sharedSettingsStyles = useSharedSettingsStyles();
   const [editing, setEditing] = useState(false);
   const [tempName, setTempName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -59,7 +63,7 @@ export function ProfileTab() {
         <TouchableOpacity onPress={openEdit} activeOpacity={0.8}>
           <View style={styles.avatarRing}>
             <View style={styles.avatarCircle}>
-              <User color={Palette.text} size={28} />
+              <User color={colors.onPrimary} size={28} />
             </View>
           </View>
         </TouchableOpacity>
@@ -68,7 +72,7 @@ export function ProfileTab() {
             <Text style={styles.profileName} numberOfLines={1}>
               {profile?.username ?? 'Local User'}
             </Text>
-            <ChevronRight color={Palette.textMuted} size={16} />
+            <ChevronRight color={colors.textMuted} size={16} />
           </View>
         </TouchableOpacity>
       </View>
@@ -161,7 +165,7 @@ export function ProfileTab() {
               value={tempName}
               onChangeText={setTempName}
               placeholder="Enter your name"
-              placeholderTextColor={Palette.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoFocus
               maxLength={30}
             />
@@ -181,7 +185,7 @@ export function ProfileTab() {
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator size="small" color={Palette.text} />
+                  <ActivityIndicator size="small" color={colors.onPrimary} />
                 ) : (
                   <Text style={sharedSettingsStyles.modalBtnSaveText}>Save</Text>
                 )}
@@ -194,61 +198,62 @@ export function ProfileTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  // Avatar section
-  avatarSection: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-  },
-  avatarRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Palette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Palette.text,
-  },
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    // Avatar section
+    avatarSection: {
+      alignItems: 'center',
+      paddingVertical: Spacing.xl,
+    },
+    avatarRing: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    avatarCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    profileName: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.text,
+    },
 
-  // Stats
-  statsCard: {
-    marginHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  statsRow: {
-    flexDirection: 'row',
-  },
-  statCell: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Palette.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: Palette.textMuted,
-    marginTop: 2,
-  },
-});
+    // Stats
+    statsCard: {
+      marginHorizontal: Spacing.lg,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+    statsRow: {
+      flexDirection: 'row',
+    },
+    statCell: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statValue: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+  });

@@ -20,12 +20,15 @@ import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
-import { Palette, Spacing } from '../theme/Theme';
+import { Spacing, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 import type { LiveStream } from '../types';
 
 export function LibraryScreen() {
   const { streams, loading, refreshStreams, isDeviceOffline, isBackendReachable } = useStreams();
   const { resolve, resolving } = useStreamResolver();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPlatform, setFilterPlatform] = useState('all');
@@ -119,7 +122,7 @@ export function LibraryScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator color={Palette.primary} />
+        <ActivityIndicator color={colors.primary} />
         <Text style={styles.loadingText}>Loading library...</Text>
       </View>
     );
@@ -143,17 +146,17 @@ export function LibraryScreen() {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Search color={Palette.textMuted} size={20} style={styles.searchIcon} />
+        <Search color={colors.textMuted} size={20} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search streams or streamers..."
-          placeholderTextColor={Palette.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <X color={Palette.textMuted} size={20} />
+            <X color={colors.textMuted} size={20} />
           </TouchableOpacity>
         )}
       </View>
@@ -217,7 +220,7 @@ export function LibraryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Palette.primary}
+            tintColor={colors.primary}
           />
         }
         renderItem={({ item }) => (
@@ -246,7 +249,7 @@ export function LibraryScreen() {
 
       {resolving && (
         <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={Palette.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.overlayText}>Loading stream...</Text>
         </View>
       )}
@@ -254,105 +257,106 @@ export function LibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-    paddingTop: 60,
-    paddingHorizontal: Spacing.lg,
-  },
-  headerTitle: {
-    color: Palette.text,
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: Spacing.lg,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: Palette.text,
-    fontSize: 16,
-  },
-  filterSectionWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    maxHeight: 40, // Keeping this to maintain overall height
-  },
-  filterContainer: {
-    flex: 1, // Takes remaining space
-  },
-  scrollableFilterContent: {
-    gap: 8,
-    paddingRight: Spacing.lg, // Add padding to the end of the scrollable content
-  },
-  filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Palette.card,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  filterChipActive: {
-    backgroundColor: Palette.primary,
-    borderColor: Palette.primary,
-  },
-  filterChipText: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  filterChipTextActive: {
-    color: '#fff',
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: Palette.textMuted,
-    marginTop: Spacing.md,
-  },
-  emptyContainer: {
-    marginTop: 100,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: Palette.text,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  emptySubtext: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    marginTop: 8,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overlayText: {
-    color: '#fff',
-    marginTop: Spacing.md,
-    fontSize: 16,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingTop: 60,
+      paddingHorizontal: Spacing.lg,
+    },
+    headerTitle: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: Spacing.lg,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      marginBottom: 12,
+      height: 48,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+    },
+    filterSectionWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      maxHeight: 40, // Keeping this to maintain overall height
+    },
+    filterContainer: {
+      flex: 1, // Takes remaining space
+    },
+    scrollableFilterContent: {
+      gap: 8,
+      paddingRight: Spacing.lg, // Add padding to the end of the scrollable content
+    },
+    filterChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    filterChipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    filterChipText: {
+      color: colors.textMuted,
+      fontSize: 14,
+      fontWeight: '600',
+      textTransform: 'capitalize',
+    },
+    filterChipTextActive: {
+      color: colors.onPrimary,
+    },
+    centered: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      color: colors.textMuted,
+      marginTop: Spacing.md,
+    },
+    emptyContainer: {
+      marginTop: 100,
+      alignItems: 'center',
+    },
+    emptyText: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    emptySubtext: {
+      color: colors.textMuted,
+      fontSize: 14,
+      marginTop: 8,
+    },
+    overlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    overlayText: {
+      color: '#fff',
+      marginTop: Spacing.md,
+      fontSize: 16,
+    },
+  });

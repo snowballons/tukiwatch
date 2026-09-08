@@ -10,8 +10,8 @@ import {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { Home, Library, PlusCircle, Search, Settings } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
 import { CustomSplashScreen } from './src/components/CustomSplashScreen';
 import { StreamProvider } from './src/context/StreamContext';
 import { AddScreen } from './src/screens/AddScreen';
@@ -22,7 +22,8 @@ import { LibraryScreen } from './src/screens/LibraryScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { PlayerScreen } from './src/screens/PlayerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { Palette } from './src/theme/Theme';
+import type { ThemeColors } from './src/theme/Theme';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import type { StreamResolution } from './src/types';
 
 SplashScreen.preventAutoHideAsync();
@@ -66,18 +67,20 @@ const linking: LinkingOptions<RootStackParamList> = {
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 function TabNavigator() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Palette.background,
-          borderTopColor: Palette.border,
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
           height: 85,
           paddingBottom: 25,
         },
-        tabBarActiveTintColor: Palette.primary,
-        tabBarInactiveTintColor: Palette.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
       }}
     >
       <Tab.Screen
@@ -95,8 +98,8 @@ function TabNavigator() {
         component={AddScreen}
         options={{
           tabBarIcon: () => (
-            <View style={styles.addButton}>
-              <PlusCircle color="#fff" size={26} />
+            <View style={[styles.addButton, { backgroundColor: colors.primary }]}>
+              <PlusCircle color={colors.onPrimary} size={26} />
             </View>
           ),
           tabBarLabel: () => null,
@@ -119,8 +122,18 @@ function TabNavigator() {
 }
 
 export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
   const [appIsReady, setAppIsReady] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   useEffect(() => {
     AsyncStorage.getItem('onboarding_complete')
@@ -157,6 +170,7 @@ export default function App() {
 
   return (
     <StreamProvider>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <View style={styles.container} onLayout={onLayoutRootView}>
         <NavigationContainer linking={linking} ref={navigationRef}>
           <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_bottom' }}>
@@ -174,15 +188,15 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-  },
-  addButton: {
-    backgroundColor: Palette.primary,
-    borderRadius: 16,
-    padding: 10,
-    marginBottom: 4,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    addButton: {
+      borderRadius: 16,
+      padding: 10,
+      marginBottom: 4,
+    },
+  });

@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ChevronDown, Link, Plus, X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,7 +21,8 @@ import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
 import { useConnectivity } from '../hooks/useConnectivity';
 import { useStreamResolver } from '../hooks/useStreamResolver';
-import { Palette, Spacing } from '../theme/Theme';
+import { Spacing, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 import type { StreamResolution } from '../types';
 
 // Platform configuration based on backend supported domains
@@ -169,6 +170,8 @@ export function AddScreen() {
   const [identifier, setIdentifier] = useState('');
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
   const { resolve, resolving, error: resolveError } = useStreamResolver();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { isOffline } = useConnectivity();
   const [previewData, setPreviewData] = useState<StreamResolution | null>(null);
   const [constructedUrl, setConstructedUrl] = useState('');
@@ -251,11 +254,11 @@ export function AddScreen() {
 
       {/* Platform Selector */}
       <TouchableOpacity style={styles.platformSelector} onPress={() => setShowPlatformPicker(true)}>
-        <Link color={Palette.textMuted} size={20} />
+        <Link color={colors.textMuted} size={20} />
         <Text style={[styles.platformSelectorText, !selectedPlatform && styles.placeholderText]}>
           {selectedPlatform ? selectedPlatformData?.name : 'Select platform'}
         </Text>
-        <ChevronDown color={Palette.textMuted} size={20} />
+        <ChevronDown color={colors.textMuted} size={20} />
       </TouchableOpacity>
 
       {/* Identifier Input */}
@@ -265,7 +268,7 @@ export function AddScreen() {
           placeholder={
             selectedPlatformData?.placeholder || 'Enter streamer name or stream identifier'
           }
-          placeholderTextColor={Palette.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={identifier}
           onChangeText={setIdentifier}
           autoCapitalize="none"
@@ -274,7 +277,7 @@ export function AddScreen() {
         {/* CLEAR BUTTON (X) */}
         {(selectedPlatform || identifier.length > 0) && (
           <TouchableOpacity onPress={handleClear} style={styles.clearIcon}>
-            <X color={Palette.textMuted} size={18} />
+            <X color={colors.textMuted} size={18} />
           </TouchableOpacity>
         )}
       </View>
@@ -295,7 +298,7 @@ export function AddScreen() {
         disabled={resolving || !selectedPlatform || !identifier.trim()}
       >
         {resolving ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <Text style={styles.buttonText}>Verify Link</Text>
         )}
@@ -370,7 +373,7 @@ export function AddScreen() {
           />
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Plus color="#fff" size={20} />
+            <Plus color={colors.onPrimary} size={20} />
             <Text style={styles.buttonText}>Add to My List</Text>
           </TouchableOpacity>
         </View>
@@ -379,128 +382,129 @@ export function AddScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Palette.background },
-  title: { color: Palette.text, fontSize: 28, fontWeight: 'bold' },
-  subtitle: { color: Palette.textMuted, fontSize: 15, marginTop: 8, marginBottom: 32 },
-  platformSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.card,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 60,
-    borderWidth: 1,
-    borderColor: Palette.border,
-    marginBottom: 12,
-  },
-  platformSelectorText: {
-    flex: 1,
-    color: Palette.text,
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  placeholderText: {
-    color: Palette.textMuted,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.card,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 60,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  input: { flex: 1, color: Palette.text, fontSize: 16 },
-  clearIcon: { padding: 4 },
-  urlPreview: {
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  urlPreviewLabel: {
-    color: Palette.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  urlPreviewText: {
-    color: Palette.text,
-    fontSize: 14,
-  },
-  primaryButton: {
-    backgroundColor: Palette.primary,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  saveButton: {
-    backgroundColor: Palette.live,
-    height: 56,
-    borderRadius: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    gap: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  previewSection: { marginTop: 40, paddingBottom: 40 },
-  previewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  previewLabel: {
-    color: Palette.textMuted,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  cancelLink: { color: '#EF4444', fontSize: 12, fontWeight: '600' },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: Palette.card,
-    borderRadius: 16,
-    width: '80%',
-    maxHeight: '70%',
-    padding: 20,
-  },
-  modalTitle: {
-    color: Palette.text,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  platformOption: {
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  platformOptionSelected: {
-    backgroundColor: `${Palette.primary}20`,
-  },
-  platformOptionText: {
-    color: Palette.text,
-    fontSize: 16,
-  },
-  platformOptionTextSelected: {
-    color: Palette.primary,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    title: { color: colors.text, fontSize: 28, fontWeight: 'bold' },
+    subtitle: { color: colors.textMuted, fontSize: 15, marginTop: 8, marginBottom: 32 },
+    platformSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      height: 60,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginBottom: 12,
+    },
+    platformSelectorText: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+      marginLeft: 12,
+    },
+    placeholderText: {
+      color: colors.textMuted,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      height: 60,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    input: { flex: 1, color: colors.text, fontSize: 16 },
+    clearIcon: { padding: 4 },
+    urlPreview: {
+      marginTop: 12,
+      padding: 12,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    urlPreviewLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontWeight: '600',
+      marginBottom: 4,
+    },
+    urlPreviewText: {
+      color: colors.text,
+      fontSize: 14,
+    },
+    primaryButton: {
+      backgroundColor: colors.primary,
+      height: 56,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 16,
+    },
+    saveButton: {
+      backgroundColor: colors.live,
+      height: 56,
+      borderRadius: 16,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 8,
+      gap: 8,
+    },
+    buttonText: { color: colors.onPrimary, fontSize: 16, fontWeight: '700' },
+    previewSection: { marginTop: 40, paddingBottom: 40 },
+    previewHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    previewLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+    },
+    cancelLink: { color: colors.danger, fontSize: 12, fontWeight: '600' },
+    // Modal styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      width: '80%',
+      maxHeight: '70%',
+      padding: 20,
+    },
+    modalTitle: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 16,
+    },
+    platformOption: {
+      paddingVertical: 16,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    platformOptionSelected: {
+      backgroundColor: `${colors.primary}20`,
+    },
+    platformOptionText: {
+      color: colors.text,
+      fontSize: 16,
+    },
+    platformOptionTextSelected: {
+      color: colors.primary,
+      fontWeight: '600',
+    },
+  });

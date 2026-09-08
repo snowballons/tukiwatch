@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { ChevronRight, Info, Loader, RefreshCw, RotateCcw, Shield } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +22,9 @@ import {
 } from '../../lib/licenseApi';
 import { clearSessionToken, setSessionToken } from '../../lib/sessionToken';
 import { checkForUpdate, selectApkUrl } from '../../services/updateService';
-import { Palette, Spacing } from '../../theme/Theme';
-import { Card, CardRow, SectionTitle, sharedSettingsStyles } from './SharedSettingsComponents';
+import { Spacing, type ThemeColors } from '../../theme/Theme';
+import { useTheme } from '../../theme/ThemeContext';
+import { Card, CardRow, SectionTitle, useSharedSettingsStyles } from './SharedSettingsComponents';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const APP_VERSION_CODE = Constants.expoConfig?.android?.versionCode ?? 0;
@@ -40,6 +41,9 @@ function formatSessionExpiry(iso: string): string | null {
 
 export function ConnectionTab() {
   const { config, isCustom, loading: configLoading, reset, reload } = useBackendConfig();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const sharedSettingsStyles = useSharedSettingsStyles();
   const { isBackendReachable, reconnect } = useStreams();
   const [resetting, setResetting] = useState(false);
   const [editingServer, setEditingServer] = useState(false);
@@ -145,7 +149,7 @@ export function ConnectionTab() {
         <Text style={sharedSettingsStyles.cardSectionLabel}>CONNECTION</Text>
         {configLoading ? (
           <View style={sharedSettingsStyles.loadingRow}>
-            <ActivityIndicator size="small" color={Palette.textMuted} />
+            <ActivityIndicator size="small" color={colors.textMuted} />
             <Text style={sharedSettingsStyles.loadingText}>Loading…</Text>
           </View>
         ) : (
@@ -173,7 +177,7 @@ export function ConnectionTab() {
             <View style={sharedSettingsStyles.divider} />
             <TouchableOpacity style={sharedSettingsStyles.editServerRow} onPress={openEditServer}>
               <Text style={sharedSettingsStyles.editServerText}>Change Server</Text>
-              <ChevronRight color={Palette.textMuted} size={18} />
+              <ChevronRight color={colors.textMuted} size={18} />
             </TouchableOpacity>
           </>
         )}
@@ -190,7 +194,7 @@ export function ConnectionTab() {
         </View>
         {supporterState === 'checking' ? (
           <View style={sharedSettingsStyles.loadingRow}>
-            <ActivityIndicator size="small" color={Palette.textMuted} />
+            <ActivityIndicator size="small" color={colors.textMuted} />
             <Text style={sharedSettingsStyles.loadingText}>Checking…</Text>
           </View>
         ) : supporterState === 'supporter' ? (
@@ -224,7 +228,7 @@ export function ConnectionTab() {
                 setSupporterError(null);
               }}
               placeholder="TUKI_…"
-              placeholderTextColor={Palette.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoCorrect={false}
               autoCapitalize="none"
               editable={supporterState !== 'activating'}
@@ -237,7 +241,7 @@ export function ConnectionTab() {
               activeOpacity={0.7}
             >
               {supporterState === 'activating' ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.onPrimary} />
               ) : (
                 <Text style={styles.accessBtnText}>Activate</Text>
               )}
@@ -263,13 +267,13 @@ export function ConnectionTab() {
           activeOpacity={0.7}
         >
           <View style={sharedSettingsStyles.destructiveRowLeft}>
-            <RotateCcw color="#EF4444" size={18} />
+            <RotateCcw color={colors.danger} size={18} />
             <Text style={sharedSettingsStyles.destructiveText}>Reset to Default Server</Text>
           </View>
           {resetting ? (
-            <ActivityIndicator size="small" color="#EF4444" />
+            <ActivityIndicator size="small" color={colors.danger} />
           ) : (
-            <ChevronRight color="#EF4444" size={18} />
+            <ChevronRight color={colors.danger} size={18} />
           )}
         </TouchableOpacity>
       </Card>
@@ -293,7 +297,7 @@ export function ConnectionTab() {
               value={tempServerUrl}
               onChangeText={setTempServerUrl}
               placeholder="https://api.example.com"
-              placeholderTextColor={Palette.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoCorrect={false}
               autoCapitalize="none"
               keyboardType="url"
@@ -318,6 +322,9 @@ export function ConnectionTab() {
 
 export function SystemTab() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const { colors, mode: themeMode, setMode: setThemeMode } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const sharedSettingsStyles = useSharedSettingsStyles();
 
   const checkForUpdates = useCallback(async (isManual: boolean) => {
     if (isManual) setCheckingUpdate(true);
@@ -350,7 +357,7 @@ export function SystemTab() {
       <Card>
         <View style={styles.aboutHeader}>
           <View style={styles.aboutIconWrap}>
-            <Info color={Palette.primary} size={24} />
+            <Info color={colors.primary} size={24} />
           </View>
           <View style={styles.aboutInfo}>
             <Text style={styles.aboutTitle}>TukiWatch</Text>
@@ -379,16 +386,16 @@ export function SystemTab() {
           activeOpacity={0.7}
         >
           <View style={styles.listRowLeft}>
-            <RefreshCw color={Palette.textMuted} size={18} />
+            <RefreshCw color={colors.textMuted} size={18} />
             <Text style={styles.listRowLabel}>Check for Updates</Text>
           </View>
           <View style={styles.listRowRight}>
             {checkingUpdate ? (
-              <ActivityIndicator size="small" color={Palette.textMuted} />
+              <ActivityIndicator size="small" color={colors.textMuted} />
             ) : (
               <>
                 <Text style={styles.listRowValue}>v{APP_VERSION}</Text>
-                <ChevronRight color={Palette.textMuted} size={18} />
+                <ChevronRight color={colors.textMuted} size={18} />
               </>
             )}
           </View>
@@ -400,10 +407,10 @@ export function SystemTab() {
           activeOpacity={0.7}
         >
           <View style={styles.listRowLeft}>
-            <Shield color={Palette.textMuted} size={18} />
+            <Shield color={colors.textMuted} size={18} />
             <Text style={styles.listRowLabel}>Terms of Service</Text>
           </View>
-          <ChevronRight color={Palette.textMuted} size={18} />
+          <ChevronRight color={colors.textMuted} size={18} />
         </TouchableOpacity>
         <View style={sharedSettingsStyles.divider} />
         <TouchableOpacity
@@ -412,11 +419,42 @@ export function SystemTab() {
           activeOpacity={0.7}
         >
           <View style={styles.listRowLeft}>
-            <Shield color={Palette.textMuted} size={18} />
+            <Shield color={colors.textMuted} size={18} />
             <Text style={styles.listRowLabel}>Privacy Policy</Text>
           </View>
-          <ChevronRight color={Palette.textMuted} size={18} />
+          <ChevronRight color={colors.textMuted} size={18} />
         </TouchableOpacity>
+      </Card>
+
+      {/* Appearance */}
+      <View style={sharedSettingsStyles.gapMd} />
+      <SectionTitle>APPEARANCE</SectionTitle>
+      <Card>
+        <View style={styles.appearanceRow}>
+          {(
+            [
+              { key: 'system', label: 'System' },
+              { key: 'light', label: 'Light' },
+              { key: 'dark', label: 'Dark' },
+            ] as const
+          ).map((option) => {
+            const selected = themeMode === option.key;
+            return (
+              <TouchableOpacity
+                key={option.key}
+                style={[styles.appearanceOption, selected && styles.appearanceOptionSelected]}
+                onPress={() => setThemeMode(option.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+              >
+                <Text style={[styles.appearanceLabel, selected && styles.appearanceLabelSelected]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <Text style={styles.appearanceHint}>System follows your device setting.</Text>
       </Card>
 
       {/* Developer */}
@@ -434,153 +472,189 @@ export function SystemTab() {
           activeOpacity={0.7}
         >
           <View style={sharedSettingsStyles.destructiveRowLeft}>
-            <Loader color="#EF4444" size={18} />
+            <Loader color={colors.danger} size={18} />
             <Text style={sharedSettingsStyles.destructiveText}>Clear Cache</Text>
           </View>
-          <ChevronRight color="#EF4444" size={18} />
+          <ChevronRight color={colors.danger} size={18} />
         </TouchableOpacity>
       </Card>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  // Access card
-  accessCard: {
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    marginHorizontal: Spacing.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  accessHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  accessBadge: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: 'rgba(43, 53, 255, 0.15)',
-  },
-  accessBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Palette.primary,
-    letterSpacing: 0.5,
-  },
-  accessTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Palette.text,
-  },
-  accessDesc: {
-    fontSize: 13,
-    color: Palette.textMuted,
-    lineHeight: 20,
-    marginBottom: Spacing.md,
-  },
-  accessBtn: {
-    backgroundColor: Palette.primary,
-    borderRadius: 8,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-  },
-  accessBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#EF4444',
-    marginBottom: Spacing.sm,
-  },
-  signOutRow: {
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  signOutText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Palette.textMuted,
-  },
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    // Access card
+    accessCard: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      marginHorizontal: Spacing.lg,
+      padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    accessHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      marginBottom: Spacing.sm,
+    },
+    accessBadge: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 3,
+      borderRadius: 6,
+      backgroundColor: 'rgba(43, 53, 255, 0.15)',
+    },
+    accessBadgeText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.primary,
+      letterSpacing: 0.5,
+    },
+    accessTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    accessDesc: {
+      fontSize: 13,
+      color: colors.textMuted,
+      lineHeight: 20,
+      marginBottom: Spacing.md,
+    },
+    accessBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+    },
+    accessBtnText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.onPrimary,
+    },
+    errorText: {
+      fontSize: 13,
+      color: colors.danger,
+      marginBottom: Spacing.sm,
+    },
+    signOutRow: {
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+      marginTop: Spacing.sm,
+    },
+    signOutText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textMuted,
+    },
 
-  // About card
-  aboutHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  aboutIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(43, 53, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  aboutInfo: {
-    flex: 1,
-  },
-  aboutTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Palette.text,
-  },
-  aboutVersion: {
-    fontSize: 13,
-    color: Palette.textMuted,
-    marginTop: 2,
-  },
-  aboutDesc: {
-    fontSize: 14,
-    color: Palette.textMuted,
-    lineHeight: 22,
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  copyrightRow: {
-    borderTopWidth: 1,
-    borderTopColor: Palette.border,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-  },
-  copyrightText: {
-    fontSize: 13,
-    color: Palette.textMuted,
-  },
+    // About card
+    aboutHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+    aboutIconWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: 'rgba(43, 53, 255, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    aboutInfo: {
+      flex: 1,
+    },
+    aboutTitle: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    aboutVersion: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    aboutDesc: {
+      fontSize: 14,
+      color: colors.textMuted,
+      lineHeight: 22,
+      paddingHorizontal: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+    copyrightRow: {
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.md,
+    },
+    copyrightText: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
 
-  // List row
-  listRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-  },
-  listRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flex: 1,
-  },
-  listRowLabel: {
-    fontSize: 15,
-    color: Palette.text,
-  },
-  listRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  listRowValue: {
-    fontSize: 14,
-    color: Palette.textMuted,
-  },
-});
+    // List row
+    listRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.md,
+    },
+    listRowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      flex: 1,
+    },
+    listRowLabel: {
+      fontSize: 15,
+      color: colors.text,
+    },
+    listRowRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    listRowValue: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+
+    // Appearance selector
+    appearanceRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.md,
+    },
+    appearanceOption: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+    },
+    appearanceOptionSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    appearanceLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.textMuted,
+    },
+    appearanceLabelSelected: {
+      color: colors.onPrimary,
+    },
+    appearanceHint: {
+      fontSize: 12,
+      color: colors.textMuted,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+    },
+  });

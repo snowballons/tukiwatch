@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Filter, Play, RefreshCw } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -19,7 +19,8 @@ import { OfflineBanner, OfflineEmpty } from '../components/OfflineState';
 import { useConnectivity } from '../hooks/useConnectivity';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { useTwitchTrackerDiscovery } from '../hooks/useTwitchTrackerDiscovery';
-import { Palette, Spacing } from '../theme/Theme';
+import { Spacing, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 import type { DiscoveryStream } from '../types';
 
 const LANGUAGES = [
@@ -35,6 +36,8 @@ export function DiscoveryScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { resolve, error: resolveError } = useStreamResolver();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isResolvingRef = useRef(false);
   const { isOffline } = useConnectivity();
   const { streams, loading, refreshing, error, errorKind, hasMore, refresh, loadMore } =
@@ -117,7 +120,7 @@ export function DiscoveryScreen() {
               onPress={() => handleStreamPress(item)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Play color="#fff" size={18} fill="#fff" />
+              <Play color={colors.onPrimary} size={18} fill={colors.onPrimary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.addButton}
@@ -130,7 +133,7 @@ export function DiscoveryScreen() {
         </View>
       </TouchableOpacity>
     ),
-    [handleStreamPress, handleAddToLibrary]
+    [handleStreamPress, handleAddToLibrary, styles, colors]
   );
 
   const renderItemSeparator = () => <View style={styles.separator} />;
@@ -139,7 +142,7 @@ export function DiscoveryScreen() {
     if (error || (!hasMore && !loading && !refreshing)) return null;
     return (
       <View style={styles.footer}>
-        <ActivityIndicator size="small" color={Palette.primary} />
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
   };
@@ -148,7 +151,7 @@ export function DiscoveryScreen() {
     if (loading) {
       return (
         <View style={styles.empty}>
-          <ActivityIndicator size="large" color={Palette.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       );
     }
@@ -189,7 +192,7 @@ export function DiscoveryScreen() {
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <RefreshCw
-            color={refreshing ? Palette.textMuted : Palette.primary}
+            color={refreshing ? colors.textMuted : colors.primary}
             size={20}
             style={refreshing ? { transform: [{ rotate: '180deg' }] } : undefined}
           />
@@ -198,7 +201,7 @@ export function DiscoveryScreen() {
 
       {/* Language filter */}
       <View style={styles.filterContainer}>
-        <Filter color={Palette.textMuted} size={16} style={styles.filterIcon} />
+        <Filter color={colors.textMuted} size={16} style={styles.filterIcon} />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -241,7 +244,7 @@ export function DiscoveryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[Palette.primary]}
+            colors={[colors.primary]}
           />
         }
         onEndReached={loadMore}
@@ -251,195 +254,196 @@ export function DiscoveryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Palette.border,
-    backgroundColor: Palette.background,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Palette.text,
-  },
-  refreshButton: {
-    padding: Spacing.sm,
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Palette.border,
-    backgroundColor: Palette.background,
-  },
-  filterIcon: {
-    marginRight: Spacing.sm,
-  },
-  filterScroll: {
-    flex: 1,
-  },
-  filterContent: {
-    alignItems: 'center',
-  },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Palette.border,
-    marginRight: Spacing.sm,
-    backgroundColor: Palette.card,
-  },
-  chipActive: {
-    backgroundColor: Palette.primary,
-    borderColor: Palette.primary,
-  },
-  chipText: {
-    fontSize: 14,
-    color: Palette.textMuted,
-  },
-  chipTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: Spacing.lg,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    backgroundColor: Palette.card,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.sm,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ff0000',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginRight: Spacing.sm,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#fff',
-    marginRight: 4,
-  },
-  liveText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  rankBadge: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginRight: Spacing.sm,
-  },
-  rankText: {
-    color: '#ffd700',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  content: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  info: {
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  streamer: {
-    color: Palette.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  category: {
-    color: Palette.accent,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  viewers: {
-    color: Palette.textMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  playButton: {
-    backgroundColor: Palette.primary,
-    padding: 10,
-    borderRadius: 20,
-  },
-  addButton: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonText: {
-    color: '#10b981',
-    fontSize: 20,
-    fontWeight: '600',
-    lineHeight: 24,
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Palette.border,
-    marginHorizontal: Spacing.lg,
-  },
-  footer: {
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  empty: {
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Palette.textMuted,
-    textAlign: 'center',
-  },
-  errorRetryButton: {
-    marginTop: Spacing.md,
-    backgroundColor: Palette.primary,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  errorRetryText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingTop: 60,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.background,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    refreshButton: {
+      padding: Spacing.sm,
+    },
+    filterContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.background,
+    },
+    filterIcon: {
+      marginRight: Spacing.sm,
+    },
+    filterScroll: {
+      flex: 1,
+    },
+    filterContent: {
+      alignItems: 'center',
+    },
+    chip: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: Spacing.sm,
+      backgroundColor: colors.card,
+    },
+    chipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    chipText: {
+      fontSize: 14,
+      color: colors.textMuted,
+    },
+    chipTextActive: {
+      color: colors.onPrimary,
+      fontWeight: '600',
+    },
+    listContent: {
+      paddingBottom: Spacing.lg,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.md,
+      backgroundColor: colors.card,
+      marginHorizontal: Spacing.lg,
+      marginBottom: Spacing.sm,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    liveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.danger,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 4,
+      borderRadius: 4,
+      marginRight: Spacing.sm,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: '#fff',
+      marginRight: 4,
+    },
+    liveText: {
+      color: '#fff',
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    rankBadge: {
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      marginRight: Spacing.sm,
+    },
+    rankText: {
+      color: '#ffd700',
+      fontSize: 10,
+      fontWeight: '700',
+    },
+    content: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    info: {
+      flex: 1,
+      marginRight: Spacing.sm,
+    },
+    streamer: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    category: {
+      color: colors.accent,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    viewers: {
+      color: colors.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    playButton: {
+      backgroundColor: colors.primary,
+      padding: 10,
+      borderRadius: 20,
+    },
+    addButton: {
+      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addButtonText: {
+      color: colors.live,
+      fontSize: 20,
+      fontWeight: '600',
+      lineHeight: 24,
+    },
+    separator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginHorizontal: Spacing.lg,
+    },
+    footer: {
+      padding: Spacing.lg,
+      alignItems: 'center',
+    },
+    empty: {
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontSize: 16,
+      color: colors.textMuted,
+      textAlign: 'center',
+    },
+    errorRetryButton: {
+      marginTop: Spacing.md,
+      backgroundColor: colors.primary,
+      paddingHorizontal: Spacing.xl,
+      paddingVertical: Spacing.sm,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    errorRetryText: {
+      color: colors.onPrimary,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+  });
