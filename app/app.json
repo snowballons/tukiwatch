@@ -12,7 +12,7 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0A0A0A"
       },
-      "versionCode": 10,
+      "versionCode": 12,
       "predictiveBackGestureEnabled": false,
       "package": "com.tukiwatch.app"
     },
