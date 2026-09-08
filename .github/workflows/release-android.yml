@@ -1,16 +1,20 @@
-# Builds the official Android APK via EAS and publishes a GitHub release + update manifest.
+# Builds the official Android APKs via EAS and publishes a GitHub release + update manifest.
 # NOTE: expo-doctor reports 21/22 — Hermes V1 memory regression on Expo SDK 56
 # (expo@56.0.20 / RN 0.85.3 / Hermes 250829098.0.10). Accepted for this release;
 # plan an SDK 57 upgrade (RN 0.86.2+) to clear it on the next one.
+#
+# Two variants are built from the same source via per-profile ANDROID_ABI env
+# (see app.config.js + app/plugins/withAbiFilter.js):
+#   - tukiwatch-<version>-arm64.apk     (arm64-v8a only, the primary download)
+#   - tukiwatch-<version>-universal.apk (all ABIs, fallback for 32-bit devices)
 #
 # Triggered manually via workflow_dispatch. The tag (v*) path is intentionally
 # not supported: it checked out a detached HEAD, so the final version.json
 # commit+push could not succeed.
 #
-# Idempotent: re-running for a version that is already released (GitHub release
-# with an APK) does nothing. If only a finished EAS build exists for the version
-# (e.g. a previous run that failed after the build), that APK is reused instead
-# of building again. Pass `force` to rebuild anyway.
+# Idempotent: re-running for a version whose release already ships BOTH APKs
+# does nothing. Finished EAS builds are reused per profile (e.g. a previous
+# run that failed after the build). Pass `force` to rebuild anyway.
 
 name: Android APK Release
 
@@ -21,7 +25,7 @@ on:
         description: "Release version (e.g. 1.0.6)"
         required: true
       force:
-        description: "Rebuild even if a release or finished EAS build already exists"
+        description: "Rebuild even if a release or finished EAS builds already exist"
         type: boolean
         default: false
 
@@ -62,53 +66,59 @@ jobs:
           # Normalize to SemVer (allow "1.0.6" or "v1.0.6")
           VERSION="${VERSION#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "arm64_asset=tukiwatch-${VERSION}-arm64.apk" >> "$GITHUB_OUTPUT"
+          echo "universal_asset=tukiwatch-${VERSION}-universal.apk" >> "$GITHUB_OUTPUT"
           echo "Resolved release version: ${VERSION}"
 
-      - name: Check for existing release APK
+      - name: Check for existing release APKs
         id: check-release
         if: github.event.inputs.force != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          APK_ASSET=$(gh release view "v${VERSION}" --json assets \
+          ASSETS=$(gh release view "v${VERSION}" --json assets \
             --jq '.assets[]? | select(.name | endswith(".apk")) | .name' 2>/dev/null || true)
-          if [ -n "${APK_ASSET}" ]; then
-            echo "Release v${VERSION} already ships '${APK_ASSET}' — nothing to do."
+          MISSING=""
+          for want in "${{ steps.version.outputs.arm64_asset }}" "${{ steps.version.outputs.universal_asset }}"; do
+            echo "${ASSETS}" | grep -qx "${want}" || MISSING="${MISSING} ${want}"
+          done
+          if [ -z "${MISSING}" ]; then
+            echo "Release v${VERSION} already ships both APKs — nothing to do."
             echo "existing=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No release with an APK for v${VERSION}."
+            echo "Release v${VERSION} is missing:${MISSING}."
             echo "existing=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Reuse existing EAS build (same appVersion)
+      - name: Reuse existing EAS builds (same appVersion, per profile)
         id: reuse
         if: steps.check-release.outputs.existing == 'false'
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          HIT=$(eas build:list --platform android --buildProfile production \
-              --status finished --json --non-interactive --limit 100 2>/dev/null \
-            | node -e "
-                const builds = JSON.parse(require('fs').readFileSync(0, 'utf8'));
-                const v = '$VERSION';
-                const hit = (Array.isArray(builds) ? builds : [])
-                  .filter(b => String(b.status || '').toUpperCase() === 'FINISHED')
-                  .filter(b => String(b.appVersion || '') === v)
-                  .filter(b => b.artifacts && b.artifacts.buildUrl)
-                  .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
-                if (hit) console.log(JSON.stringify(hit));
-              " || true)
-          if [ -n "${HIT}" ]; then
-            BUILD_URL=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).artifacts.buildUrl)")
-            VERSION_CODE=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).appBuildVersion || '')")
-            echo "build-url=${BUILD_URL}" >> "$GITHUB_OUTPUT"
-            echo "version-code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-            echo "Reusing finished EAS build for v${VERSION} (versionCode ${VERSION_CODE:-?}) — skipping the EAS build."
-          else
-            echo "No reusable finished EAS build for v${VERSION} — a fresh build is required."
-          fi
+          for variant in arm64 universal; do
+            HIT=$(eas build:list --platform android --buildProfile "production-${variant}" \
+                --status finished --json --non-interactive --limit 100 2>/dev/null \
+              | node -e "
+                  const builds = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+                  const v = '$VERSION';
+                  const hit = (Array.isArray(builds) ? builds : [])
+                    .filter(b => String(b.status || '').toUpperCase() === 'FINISHED')
+                    .filter(b => String(b.appVersion || '') === v)
+                    .filter(b => b.artifacts && b.artifacts.buildUrl)
+                    .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
+                  if (hit) console.log(JSON.stringify(hit));
+                " || true)
+            if [ -n "${HIT}" ]; then
+              echo "build-url-${variant}=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).artifacts.buildUrl)")" >> "$GITHUB_OUTPUT"
+              echo "version-code-${variant}=$(echo "${HIT}" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).appBuildVersion || '')")" >> "$GITHUB_OUTPUT"
+              echo "Reusing finished EAS build (production-${variant}) for v${VERSION} — skipping that build."
+            else
+              echo "No reusable finished EAS build (production-${variant}) for v${VERSION}."
+            fi
+          done
 
       - name: Set app version in app.json
         if: steps.check-release.outputs.existing != 'true'
@@ -120,56 +130,66 @@ jobs:
             fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
           "
 
-      - name: Build Android APK
-        if: steps.check-release.outputs.existing != 'true' && steps.reuse.outputs.build-url == ''
+      - name: Build arm64 APK
+        if: steps.check-release.outputs.existing != 'true' && steps.reuse.outputs.build-url-arm64 == ''
         env:
           EXPO_PUBLIC_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/snowballons/tukiwatch/main/app/version.json
-        run: eas build --platform android --profile production --non-interactive --json > build.json
+        run: eas build --platform android --profile production-arm64 --non-interactive --json > build-arm64.json
 
-      - name: Download APK artifact
+      - name: Build universal APK
+        if: steps.check-release.outputs.existing != 'true' && steps.reuse.outputs.build-url-universal == ''
+        env:
+          EXPO_PUBLIC_UPDATE_MANIFEST_URL: https://raw.githubusercontent.com/snowballons/tukiwatch/main/app/version.json
+        run: eas build --platform android --profile production-universal --non-interactive --json > build-universal.json
+
+      - name: Download APK artifacts
         if: steps.check-release.outputs.existing != 'true'
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          BUILD_URL="${{ steps.reuse.outputs.build-url }}"
-          if [ -z "${BUILD_URL}" ]; then
-            BUILD_URL=$(node -e "
-              const b = require('./build.json');
-              const builds = Array.isArray(b) ? b : [b];
-              const a = builds[builds.length - 1];
-              const status = String((a && a.status) || '').toUpperCase();
-              if (status !== 'FINISHED') throw new Error('build status ' + status);
-              if (!a || !a.artifacts || !a.artifacts.buildUrl) throw new Error('build.json has no buildUrl');
-              console.log(a.artifacts.buildUrl);
-            ")
-          fi
           mkdir -p build
-          curl -fL -H "Authorization: Bearer ${EXPO_TOKEN}" "$BUILD_URL" -o "build/tukiwatch-${VERSION}.apk"
+          for variant in arm64 universal; do
+            case "${variant}" in
+              arm64) BUILD_URL="${{ steps.reuse.outputs.build-url-arm64 }}"; JSON="build-arm64.json"; NAME="${{ steps.version.outputs.arm64_asset }}";;
+              universal) BUILD_URL="${{ steps.reuse.outputs.build-url-universal }}"; JSON="build-universal.json"; NAME="${{ steps.version.outputs.universal_asset }}";;
+            esac
+            if [ -z "${BUILD_URL}" ]; then
+              BUILD_URL=$(variant="${variant}" json="${JSON}" node -e "
+                const b = require('./' + process.env.json);
+                const builds = Array.isArray(b) ? b : [b];
+                const a = builds[builds.length - 1];
+                const status = String((a && a.status) || '').toUpperCase();
+                if (status !== 'FINISHED') throw new Error(process.env.variant + ' build status ' + status);
+                if (!a || !a.artifacts || !a.artifacts.buildUrl) throw new Error(process.env.json + ' has no buildUrl');
+                console.log(a.artifacts.buildUrl);
+              ")
+            fi
+            curl -fL -H "Authorization: Bearer ${EXPO_TOKEN}" "$BUILD_URL" -o "build/${NAME}"
+          done
 
-      - name: Read built versionCode
+      - name: Read built versionCodes
         id: versioncode
         if: steps.check-release.outputs.existing != 'true'
         run: |
-          VERSION_CODE=""
-          if [ -f build.json ]; then
-            VERSION_CODE=$(node -e "
-              const b = require('./build.json');
-              const a = Array.isArray(b) ? b[b.length - 1] : b;
-              console.log((a && a.appBuildVersion) || '');
-            ")
-          fi
-          if [ -z "${VERSION_CODE}" ]; then
-            VERSION_CODE="${{ steps.reuse.outputs.version-code }}"
-          fi
-          if [ -z "${VERSION_CODE}" ]; then
-            VERSION_CODE=$(node -e "
-              const cfg = JSON.parse(require('fs').readFileSync('app.json', 'utf8'));
-              console.log(cfg.expo.android?.versionCode ?? '');
-            ")
-          fi
-          echo "versionCode=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          echo "Built versionCode: ${VERSION_CODE}"
+          for variant in arm64 universal; do
+            CODE=""
+            if [ -f "build-${variant}.json" ]; then
+              CODE=$(variant="${variant}" node -e "
+                const b = require('./build-' + process.env.variant + '.json');
+                const a = Array.isArray(b) ? b[b.length - 1] : b;
+                console.log((a && a.appBuildVersion) || '');
+              ")
+            fi
+            if [ -z "${CODE}" ]; then
+              CODE="${{ steps.reuse.outputs.version-code-arm64 }}"
+              if [ "${variant}" = "universal" ]; then
+                CODE="${{ steps.reuse.outputs.version-code-universal }}"
+              fi
+            fi
+            echo "versionCode ${variant}: ${CODE}"
+            echo "version-code-${variant}=${CODE}" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Create GitHub Release
         id: release
@@ -187,12 +207,13 @@ jobs:
           node -e "
             const fs = require('fs');
             const v = '${{ steps.version.outputs.version }}';
-            const code = ${{ steps.versioncode.outputs.versionCode }};
-            const apk = 'https://github.com/${{ github.repository }}/releases/download/v' + v + '/' + fs.readdirSync('build').find(f => f.endsWith('.apk'));
+            const repo = 'https://github.com/${{ github.repository }}/releases/download/v' + v + '/';
             const manifest = {
               version: v,
-              versionCode: code,
-              apkUrl: apk,
+              versionCode: Number('${{ steps.versioncode.outputs.version-code-universal }}'),
+              versionCodeArm64: Number('${{ steps.versioncode.outputs.version-code-arm64 }}'),
+              apkUrl: repo + '${{ steps.version.outputs.universal_asset }}',
+              apkUrlArm64: repo + '${{ steps.version.outputs.arm64_asset }}',
               releaseNotes: 'Released via GitHub Actions.',
               mandatory: false,
               minAndroidVersion: 8,

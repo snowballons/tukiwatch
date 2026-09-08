@@ -178,6 +178,16 @@ h1, h2, h3, h4 {
   flex-wrap: wrap;
   gap: var(--space-md);
 }
+.hero__alt-download {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+.hero__alt-download a {
+  color: var(--color-ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .btn {
   display: inline-flex;
   align-items: center;

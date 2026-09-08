@@ -14,10 +14,12 @@ import {
   View,
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
+import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
-import { Palette, Spacing } from '../theme/Theme';
+import { Spacing, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 import type { LiveStream } from '../types';
 
 function getTimeGreeting(): string {
@@ -28,12 +30,14 @@ function getTimeGreeting(): string {
 }
 
 export function HomeScreen() {
-  const { streams, loading, refreshStreams } = useStreams();
+  const { streams, loading, refreshStreams, isDeviceOffline, isBackendReachable } = useStreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [greeting, setGreeting] = useState(getTimeGreeting);
   const [filterPlatform, setFilterPlatform] = useState('all');
   const { resolve, resolving } = useStreamResolver();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isResolvingRef = useRef(false);
 
@@ -94,7 +98,7 @@ export function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Palette.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Checking your favorites...</Text>
       </View>
     );
@@ -107,19 +111,31 @@ export function HomeScreen() {
         <Text style={styles.title}>Live Now</Text>
       </View>
 
+      {(isDeviceOffline || !isBackendReachable) && (
+        <OfflineBanner
+          message={
+            isDeviceOffline
+              ? 'No internet connection — showing last known status'
+              : 'Cannot reach your server — showing last known status'
+          }
+          onRetry={onRefresh}
+          retrying={refreshing}
+        />
+      )}
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Search color={Palette.textMuted} size={20} style={styles.searchIcon} />
+        <Search color={colors.textMuted} size={20} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search live streams..."
-          placeholderTextColor={Palette.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <X color={Palette.textMuted} size={20} />
+            <X color={colors.textMuted} size={20} />
           </TouchableOpacity>
         )}
       </View>
@@ -207,7 +223,7 @@ export function HomeScreen() {
 
       {resolving && (
         <View style={styles.overlay}>
-          <ActivityIndicator size="large" color={Palette.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.overlayText}>Loading stream...</Text>
         </View>
       )}
@@ -215,97 +231,98 @@ export function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Palette.background, paddingTop: 60 },
-  header: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
-  welcomeText: { color: Palette.textMuted, fontSize: 14, fontWeight: '500' },
-  title: { color: Palette.text, fontSize: 28, fontWeight: 'bold' },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginHorizontal: Spacing.lg,
-    marginBottom: 12,
-    height: 48,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: Palette.text,
-    fontSize: 16,
-  },
-  filterSectionWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: Spacing.lg,
-    marginBottom: 16,
-    maxHeight: 40, // Keeping this to maintain overall height
-  },
-  filterContainer: {
-    flex: 1, // Takes remaining space
-  },
-  scrollableFilterContent: {
-    gap: 8,
-    paddingRight: Spacing.lg, // Add padding to the end of the scrollable content
-  },
-  filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Palette.card,
-    borderWidth: 1,
-    borderColor: Palette.border,
-  },
-  filterChipActive: {
-    backgroundColor: Palette.primary,
-    borderColor: Palette.primary,
-  },
-  filterChipText: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  filterChipTextActive: {
-    color: '#fff',
-  },
-  scrollContent: { paddingHorizontal: Spacing.lg },
-  centered: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: Palette.textMuted, marginTop: Spacing.md },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl * 2,
-    paddingHorizontal: Spacing.lg,
-  },
-  emptyTitle: {
-    color: Palette.text,
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: Spacing.sm,
-  },
-  emptySubtitle: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  overlayText: {
-    color: '#fff',
-    marginTop: Spacing.md,
-    fontSize: 16,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background, paddingTop: 60 },
+    header: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+    welcomeText: { color: colors.textMuted, fontSize: 14, fontWeight: '500' },
+    title: { color: colors.text, fontSize: 28, fontWeight: 'bold' },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      marginHorizontal: Spacing.lg,
+      marginBottom: 12,
+      height: 48,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+    },
+    filterSectionWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: Spacing.lg,
+      marginBottom: 16,
+      maxHeight: 40, // Keeping this to maintain overall height
+    },
+    filterContainer: {
+      flex: 1, // Takes remaining space
+    },
+    scrollableFilterContent: {
+      gap: 8,
+      paddingRight: Spacing.lg, // Add padding to the end of the scrollable content
+    },
+    filterChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    filterChipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    filterChipText: {
+      color: colors.textMuted,
+      fontSize: 14,
+      fontWeight: '600',
+      textTransform: 'capitalize',
+    },
+    filterChipTextActive: {
+      color: colors.onPrimary,
+    },
+    scrollContent: { paddingHorizontal: Spacing.lg },
+    centered: { justifyContent: 'center', alignItems: 'center' },
+    loadingText: { color: colors.textMuted, marginTop: Spacing.md },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: Spacing.xl * 2,
+      paddingHorizontal: Spacing.lg,
+    },
+    emptyTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: Spacing.sm,
+    },
+    emptySubtitle: {
+      color: colors.textMuted,
+      fontSize: 14,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    overlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    overlayText: {
+      color: '#fff',
+      marginTop: Spacing.md,
+      fontSize: 16,
+    },
+  });

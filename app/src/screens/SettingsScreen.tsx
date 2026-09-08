@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProfileTab } from '../components/settings/SettingsProfileTab';
 import { ConnectionTab, SystemTab } from '../components/settings/SettingsSupporterSystemTabs';
-import { sharedSettingsStyles } from '../components/settings/SharedSettingsComponents';
-import { Palette } from '../theme/Theme';
+import { useSharedSettingsStyles } from '../components/settings/SharedSettingsComponents';
+import type { ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 
 const TABS = ['Profile', 'Connection', 'System'] as const;
 type Tab = (typeof TABS)[number];
 
 export function SettingsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('Profile');
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const sharedSettingsStyles = useSharedSettingsStyles();
 
   return (
     <View style={styles.container}>
@@ -47,9 +51,10 @@ export function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+  });

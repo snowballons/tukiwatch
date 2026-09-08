@@ -2,10 +2,10 @@
   "expo": {
     "name": "TukiWatch",
     "slug": "streamwatch",
-    "version": "1.1.3",
+    "version": "1.1.4",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "scheme": "tukiwatch",
     "android": {
       "adaptiveIcon": {

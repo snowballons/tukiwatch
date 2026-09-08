@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChevronRight } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
@@ -12,7 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Palette, PlatformColors } from '../theme/Theme';
+import { PlatformColors, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 
 // --- VISUAL COMPONENTS ---
 
@@ -26,6 +27,8 @@ const FEATURED_PLATFORMS = [
 ];
 
 function Slide1Visual() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [_reduceMotion, setReduceMotion] = useState(false);
   const anims = useRef(FEATURED_PLATFORMS.map(() => new Animated.Value(0))).current;
 
@@ -84,6 +87,8 @@ function Slide1Visual() {
 }
 
 function Slide2Visual() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [_reduceMotion, setReduceMotion] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -153,6 +158,8 @@ function Slide2Visual() {
 }
 
 function Slide3Visual() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [_reduceMotion, setReduceMotion] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -267,6 +274,8 @@ const SLIDES = [
 ];
 
 function SlideWrapper({ width, slide }: { width: number; slide: (typeof SLIDES)[0] }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.slide, { width }]}>
       <View style={styles.visualZone}>
@@ -281,6 +290,8 @@ function SlideWrapper({ width, slide }: { width: number; slide: (typeof SLIDES)[
 }
 
 function Dots({ current }: { current: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.dotsContainer}>
       {SLIDES.map((slide) => {
@@ -291,6 +302,8 @@ function Dots({ current }: { current: number }) {
 }
 
 function Dot({ isActive }: { isActive: boolean }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const widthAnim = useRef(new Animated.Value(isActive ? 24 : 8)).current;
   const bgColorAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
 
@@ -311,13 +324,15 @@ function Dot({ isActive }: { isActive: boolean }) {
 
   const backgroundColor = bgColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [Palette.textMuted, Palette.primary],
+    outputRange: [colors.textMuted, colors.primary],
   });
 
   return <Animated.View style={[styles.dot, { width: widthAnim, backgroundColor }]} />;
 }
 
 export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [index, setIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const { width } = useWindowDimensions();
@@ -365,7 +380,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
         >
           <Text style={styles.ctaText}>{index === SLIDES.length - 1 ? 'Get Started' : 'Next'}</Text>
           {index !== SLIDES.length - 1 && (
-            <ChevronRight color={Palette.text} size={18} style={{ marginLeft: 8 }} />
+            <ChevronRight color={colors.text} size={18} style={{ marginLeft: 8 }} />
           )}
         </TouchableOpacity>
       </View>
@@ -373,242 +388,243 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-  },
-  skip: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  skipText: {
-    color: Palette.textMuted,
-    fontSize: 16,
-  },
-  slide: {
-    flex: 1,
-    paddingTop: 80,
-    alignItems: 'center',
-  },
-  visualZone: {
-    height: '45%',
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textZone: {
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  headline: {
-    color: Palette.text,
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  description: {
-    color: Palette.textMuted,
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  bottomChrome: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
-    alignItems: 'center',
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    marginBottom: 32,
-    alignItems: 'center',
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  cta: {
-    backgroundColor: Palette.primary,
-    width: '100%',
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 44,
-  },
-  ctaText: {
-    color: Palette.text,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  // Visual specific styles
-  visualContainer: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  platformGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-  },
-  platformPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Palette.card,
-    borderRadius: 20,
-    borderLeftWidth: 3,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    margin: 6,
-  },
-  platformDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  platformText: {
-    color: Palette.text,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  platformMore: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    marginTop: 24,
-  },
-  notificationCard: {
-    backgroundColor: Palette.card,
-    borderRadius: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: Palette.live,
-    padding: 16,
-    width: '80%',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
-  notificationCardPartial: {
-    opacity: 0.5,
-    position: 'absolute',
-    bottom: -60, // Partially hidden
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  liveContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Palette.live,
-    marginRight: 4,
-  },
-  liveText: {
-    color: Palette.live,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  streamerName: {
-    color: Palette.text,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cardDesc: {
-    color: Palette.textMuted,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  playerFrame: {
-    backgroundColor: '#111',
-    width: '85%',
-    aspectRatio: 16 / 9,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Palette.border,
-    overflow: 'hidden',
-    justifyContent: 'space-between',
-  },
-  playerTopBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 12,
-  },
-  playerLiveBadge: {
-    backgroundColor: Palette.live,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  playerLiveText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  playerCenter: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Palette.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playIcon: {
-    color: 'white',
-    fontSize: 20,
-    marginLeft: 4, // Visual center tweak
-  },
-  playerBottomBar: {
-    padding: 12,
-  },
-  progressBarBg: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    width: '30%',
-    height: '100%',
-    backgroundColor: Palette.primary,
-    borderRadius: 2,
-  },
-  qualityPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  qualityText: {
-    color: 'white',
-    fontSize: 12,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    skip: {
+      position: 'absolute',
+      top: 50,
+      right: 20,
+      zIndex: 10,
+      minWidth: 44,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    skipText: {
+      color: colors.textMuted,
+      fontSize: 16,
+    },
+    slide: {
+      flex: 1,
+      paddingTop: 80,
+      alignItems: 'center',
+    },
+    visualZone: {
+      height: '45%',
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    textZone: {
+      paddingHorizontal: 32,
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    headline: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    description: {
+      color: colors.textMuted,
+      fontSize: 16,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    bottomChrome: {
+      paddingHorizontal: 24,
+      paddingBottom: 40,
+      alignItems: 'center',
+    },
+    dotsContainer: {
+      flexDirection: 'row',
+      marginBottom: 32,
+      alignItems: 'center',
+    },
+    dot: {
+      height: 8,
+      borderRadius: 4,
+      marginHorizontal: 4,
+    },
+    cta: {
+      backgroundColor: colors.primary,
+      width: '100%',
+      height: 56,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: 44,
+    },
+    ctaText: {
+      color: colors.onPrimary,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    // Visual specific styles
+    visualContainer: {
+      flex: 1,
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    platformGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 12,
+      paddingHorizontal: 20,
+    },
+    platformPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      borderLeftWidth: 3,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      margin: 6,
+    },
+    platformDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 8,
+    },
+    platformText: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    platformMore: {
+      color: colors.textMuted,
+      fontSize: 14,
+      marginTop: 24,
+    },
+    notificationCard: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.live,
+      padding: 16,
+      width: '80%',
+      marginBottom: 12,
+      shadowColor: '#000',
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 5,
+    },
+    notificationCardPartial: {
+      opacity: 0.5,
+      position: 'absolute',
+      bottom: -60, // Partially hidden
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    liveContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 8,
+    },
+    liveDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.live,
+      marginRight: 4,
+    },
+    liveText: {
+      color: colors.live,
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    streamerName: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    cardDesc: {
+      color: colors.textMuted,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    playerFrame: {
+      backgroundColor: '#111',
+      width: '85%',
+      aspectRatio: 16 / 9,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+      justifyContent: 'space-between',
+    },
+    playerTopBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      padding: 12,
+    },
+    playerLiveBadge: {
+      backgroundColor: colors.live,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    playerLiveText: {
+      color: 'white',
+      fontSize: 10,
+      fontWeight: 'bold',
+    },
+    playerCenter: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    playButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    playIcon: {
+      color: 'white',
+      fontSize: 20,
+      marginLeft: 4, // Visual center tweak
+    },
+    playerBottomBar: {
+      padding: 12,
+    },
+    progressBarBg: {
+      height: 4,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      borderRadius: 2,
+      marginBottom: 8,
+    },
+    progressBarFill: {
+      width: '30%',
+      height: '100%',
+      backgroundColor: colors.primary,
+      borderRadius: 2,
+    },
+    qualityPill: {
+      alignSelf: 'flex-start',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    qualityText: {
+      color: 'white',
+      fontSize: 12,
+    },
+  });

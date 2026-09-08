@@ -1,7 +1,25 @@
-export const Palette = {
+export interface ThemeColors {
+  background: string;
+  backgroundGradient: [string, string];
+  card: string;
+  text: string;
+  textMuted: string;
+  primary: string;
+  secondary: string;
+  live: string;
+  offline: string;
+  accent: string;
+  border: string;
+  danger: string;
+  warning: string;
+  /** Text/icons drawn on top of primary-colored surfaces. */
+  onPrimary: string;
+}
+
+export const DarkColors: ThemeColors = {
   // Dark Mode (Primary)
   background: '#0A0A0A',
-  backgroundGradient: ['#1A1A2E', '#0A0A0A'] as const,
+  backgroundGradient: ['#1A1A2E', '#0A0A0A'],
   card: '#161616',
   text: '#FFFFFF',
   textMuted: '#A1A1AA',
@@ -14,10 +32,31 @@ export const Palette = {
   accent: '#00D1FF',
   border: '#27272A',
 
-  // Light Mode (Optional - for later)
-  lightBackground: '#F9FAFB',
-  lightCard: '#FFFFFF',
-  lightText: '#111827',
+  // Functional (mode-independent)
+  danger: '#EF4444',
+  warning: '#FBBF24',
+  onPrimary: '#FFFFFF',
+};
+
+export const LightColors: ThemeColors = {
+  background: '#F9FAFB',
+  backgroundGradient: ['#FFFFFF', '#E8EAF0'],
+  card: '#FFFFFF',
+  text: '#111827',
+  textMuted: '#6B7280',
+
+  // Accents (brand hues kept; accent deepened for contrast on white)
+  primary: '#2B35FF',
+  secondary: '#E5E7EB',
+  live: '#10B981',
+  offline: '#9CA3AF',
+  accent: '#0284C7',
+  border: '#E5E7EB',
+
+  // Functional (mode-independent)
+  danger: '#EF4444',
+  warning: '#B45309',
+  onPrimary: '#FFFFFF',
 };
 
 export const PlatformColors = {

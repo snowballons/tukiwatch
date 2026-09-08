@@ -1,9 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Image, StyleSheet, Text, View } from 'react-native';
-import { Palette } from '../theme/Theme';
+import type { ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 
 export function CustomSplashScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const dot1Anim = useRef(new Animated.Value(0.3)).current;
@@ -43,7 +46,7 @@ export function CustomSplashScreen() {
   }, [dot2Anim, scaleAnim, fadeAnim, dot3Anim, dot1Anim]);
 
   return (
-    <LinearGradient colors={Palette.backgroundGradient} style={styles.container}>
+    <LinearGradient colors={colors.backgroundGradient} style={styles.container}>
       <Animated.View
         style={[
           styles.content,
@@ -77,51 +80,52 @@ export function CustomSplashScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoContainer: {
-    marginBottom: 30,
-    shadowColor: Palette.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Palette.text,
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  tagline: {
-    fontSize: 16,
-    color: Palette.textMuted,
-    marginBottom: 50,
-    letterSpacing: 0.5,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Palette.primary,
-    marginHorizontal: 4,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logoContainer: {
+      marginBottom: 30,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    logo: {
+      width: 120,
+      height: 120,
+    },
+    appName: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 8,
+      letterSpacing: 1,
+    },
+    tagline: {
+      fontSize: 16,
+      color: colors.textMuted,
+      marginBottom: 50,
+      letterSpacing: 0.5,
+    },
+    loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loadingDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.primary,
+      marginHorizontal: 4,
+    },
+  });

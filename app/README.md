@@ -104,26 +104,40 @@ tukiwatch://connect?url=<backend-url>&updates=<manifest-url>
 ## Update flow
 
 - `src/services/updateService.ts` fetches the manifest (`version.json`) and
-  reports an update when `manifest.versionCode > currentVersionCode`.
-- The manifest shape: `{ version, versionCode, apkUrl, releaseNotes, mandatory, minAndroidVersion }`.
-- "Check for Updates" in Settings downloads the APK via the manifest URL.
+  reports an update when the manifest code for the device's asset is newer.
+  The manifest shape: `{ version, versionCode, versionCodeArm64, apkUrl, apkUrlArm64, releaseNotes, mandatory, minAndroidVersion }`.
+- "Check for Updates" in Settings downloads the arm64 APK on arm64 devices
+  (`expo-device`), otherwise the universal APK, via `selectApkUrl()`.
+
+## Android builds: arm64 primary + universal fallback
+
+Two APK variants are built from the same source (see `eas.json`):
+
+- `tukiwatch-<version>-arm64.apk` — arm64-v8a only, the primary download (~50MB).
+- `tukiwatch-<version>-universal.apk` — all ABIs, fallback for 32-bit devices.
+
+Per-variant ABI filtering is driven by the `ANDROID_ABI` env var
+(`production-arm64` sets it; `production-universal` leaves it unset),
+consumed by `app.config.js` through the local `plugins/withAbiFilter.js`
+config plugin (verified via `expo prebuild`: `abiFilters 'arm64-v8a'` lands
+in `defaultConfig`, absent for universal).
 
 ## Releasing a new version
 
 Trigger the **Android APK Release** workflow (manual dispatch with a version
 like `1.0.6`):
 
-1. If a GitHub release `v<version>` already ships an APK, the workflow exits
-   without rebuilding (fully idempotent rerun).
-2. Otherwise, if a finished EAS Android build with the same `appVersion`
-   already exists (e.g. a previous run failed after the build), that APK is
-   **reused** instead of building again.
-3. Otherwise EAS builds a fresh APK
-   (`eas build --platform android --profile production`).
-4. The workflow downloads the APK, creates a GitHub Release, and commits a
-   bumped `version.json` + `app.json` back to `main`.
+1. If GitHub release `v<version>` already ships **both** APKs, the workflow
+   exits without rebuilding (fully idempotent rerun).
+2. Otherwise, finished EAS builds are reused **per profile**
+   (`production-arm64`, `production-universal`) when a finished build with the
+   same `appVersion` already exists.
+3. Otherwise EAS builds each missing variant
+   (`eas build --platform android --profile production-<variant>`).
+4. The workflow downloads both APKs, creates a GitHub Release with both
+   assets, and commits a bumped `version.json` + `app.json` back to `main`.
 5. The in-app **Check for Updates** and the [web download page](../app/web/)
-   read `version.json` to point users at the latest APK.
+   read `version.json` to point users at the right APK per architecture.
 
 Pass the `force` input (`true`) to rebuild a version that is already
 released. Note: the `production` profile uses `autoIncrement`, so the actual

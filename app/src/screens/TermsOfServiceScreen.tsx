@@ -1,18 +1,22 @@
 import { X } from 'lucide-react-native';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Palette, Spacing } from '../theme/Theme';
+import { Spacing, type ThemeColors } from '../theme/Theme';
+import { useTheme } from '../theme/ThemeContext';
 
 interface TermsOfServiceScreenProps {
   onClose: () => void;
 }
 
 export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Terms of Service</Text>
         <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-          <X color={Palette.text} size={24} />
+          <X color={colors.text} size={24} />
         </TouchableOpacity>
       </View>
 
@@ -105,66 +109,67 @@ export function TermsOfServiceScreen({ onClose }: TermsOfServiceScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Palette.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Palette.border,
-  },
-  title: {
-    color: Palette.text,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  closeBtn: {
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingBottom: 40,
-  },
-  lastUpdated: {
-    color: Palette.textMuted,
-    fontSize: 12,
-    marginBottom: Spacing.lg,
-    fontStyle: 'italic',
-  },
-  sectionTitle: {
-    color: Palette.text,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
-  },
-  paragraph: {
-    color: Palette.text,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: Spacing.sm,
-  },
-  bullet: {
-    color: Palette.text,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 4,
-    paddingLeft: Spacing.md,
-  },
-  contact: {
-    color: Palette.primary,
-    fontSize: 14,
-    marginTop: 4,
-  },
-});
+const makeStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.lg,
+      paddingTop: 60,
+      paddingBottom: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    closeBtn: {
+      padding: 8,
+    },
+    content: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.lg,
+      paddingBottom: 40,
+    },
+    lastUpdated: {
+      color: colors.textMuted,
+      fontSize: 12,
+      marginBottom: Spacing.lg,
+      fontStyle: 'italic',
+    },
+    sectionTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginTop: Spacing.lg,
+      marginBottom: Spacing.sm,
+    },
+    paragraph: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 22,
+      marginBottom: Spacing.sm,
+    },
+    bullet: {
+      color: colors.text,
+      fontSize: 14,
+      lineHeight: 22,
+      marginBottom: 4,
+      paddingLeft: Spacing.md,
+    },
+    contact: {
+      color: colors.primary,
+      fontSize: 14,
+      marginTop: 4,
+    },
+  });

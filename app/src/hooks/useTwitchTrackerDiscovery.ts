@@ -1,7 +1,10 @@
+import NetInfo from '@react-native-community/netinfo';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isNetworkError, OFFLINE_MESSAGE } from '../lib/networkErrors';
 import type { DiscoveryStream } from '../types';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const REQUEST_TIMEOUT_MS = 15_000;
 
 // Language code mapping: app's ISO codes → TwitchTracker's full names
 const LANGUAGE_MAP: Record<string, string> = {
@@ -30,6 +33,8 @@ export interface TwitchTrackerDiscoveryState {
   loading: boolean;
   refreshing: boolean;
   error: string | null;
+  /** offline = no internet, config = tracker URL missing, server = backend error. */
+  errorKind: 'offline' | 'config' | 'server' | null;
   hasMore: boolean;
   page: number;
   refresh: (bypassCache?: boolean) => Promise<void>;
@@ -82,6 +87,7 @@ export function useTwitchTrackerDiscovery(
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<'offline' | 'config' | 'server' | null>(null);
   const filtersRef = useRef(initialFilters);
   const isMountedRef = useRef(true);
   const timerRef = useRef<number | null>(null);
@@ -96,12 +102,18 @@ export function useTwitchTrackerDiscovery(
       if (!isLoadMore) setLoading(true);
       else setRefreshing(true);
       setError(null);
+      setErrorKind(null);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
       try {
         const trackerUrl = process.env.EXPO_PUBLIC_TWITCH_TRACKER_URL;
         if (!trackerUrl) {
           setStreams([]);
           setHasMore(false);
+          setError('Discovery is not configured on this build.');
+          setErrorKind('config');
           return;
         }
         const baseUrl = trackerUrl.replace(/\/+$/, '');
@@ -126,10 +138,11 @@ export function useTwitchTrackerDiscovery(
           headers: {
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch streams: ${response.status}`);
+          throw new Error(`TwitchTracker responded with status ${response.status}`);
         }
 
         const data = await response.json();
@@ -154,9 +167,16 @@ export function useTwitchTrackerDiscovery(
         }
       } catch (err) {
         if (!isMountedRef.current) return;
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        setError(message);
+        if (isNetworkError(err)) {
+          setError(OFFLINE_MESSAGE);
+          setErrorKind('offline');
+        } else {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          setError(message);
+          setErrorKind('server');
+        }
       } finally {
+        clearTimeout(timeoutId);
         if (isMountedRef.current) {
           setLoading(false);
           setRefreshing(false);
@@ -191,11 +211,20 @@ export function useTwitchTrackerDiscovery(
     fetchStreams();
   }, [fetchStreams]);
 
-  // Auto-refresh timer
+  // Auto-refresh timer (paused while the device reports no connection)
   useEffect(() => {
     const intervalId = setInterval(() => {
       if (!loading && !refreshing) {
-        refresh();
+        NetInfo.fetch()
+          .then((netState) => {
+            if (netState.isConnected === false || netState.isInternetReachable === false) {
+              return;
+            }
+            refresh();
+          })
+          .catch(() => {
+            refresh();
+          });
       }
     }, REFRESH_INTERVAL);
     timerRef.current = intervalId;
@@ -218,6 +247,7 @@ export function useTwitchTrackerDiscovery(
     loading,
     refreshing,
     error,
+    errorKind,
     hasMore,
     page,
     refresh,

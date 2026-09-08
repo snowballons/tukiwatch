@@ -1,6 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 
 import { getBackendConfig } from '../lib/backendConfig';
+import { isNetworkError, OFFLINE_MESSAGE } from '../lib/networkErrors';
 import { getSessionToken } from '../lib/sessionToken';
 import type { LiveStream } from '../types';
 
@@ -139,7 +140,7 @@ export const streamService = {
       updateRateLimitInfo(axiosError?.response?.headers);
 
       // Enhanced error handling based on HTTP status codes
-      let errorMessage = 'Status check failed';
+      let errorMessage = isNetworkError(error) ? OFFLINE_MESSAGE : 'Status check failed';
       const status = axiosError?.response?.status;
       const data = axiosError?.response?.data as
         | { detail?: string; retry_after?: number }

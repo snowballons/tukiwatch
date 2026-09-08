@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getFavorites } from '../../lib/db';
@@ -10,6 +11,8 @@ interface StreamContextType {
   streams: LiveStream[];
   loading: boolean;
   isBackendReachable: boolean;
+  /** True when the OS explicitly reports no connection/reachability. */
+  isDeviceOffline: boolean;
   refreshStreams: (bypassCache?: boolean) => Promise<void>;
   reconnect: () => Promise<void>;
 }
@@ -20,6 +23,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
   const [streams, setStreams] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBackendReachable, setIsBackendReachable] = useState(true);
+  const [isDeviceOffline, setIsDeviceOffline] = useState(false);
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshStreams = useCallback(async (bypassCache: boolean = false) => {
@@ -69,12 +73,27 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
     refreshStreams();
     checkConnectivity();
 
+    // Track OS-level connectivity so screens can show offline UI.
+    const subscription = NetInfo.addEventListener((netState) => {
+      setIsDeviceOffline(netState.isConnected === false || netState.isInternetReachable === false);
+    });
+    NetInfo.fetch()
+      .then((netState) => {
+        setIsDeviceOffline(
+          netState.isConnected === false || netState.isInternetReachable === false
+        );
+      })
+      .catch(() => {
+        // Keep current state; request-level errors still surface per call.
+      });
+
     // Auto-refresh periodically to keep data from going stale
     refreshTimerRef.current = setInterval(() => {
       refreshStreams(false); // use cache — just re-validates
     }, AUTO_REFRESH_INTERVAL);
 
     return () => {
+      subscription();
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
       }
@@ -83,7 +102,7 @@ export function StreamProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <StreamContext.Provider
-      value={{ streams, loading, isBackendReachable, refreshStreams, reconnect }}
+      value={{ streams, loading, isBackendReachable, isDeviceOffline, refreshStreams, reconnect }}
     >
       {children}
     </StreamContext.Provider>

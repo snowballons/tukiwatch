@@ -1,9 +1,19 @@
+import * as Device from 'expo-device';
+
 import { getBackendConfig } from '../lib/backendConfig';
 
 export interface UpdateManifest {
   version: string;
   versionCode: number;
   apkUrl: string;
+  /** SHA‑256 hash of the APK at `apkUrl`. */
+  apkSha256: string;
+  /** arm64‑only asset, present on releases published after dual‑APK support. */
+  apkUrlArm64?: string;
+  /** SHA‑256 hash of the arm64‑only APK. */
+  apkSha256Arm64?: string;
+  /** versionCode of the arm64 asset (autoIncrement can differ per variant). */
+  versionCodeArm64?: number;
   releaseNotes: string;
   mandatory: boolean;
 }
@@ -30,7 +40,47 @@ export async function checkForUpdate(currentVersionCode: number): Promise<Update
   const manifest: UpdateManifest = await response.json();
 
   return {
-    available: manifest.versionCode > currentVersionCode,
+    available: selectVersionCode(manifest) > currentVersionCode,
     manifest,
   };
+}
+
+/**
+ * True when the device can run the arm64-v8a APK. Anything else (32-bit ARM,
+ * x86 emulators, unknown) falls back to the universal APK.
+ */
+export function isArm64Device(): boolean {
+  try {
+    const arches = Device.supportedCpuArchitectures;
+    if (Array.isArray(arches) && arches.length > 0) {
+      return arches.includes('arm64-v8a');
+    }
+  } catch {
+    // Unknown architecture — fall through to the universal build.
+  }
+  return false;
+}
+
+/** Pick the smallest APK this device can install (arm64 when available). */
+export function selectApkUrl(manifest: UpdateManifest): string {
+  if (isArm64Device() && manifest.apkUrlArm64) {
+    return manifest.apkUrlArm64;
+  }
+  return manifest.apkUrl;
+}
+
+/** Pick the SHA‑256 hash matching the APK selected by `selectApkUrl`. */
+export function selectApkSha256(manifest: UpdateManifest): string | undefined {
+  if (isArm64Device() && manifest.apkSha256Arm64) {
+    return manifest.apkSha256Arm64;
+  }
+  return manifest.apkSha256;
+}
+
+/** Version code of the asset {@link selectApkUrl} would pick. */
+export function selectVersionCode(manifest: UpdateManifest): number {
+  if (isArm64Device() && typeof manifest.versionCodeArm64 === 'number') {
+    return manifest.versionCodeArm64;
+  }
+  return manifest.versionCode;
 }
