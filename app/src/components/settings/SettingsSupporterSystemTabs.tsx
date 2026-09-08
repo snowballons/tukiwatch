@@ -21,7 +21,8 @@ import {
   validateSession,
 } from '../../lib/licenseApi';
 import { clearSessionToken, setSessionToken } from '../../lib/sessionToken';
-import { checkForUpdate, selectApkUrl } from '../../services/updateService';
+import { verifyAndOpenApk } from '../../services/apkVerifier';
+import { checkForUpdate, selectApkSha256, selectApkUrl } from '../../services/updateService';
 import { Spacing, type ThemeColors } from '../../theme/Theme';
 import { useTheme } from '../../theme/ThemeContext';
 import { Card, CardRow, SectionTitle, useSharedSettingsStyles } from './SharedSettingsComponents';
@@ -331,13 +332,26 @@ export function SystemTab() {
     try {
       const result = await checkForUpdate(APP_VERSION_CODE);
       if (result.available && result.manifest) {
-        const { version, releaseNotes, mandatory } = result.manifest;
-        const apkUrl = selectApkUrl(result.manifest);
+        const manifest = result.manifest;
+        const { version, releaseNotes, mandatory } = manifest;
+        const apkUrl = selectApkUrl(manifest);
         Alert.alert('Update Available', `Version ${version} is ready.\n\n${releaseNotes}`, [
           ...(!mandatory ? [{ text: 'Later', style: 'cancel' as const }] : []),
-          { text: 'Download', onPress: () => Linking.openURL(apkUrl) },
+          {
+            text: 'Download',
+            onPress: async () => {
+              const sha256 = selectApkSha256(manifest);
+              if (!sha256) {
+                Alert.alert(
+                  'Missing hash',
+                  'Update manifest missing SHA‑256 hash. Update aborted.'
+                );
+                return;
+              }
+              await verifyAndOpenApk(apkUrl, sha256);
+            },
+          },
         ]);
-      } else if (isManual) {
         Alert.alert('Up to Date', `You are running the latest version (${APP_VERSION}).`);
       }
     } catch {

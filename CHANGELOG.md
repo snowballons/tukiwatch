@@ -11,6 +11,39 @@ GitHub Releases with the APK attached.
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-09-08
+
+### Added
+
+- Global connectivity via @react-native-community/netinfo, shared
+  isNetworkError classifier, OfflineBanner/OfflineEmpty with retry
+- Dual Android artifacts: withAbiFilter config plugin + app.config.js
+  ANDROID_ABI overlay, production-arm64/universal EAS profiles,
+  release workflow builds/publishes both APKs, arch-aware updater
+  (expo-device) and website fallback link
+- Theme tokens split into DarkColors/LightColors (ThemeColors type);
+  accent deepened for light-mode contrast, functional danger/warning/
+  onPrimary tokens shared across modes
+- ThemeProvider with system/light/dark mode, AsyncStorage persistence,
+  live OS-scheme switching; all 16 Palette consumers migrated to
+  useTheme + memoized makeStyles; shared settings styles now a hook                                                
+ - Added selectApkSha256 function mirroring URL logic.                                                                                 
+ - Created apkVerifier.ts implementing download, SHA‑256 verification, and safe install, with a cast for FileSystem.cacheDirectory.    
+
+### Changed
+- Settings System tab gains an Appearance selector; status bar follows
+  mode; app.json userInterfaceStyle automatic
+- UpdateManifest now includes required apkSha256 and optional apkSha256Arm64 fields. 
+   - Updated SettingsSupporterSystemTabs:                                                                                                
+   - Imported new services (checkForUpdate, selectApkUrl, selectApkSha256, verifyAndOpenApk).                                          
+   - Added Spacing and ThemeColors imports.                                                                                            
+   - Integrated verification flow: fetch manifest, resolve SHA‑256, alert on missing/hash mismatch, and invoke verifier. 
+   
+### Fixed
+- Discovery: 15s timeout, typed errors, retry states, footer fix,
+  auto-refresh pauses offline; banners on Home/Library/Add/Player
+
+
 ## [1.1.3] — 2026-09-06
 
 ### Added

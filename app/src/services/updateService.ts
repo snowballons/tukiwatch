@@ -6,8 +6,12 @@ export interface UpdateManifest {
   version: string;
   versionCode: number;
   apkUrl: string;
-  /** arm64-only asset, present on releases published after dual-APK support. */
+  /** SHA‑256 hash of the APK at `apkUrl`. */
+  apkSha256: string;
+  /** arm64‑only asset, present on releases published after dual‑APK support. */
   apkUrlArm64?: string;
+  /** SHA‑256 hash of the arm64‑only APK. */
+  apkSha256Arm64?: string;
   /** versionCode of the arm64 asset (autoIncrement can differ per variant). */
   versionCodeArm64?: number;
   releaseNotes: string;
@@ -63,6 +67,14 @@ export function selectApkUrl(manifest: UpdateManifest): string {
     return manifest.apkUrlArm64;
   }
   return manifest.apkUrl;
+}
+
+/** Pick the SHA‑256 hash matching the APK selected by `selectApkUrl`. */
+export function selectApkSha256(manifest: UpdateManifest): string | undefined {
+  if (isArm64Device() && manifest.apkSha256Arm64) {
+    return manifest.apkSha256Arm64;
+  }
+  return manifest.apkSha256;
 }
 
 /** Version code of the asset {@link selectApkUrl} would pick. */
