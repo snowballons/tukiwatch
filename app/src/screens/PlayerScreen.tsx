@@ -14,6 +14,8 @@ import {
   View,
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
+import { OfflineBanner } from '../components/OfflineState';
+import { useConnectivity } from '../hooks/useConnectivity';
 import { Palette, PlatformColors, Spacing } from '../theme/Theme';
 import type { StreamResolution } from '../types';
 import { getPlatformName, openInOfficialApp } from '../utils/platformLinks';
@@ -34,6 +36,7 @@ export function PlayerScreen({ route, navigation }: PlayerScreenProps) {
   const [currentQuality, setCurrentQuality] = useState('best');
   const [isChanging, setIsChanging] = useState(false);
   const [showQualityPicker, setShowQualityPicker] = useState(false);
+  const { isOffline } = useConnectivity();
 
   const player = useVideoPlayer(sources.best_quality ?? url, (p) => {
     p.loop = false;
@@ -71,6 +74,8 @@ export function PlayerScreen({ route, navigation }: PlayerScreenProps) {
           </View>
         )}
       </View>
+
+      {isOffline && <OfflineBanner message="No internet connection — playback may stall" />}
 
       {/* Metadata & Actions */}
       <ScrollView contentContainerStyle={styles.details}>

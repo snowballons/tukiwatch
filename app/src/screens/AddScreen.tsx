@@ -17,7 +17,9 @@ import {
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
 import { addFavorite } from '../../lib/db';
+import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
+import { useConnectivity } from '../hooks/useConnectivity';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { Palette, Spacing } from '../theme/Theme';
 import type { StreamResolution } from '../types';
@@ -166,7 +168,8 @@ export function AddScreen() {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('');
   const [identifier, setIdentifier] = useState('');
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
-  const { resolve, resolving } = useStreamResolver();
+  const { resolve, resolving, error: resolveError } = useStreamResolver();
+  const { isOffline } = useConnectivity();
   const [previewData, setPreviewData] = useState<StreamResolution | null>(null);
   const [constructedUrl, setConstructedUrl] = useState('');
 
@@ -203,7 +206,7 @@ export function AddScreen() {
     } else if (data) {
       Alert.alert('Offline', 'Stream is currently offline.');
     } else {
-      Alert.alert('Error', 'Could not resolve link.');
+      Alert.alert('Error', resolveError ?? 'Could not resolve link.');
     }
   };
 
@@ -241,6 +244,10 @@ export function AddScreen() {
       <Text style={styles.subtitle}>
         Select platform and enter streamer name or stream identifier.
       </Text>
+
+      {isOffline && (
+        <OfflineBanner message="No internet connection — verify will fail until you reconnect" />
+      )}
 
       {/* Platform Selector */}
       <TouchableOpacity style={styles.platformSelector} onPress={() => setShowPlatformPicker(true)}>

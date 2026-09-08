@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isNetworkError, OFFLINE_MESSAGE } from '../lib/networkErrors';
 import { resolveStream } from '../services/engine';
 import type { StreamResolution } from '../types';
 
@@ -57,9 +58,8 @@ export function useStreamResolver() {
           const structured = detail as { error?: string };
           msg = structured.error || JSON.stringify(detail);
         } else if (err.message) {
-          if (err.message === 'Network Error') {
-            msg =
-              'Cannot connect to the server. Please check your internet connection and try again.';
+          if (isNetworkError(e)) {
+            msg = OFFLINE_MESSAGE;
           } else {
             msg = err.message;
           }

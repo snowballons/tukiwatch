@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
 import { addFavorite } from '../../lib/db';
+import { OfflineBanner, OfflineEmpty } from '../components/OfflineState';
+import { useConnectivity } from '../hooks/useConnectivity';
 import { useStreamResolver } from '../hooks/useStreamResolver';
 import { useTwitchTrackerDiscovery } from '../hooks/useTwitchTrackerDiscovery';
 import { Palette, Spacing } from '../theme/Theme';
@@ -32,9 +34,10 @@ const LANGUAGES = [
 export function DiscoveryScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { resolve } = useStreamResolver();
+  const { resolve, error: resolveError } = useStreamResolver();
   const isResolvingRef = useRef(false);
-  const { streams, loading, refreshing, error, hasMore, refresh, loadMore } =
+  const { isOffline } = useConnectivity();
+  const { streams, loading, refreshing, error, errorKind, hasMore, refresh, loadMore } =
     useTwitchTrackerDiscovery({
       language: selectedLanguage === 'all' ? undefined : selectedLanguage,
     });
@@ -50,13 +53,13 @@ export function DiscoveryScreen() {
         } else if (data) {
           Alert.alert('Offline', data.error || 'Stream is not live.');
         } else {
-          Alert.alert('Error', 'Could not connect to engine.');
+          Alert.alert('Error', resolveError ?? 'Could not connect to engine.');
         }
       } finally {
         isResolvingRef.current = false;
       }
     },
-    [navigation, resolve]
+    [navigation, resolve, resolveError]
   );
   const handleAddToLibrary = useCallback(async (stream: DiscoveryStream) => {
     const success = await addFavorite(stream.author, stream.url);
@@ -133,7 +136,7 @@ export function DiscoveryScreen() {
   const renderItemSeparator = () => <View style={styles.separator} />;
 
   const renderFooter = () => {
-    if (!hasMore && !loading && !refreshing) return null;
+    if (error || (!hasMore && !loading && !refreshing)) return null;
     return (
       <View style={styles.footer}>
         <ActivityIndicator size="small" color={Palette.primary} />
@@ -141,11 +144,38 @@ export function DiscoveryScreen() {
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.empty}>
-      <Text style={styles.emptyText}>{error || 'No streams found'}</Text>
-    </View>
-  );
+  const renderEmpty = () => {
+    if (loading) {
+      return (
+        <View style={styles.empty}>
+          <ActivityIndicator size="large" color={Palette.primary} />
+        </View>
+      );
+    }
+    if (errorKind === 'offline') {
+      return <OfflineEmpty onRetry={() => refresh(true)} retrying={refreshing} />;
+    }
+    if (error) {
+      return (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.errorRetryButton}
+            onPress={() => refresh(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Retry"
+          >
+            <Text style={styles.errorRetryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyText}>No streams found</Text>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -192,6 +222,13 @@ export function DiscoveryScreen() {
       </View>
 
       {/* Stream list */}
+      {isOffline && (
+        <OfflineBanner
+          message="No internet connection — discovery is unavailable"
+          onRetry={handleRefresh}
+          retrying={refreshing}
+        />
+      )}
       <FlatList
         data={streams}
         keyExtractor={(item) => String(item.id)}
@@ -391,5 +428,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Palette.textMuted,
     textAlign: 'center',
+  },
+  errorRetryButton: {
+    marginTop: Spacing.md,
+    backgroundColor: Palette.primary,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.sm,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  errorRetryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

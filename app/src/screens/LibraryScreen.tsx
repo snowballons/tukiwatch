@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
 import { removeFavorite } from '../../lib/db';
+import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
@@ -23,7 +24,7 @@ import { Palette, Spacing } from '../theme/Theme';
 import type { LiveStream } from '../types';
 
 export function LibraryScreen() {
-  const { streams, loading, refreshStreams } = useStreams();
+  const { streams, loading, refreshStreams, isDeviceOffline, isBackendReachable } = useStreams();
   const { resolve, resolving } = useStreamResolver();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,6 +128,18 @@ export function LibraryScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>My Library</Text>
+
+      {(isDeviceOffline || !isBackendReachable) && (
+        <OfflineBanner
+          message={
+            isDeviceOffline
+              ? 'No internet connection — showing last known status'
+              : 'Cannot reach your server — showing last known status'
+          }
+          onRetry={onRefresh}
+          retrying={refreshing}
+        />
+      )}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

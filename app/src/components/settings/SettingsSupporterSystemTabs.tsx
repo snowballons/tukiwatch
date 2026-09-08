@@ -21,7 +21,7 @@ import {
   validateSession,
 } from '../../lib/licenseApi';
 import { clearSessionToken, setSessionToken } from '../../lib/sessionToken';
-import { checkForUpdate } from '../../services/updateService';
+import { checkForUpdate, selectApkUrl } from '../../services/updateService';
 import { Palette, Spacing } from '../../theme/Theme';
 import { Card, CardRow, SectionTitle, sharedSettingsStyles } from './SharedSettingsComponents';
 
@@ -324,7 +324,8 @@ export function SystemTab() {
     try {
       const result = await checkForUpdate(APP_VERSION_CODE);
       if (result.available && result.manifest) {
-        const { version, apkUrl, releaseNotes, mandatory } = result.manifest;
+        const { version, releaseNotes, mandatory } = result.manifest;
+        const apkUrl = selectApkUrl(result.manifest);
         Alert.alert('Update Available', `Version ${version} is ready.\n\n${releaseNotes}`, [
           ...(!mandatory ? [{ text: 'Later', style: 'cancel' as const }] : []),
           { text: 'Download', onPress: () => Linking.openURL(apkUrl) },

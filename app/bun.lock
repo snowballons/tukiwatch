@@ -6,6 +6,7 @@
       "name": "tukiwatchapp",
       "dependencies": {
         "@react-native-async-storage/async-storage": "2.2.0",
+        "@react-native-community/netinfo": "12.0.1",
         "@react-navigation/bottom-tabs": "^7.18.16",
         "@react-navigation/native": "^7.3.16",
         "@react-navigation/native-stack": "^7.18.8",
@@ -13,6 +14,7 @@
         "expo": "~57.0.20",
         "expo-build-properties": "~57.0.17",
         "expo-constants": "~57.0.14",
+        "expo-device": "~57.0.1",
         "expo-document-picker": "~57.0.1",
         "expo-file-system": "~57.0.5",
         "expo-linear-gradient": "~57.0.1",
@@ -270,6 +272,8 @@
 
     "@react-native-async-storage/async-storage": ["@react-native-async-storage/async-storage@2.2.0", "", { "dependencies": { "merge-options": "^3.0.4" }, "peerDependencies": { "react-native": "^0.0.0-0 || >=0.65 <1.0" } }, "sha512-gvRvjR5JAaUZF8tv2Kcq/Gbt3JHwbKFYfmb445rhOj6NUMx3qPLixmDx5pZAyb9at1bYvJ4/eTUipU5aki45xw=="],
 
+    "@react-native-community/netinfo": ["@react-native-community/netinfo@12.0.1", "", { "peerDependencies": { "react": "*", "react-native": ">=0.59" } }, "sha512-P/3caXIvfYSJG8AWJVefukg+ZGRPs+M4Lp3pNJtgcTYoJxCjWrKQGNnCkj/Cz//zWa/avGed0i/wzm0T8vV2IQ=="],
+
     "@react-native/assets-registry": ["@react-native/assets-registry@0.86.3", "", {}, "sha512-TDhgCZA4wjJg84d5A9swiOQYPIWSKEEVdg9IwMFZDupQzW/F3QoLUrfAJOcalgqTDA9/buTB8awhE3Whwg6u9Q=="],
 
     "@react-native/babel-plugin-codegen": ["@react-native/babel-plugin-codegen@0.86.3", "", { "dependencies": { "@babel/traverse": "^7.29.0", "@react-native/codegen": "0.86.3" } }, "sha512-O6Xza4JBGPIU8J7YbKTyBoYL4thpy8jMW/oaLDWdAyOwYHKIjK47pAL5HUEbOe2bWz2PEKjbYRF2ApkJv1ottQ=="],
@@ -517,6 +521,8 @@
     "expo-build-properties": ["expo-build-properties@57.0.17", "", { "dependencies": { "@expo/schema-utils": "^57.0.2", "resolve-from": "^5.0.0", "semver": "^7.6.0" }, "peerDependencies": { "expo": "*" } }, "sha512-+qA5we2h1Gpnd24RGCR1amfSx7Mtf8glZ0jA5bbe1Nfdw9NdAIl+HPUqU7xyOUDKD0JWsHh9ap6yJG/jTs0tvA=="],
 
     "expo-constants": ["expo-constants@57.0.17", "", { "dependencies": { "@expo/env": "~2.4.3" }, "peerDependencies": { "expo": "*", "react-native": "*" } }, "sha512-cPWYBKN1SEbg2lXg2f8VkePJqGZrJPLvVdQDCTfbFu9sQHO1M31Y1zILReUuGnmt/VKeUz40ze579vR00xGu/A=="],
+
+    "expo-device": ["expo-device@57.0.1", "", { "dependencies": { "ua-parser-js": "^0.7.33" }, "peerDependencies": { "expo": "*" } }, "sha512-jyEMDUticH+dhcL3GHa2aiifOvGXJsmb3oVT2R2q4i8bN7Bddy61+NkpMmuS2VAZrvoLQwf0TJJ/1vi1ukvutA=="],
 
     "expo-document-picker": ["expo-document-picker@57.0.1", "", { "peerDependencies": { "expo": "*" } }, "sha512-qBwM5oxDZ3I9kwFD3pUE1oK/WNv9artoEKO6UpqhQgNRr0XA1ALRVWYjkF4+ge9lUNDRehjTm/jenINkzqg84g=="],
 
@@ -959,6 +965,8 @@
     "type-fest": ["type-fest@0.7.1", "", {}, "sha512-Ne2YiiGN8bmrmJJEuTWTLJR32nh/JdL1+PSicowtNb0WFpn59GK8/lfD61bVtzguz7b3PBt74nxpv/Pw5po5Rg=="],
 
     "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+
+    "ua-parser-js": ["ua-parser-js@0.7.41", "", { "bin": { "ua-parser-js": "script/cli.js" } }, "sha512-O3oYyCMPYgNNHuO7Jjk3uacJWZF8loBgwrfd/5LE/HyZ3lUIOdniQ7DNXJcIgZbwioZxk0fLfI4EVnetdiX5jg=="],
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 

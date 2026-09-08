@@ -26,7 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
 
       const version = `v${data.version}`;
-      const downloadUrl = data.apkUrl;
+      // arm64 build is the primary download; universal is the 32-bit fallback.
+      const downloadUrl = data.apkUrlArm64 || data.apkUrl;
+      const universalUrl = data.apkUrl;
 
       // Update all download buttons
       document
@@ -38,6 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (versionSpan) versionSpan.textContent = `(${version})`;
           }
         });
+
+      // Point the 32-bit fallback link at the universal build when published.
+      const universalBtn = document.getElementById('hero-universal-btn');
+      if (universalBtn && universalUrl && universalUrl !== downloadUrl) {
+        universalBtn.href = universalUrl;
+      }
     } catch (error) {
       console.warn('Could not fetch latest version:', error);
       // Buttons keep their default hrefs from HTML

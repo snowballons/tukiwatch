@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import type { RootStackParamList } from '../../App';
+import { OfflineBanner } from '../components/OfflineState';
 import { StreamCard } from '../components/StreamCard';
 import { useStreams } from '../context/StreamContext';
 import { useStreamResolver } from '../hooks/useStreamResolver';
@@ -28,7 +29,7 @@ function getTimeGreeting(): string {
 }
 
 export function HomeScreen() {
-  const { streams, loading, refreshStreams } = useStreams();
+  const { streams, loading, refreshStreams, isDeviceOffline, isBackendReachable } = useStreams();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [greeting, setGreeting] = useState(getTimeGreeting);
@@ -106,6 +107,18 @@ export function HomeScreen() {
         <Text style={styles.welcomeText}>{greeting}</Text>
         <Text style={styles.title}>Live Now</Text>
       </View>
+
+      {(isDeviceOffline || !isBackendReachable) && (
+        <OfflineBanner
+          message={
+            isDeviceOffline
+              ? 'No internet connection — showing last known status'
+              : 'Cannot reach your server — showing last known status'
+          }
+          onRetry={onRefresh}
+          retrying={refreshing}
+        />
+      )}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
