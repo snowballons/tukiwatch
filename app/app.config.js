@@ -12,6 +12,10 @@ module.exports = function appConfig({ config }) {
 
   return {
     ...config,
-    plugins: [...(config.plugins ?? []), ['./plugins/withAbiFilter', { abis }]],
+    plugins: [
+      ...(config.plugins ?? []),
+      'expo-secure-store',
+      ['./plugins/withAbiFilter', { abis }],
+    ],
   };
 };
