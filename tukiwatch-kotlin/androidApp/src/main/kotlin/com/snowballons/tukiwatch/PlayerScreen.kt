@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -89,6 +91,29 @@ fun AndroidStreamScreen(
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
 
+            vm.errorDetails?.let { details ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            details.error ?: details.type ?: "Error",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        details.reason?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        }
+                        details.alternative?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = vm.url,
                 onValueChange = { vm.url = it },
@@ -99,10 +124,10 @@ fun AndroidStreamScreen(
 
             Row {
                 Button(
-                    onClick = { vm.extractAndPlay(engine) },
+                    onClick = { vm.resolveAndPlay(engine) },
                     enabled = !vm.extracting
                 ) {
-                    Text(if (vm.extracting) "Extracting..." else "Extract & Play")
+                    Text(if (vm.extracting) "Resolving..." else "Resolve & Play")
                 }
                 Button(
                     onClick = { vm.stop() },
@@ -115,6 +140,36 @@ fun AndroidStreamScreen(
             Text(vm.status, modifier = Modifier.padding(vertical = 8.dp))
             vm.lastTimings?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall)
+            }
+
+            vm.metadata?.let { meta ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            meta.title ?: "Live Stream",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        meta.author?.let { Text("by $it", style = MaterialTheme.typography.bodyMedium) }
+                        Row {
+                            meta.category?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            meta.streamTypes?.let {
+                                Text(
+                                    it.joinToString(", "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                        meta.viewerCount?.let {
+                            Text("$it viewers", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
             }
 
             if (vm.result.directPlayable.isNotEmpty()) {

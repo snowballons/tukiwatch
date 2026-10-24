@@ -39,9 +39,11 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     var url by mutableStateOf("https://www.twitch.tv/lofigirl")
-    var status by mutableStateOf("Idle. Tap Extract, then Play.")
+    var status by mutableStateOf("Idle. Tap Resolve & Play.")
     var extracting by mutableStateOf(false)
     var result by mutableStateOf(EngineResult())
+    var metadata by mutableStateOf<EngineResult?>(null)
+    var errorDetails by mutableStateOf<ErrorDetails?>(null)
     var selected by mutableStateOf<StreamItem?>(null)
     var playerError by mutableStateOf<String?>(null)
     var lastTimings by mutableStateOf<String?>(null)
@@ -126,7 +128,7 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
         behindLiveRetries = 0
         playerError = null
         status = "Stream URL expired — re-extracting..."
-        lastEngine?.let { extractAndPlay(it, url) }
+        lastEngine?.let { resolveAndPlay(it, url) }
     }
 
     /** Codec/container fallback: switch to an h264 rendition once per incident. */
@@ -152,12 +154,13 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
         status = "Stopped"
     }
 
-    fun extractAndPlay(engine: ChaquopyStreamEngine, targetUrl: String = url) {
+    fun resolveAndPlay(engine: ChaquopyStreamEngine, targetUrl: String = url) {
         lastEngine = engine
         job?.cancel()
         job = viewModelScope.launch {
             extracting = true
             playerError = null
+            errorDetails = null
             url = targetUrl
 
             // 1. Fresh cache → instant play, then silent background refresh.
@@ -165,33 +168,42 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
             if (cached != null && System.currentTimeMillis() - cached.second < CACHE_TTL_MS) {
                 val (cr, _) = cached
                 result = cr
+                metadata = cr
+                errorDetails = cr.errorDetails
                 val best = preferredStream(cr.directPlayable)
                 if (best != null) {
                     play(best)
                     status = "Playing from cache (${cr.directPlayable.size} qualities)"
                     lastTimings = timingsText("cache", cr)
                 }
-                // Refresh in background without blocking playback.
                 launch { refreshFull(engine, targetUrl, silent = true) }
                 extracting = false
                 return@launch
             }
 
-            // Single full extract: streams() resolves everything anyway, so one
-            // call both populates the quality row and lets us prefer h264.
-            status = "Extracting..."
-            val full = engine.listStreams(targetUrl, "{}", "all")
-            if (full.error != null) {
-                status = "Error ${full.error}: ${full.message}"
+            status = "Resolving..."
+            val full = engine.resolveDetails(targetUrl, "{}", "all")
+            errorDetails = full.errorDetails
+            metadata = full
+
+            if (full.status == "error" || full.error != null) {
+                status = "Error ${full.error ?: "unknown"}: ${full.message}"
                 extracting = false
                 return@launch
             }
+            if (full.status == "offline") {
+                status = "Stream is offline (${full.author ?: "unknown"})"
+                extracting = false
+                return@launch
+            }
+
             val best = preferredStream(full.directPlayable)
             if (best == null) {
-                status = "No direct-playable streams"
+                status = "No direct-playable streams found"
                 extracting = false
                 return@launch
             }
+
             cache[targetUrl] = full to System.currentTimeMillis()
             result = full
             play(best)
@@ -200,17 +212,21 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun extractAndPlay(engine: ChaquopyStreamEngine, targetUrl: String = url) {
+        resolveAndPlay(engine, targetUrl)
+    }
+
     private suspend fun refreshFull(
         engine: ChaquopyStreamEngine,
         targetUrl: String,
         silent: Boolean
     ) {
         try {
-            val full = engine.listStreams(targetUrl, "{}", "all")
-            if (full.error == null && full.directPlayable.isNotEmpty()) {
+            val full = engine.resolveDetails(targetUrl, "{}", "all")
+            if (full.status == "online" && full.directPlayable.isNotEmpty()) {
                 cache[targetUrl] = full to System.currentTimeMillis()
                 result = full
-                // Keep current selection if still present; else keep playing item.
+                metadata = full
                 lastTimings = timingsText("full", full)
                 if (!silent) status = "Found ${full.streams.size} qualities"
             }

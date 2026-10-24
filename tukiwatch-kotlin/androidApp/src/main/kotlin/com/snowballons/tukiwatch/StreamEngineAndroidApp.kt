@@ -39,27 +39,70 @@ class ChaquopyStreamEngine(appContext: Context) : StreamEngine {
         }
     }
 
+    private suspend fun <T : Any> call(attr: String, vararg args: Any): T =
+        withContext(Dispatchers.IO) {
+            val module = Python.getInstance().getModule("stream_engine")
+            module.callAttr(attr, *args).toString() as T
+        }
+
     override suspend fun listStreams(
+        url: String,
+        optionsJson: String,
+        wanted: String
+    ): EngineResult = resolveDetails(url, optionsJson, wanted)
+
+    override suspend fun resolveDetails(
         url: String,
         optionsJson: String,
         wanted: String
     ): EngineResult = withContext(Dispatchers.IO) {
         try {
             val t0 = SystemClock.elapsedRealtime()
-            val module = Python.getInstance().getModule("stream_engine")
-            val raw = module.callAttr("list_streams", url, optionsJson, wanted).toString()
+            val raw = call<String>("resolve_details", url, optionsJson, wanted)
             val parsed = json.decodeFromString(EngineResult.serializer(), raw)
             android.util.Log.d(
                 "StreamEngine",
-                "extract url=$url wanted=$wanted total=${parsed.timings?.totalMs}ms " +
+                "resolve url=$url status=${parsed.status} total=${parsed.timings?.totalMs}ms " +
                     "streams=${parsed.timings?.streamsMs}ms reused=${parsed.timings?.sessionReused} " +
                     "bridge=${SystemClock.elapsedRealtime() - t0}ms"
             )
             parsed
         } catch (e: Exception) {
-            EngineResult(error = "unexpected", message = "${e.javaClass.simpleName}: ${e.message}")
+            EngineResult(
+                status = "error",
+                error = "unexpected",
+                message = "${e.javaClass.simpleName}: ${e.message}",
+                errorDetails = ErrorDetails(
+                    type = "unexpected",
+                    error = "Unexpected error: ${e.message}",
+                    message = "${e.javaClass.simpleName}: ${e.message}",
+                    reason = "Kotlin/Python bridge failure",
+                    alternative = null
+                )
+            )
         }
     }
+
+    override suspend fun checkStatus(url: String, optionsJson: String): StreamStatus =
+        withContext(Dispatchers.IO) {
+            try {
+                val raw = call<String>("check_status", url, optionsJson)
+                json.decodeFromString(StreamStatus.serializer(), raw)
+            } catch (e: Exception) {
+                StreamStatus(
+                    url = url,
+                    status = "error",
+                    error = "${e.javaClass.simpleName}: ${e.message}",
+                    errorDetails = ErrorDetails(
+                        type = "unexpected",
+                        error = "Unexpected error: ${e.message}",
+                        message = "${e.javaClass.simpleName}: ${e.message}",
+                        reason = "Kotlin/Python bridge failure",
+                        alternative = null
+                    )
+                )
+            }
+        }
 }
 
 fun playStream(player: ExoPlayer, item: StreamItem) {

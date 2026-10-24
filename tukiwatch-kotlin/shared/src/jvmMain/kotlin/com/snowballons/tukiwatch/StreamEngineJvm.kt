@@ -11,7 +11,7 @@ class SubprocessStreamEngine(
     private val pythonBin: String = System.getenv("PYKOT_PYTHON") ?: "python3.11",
     private val scriptFile: File = File(
         System.getenv("PYKOT_SCRIPT")
-            ?: "/home/jonnie/Projects/tukiwatch-org/tukiwatch-kotlin/androidApp/src/main/python/stream_engine.py"
+            ?: "/home/jonnie/Projects/tukiwatch-org/tukiwatch-mobile/tukiwatch/tukiwatch-kotlin/androidApp/src/main/python/stream_engine.py"
     )
 ) : StreamEngine {
     private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
@@ -29,34 +29,74 @@ class SubprocessStreamEngine(
         }
     }
 
+    private suspend fun runPython(attr: String, vararg args: String): String =
+        withContext(Dispatchers.IO) {
+            val proc = ProcessBuilder(
+                listOf(pythonBin, scriptFile.absolutePath, attr) + args
+            ).redirectErrorStream(true).start()
+            val raw = proc.inputStream.bufferedReader().readText()
+            proc.waitFor()
+            val jsonStart = raw.indexOf('{')
+            if (jsonStart < 0) {
+                throw IllegalStateException("no JSON in output: ${raw.take(500)}")
+            }
+            raw.substring(jsonStart)
+        }
+
     override suspend fun listStreams(
+        url: String,
+        optionsJson: String,
+        wanted: String
+    ): EngineResult = resolveDetails(url, optionsJson, wanted)
+
+    override suspend fun resolveDetails(
         url: String,
         optionsJson: String,
         wanted: String
     ): EngineResult = withContext(Dispatchers.IO) {
         try {
-            // Note: each call spawns a fresh process (no session reuse on desktop
-            // fast-path); Android in-process reuses the singleton session.
-            val proc = ProcessBuilder(pythonBin, scriptFile.absolutePath, url, wanted)
-                .redirectErrorStream(true)
-                .start()
-            val raw = proc.inputStream.bufferedReader().readText()
-            proc.waitFor()
-            val jsonStart = raw.indexOf('{')
-            if (jsonStart < 0) {
-                return@withContext EngineResult(
-                    error = "unexpected",
-                    message = raw.take(2000)
-                )
-            }
             json.decodeFromString(
                 EngineResult.serializer(),
-                raw.substring(jsonStart)
+                runPython("resolve_details", url, optionsJson, wanted)
             )
         } catch (e: Exception) {
-            EngineResult(error = "unexpected", message = "${e.javaClass.simpleName}: ${e.message}")
+            EngineResult(
+                status = "error",
+                error = "unexpected",
+                message = "${e.javaClass.simpleName}: ${e.message}",
+                errorDetails = ErrorDetails(
+                    type = "unexpected",
+                    error = "Unexpected error: ${e.message}",
+                    message = "${e.javaClass.simpleName}: ${e.message}",
+                    reason = "Desktop subprocess failure",
+                    alternative = null
+                )
+            )
         }
     }
+
+    override suspend fun checkStatus(url: String, optionsJson: String): StreamStatus =
+        withContext(Dispatchers.IO) {
+            try {
+                json.decodeFromString(
+                    StreamStatus.serializer(),
+                    runPython("check_status", url, optionsJson)
+                )
+            } catch (e: Exception) {
+                StreamStatus(
+                    url = url,
+                    status = "error",
+                    error = "${e.javaClass.simpleName}: ${e.message}",
+                    errorDetails = ErrorDetails(
+                        type = "unexpected",
+                        error = "Unexpected error: ${e.message}",
+                        message = "${e.javaClass.simpleName}: ${e.message}",
+                        reason = "Desktop subprocess failure",
+                        alternative = null
+                    )
+                )
+            }
+        }
 }
 
 actual fun createStreamEngine(): StreamEngine = SubprocessStreamEngine()

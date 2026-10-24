@@ -23,18 +23,57 @@ data class EngineTimings(
     val count: Int = 0
 )
 
+/** Client-visible error contract, matching the Expo app's 422 `error_details` shape. */
+@Serializable
+data class ErrorDetails(
+    val type: String? = null,           // no_plugin | browser_required | plugin_error | unexpected
+    val error: String? = null,
+    val message: String? = null,
+    val reason: String? = null,
+    val alternative: String? = null
+)
+
+/** Full stream resolution with metadata, mirroring `StreamResolution` from tukiwatch-core. */
 @Serializable
 data class EngineResult(
+    val status: String? = null,         // online | offline | error
     val error: String? = null,
     val message: String? = null,
     val streams: List<StreamItem> = emptyList(),
     val wanted: String? = null,
     @SerialName("quality_index") val qualityIndex: List<String>? = null,
-    @SerialName("_timings") val timings: EngineTimings? = null
+    @SerialName("_timings") val timings: EngineTimings? = null,
+    val originalUrl: String? = null,
+    val platform: String? = null,
+    val title: String? = null,
+    val author: String? = null,
+    val thumbnail: String? = null,
+    val category: String? = null,
+    val streamId: String? = null,
+    val viewerCount: Int? = null,
+    val streamTypes: List<String>? = null,
+    val bestQuality: String? = null,
+    @SerialName("error_details") val errorDetails: ErrorDetails? = null
 ) {
     val directPlayable: List<StreamItem>
         get() = streams.filter { it.playableDirect && it.url != null }
 }
+
+/** Cheap liveness check, mirroring `StreamStatus` from tukiwatch-core. */
+@Serializable
+data class StreamStatus(
+    val url: String = "",
+    val status: String = "",            // online | offline | error
+    val title: String? = null,
+    val author: String? = null,
+    val thumbnail: String? = null,
+    val category: String? = null,
+    val streamId: String? = null,
+    val platform: String? = null,
+    val viewerCount: Int? = null,
+    val error: String? = null,
+    val errorDetails: ErrorDetails? = null
+)
 
 interface StreamEngine {
     suspend fun listStreams(
@@ -42,6 +81,16 @@ interface StreamEngine {
         optionsJson: String = "{}",
         wanted: String = "all"
     ): EngineResult
+
+    /** Full resolution with metadata (Phase 1). */
+    suspend fun resolveDetails(
+        url: String,
+        optionsJson: String = "{}",
+        wanted: String = "all"
+    ): EngineResult
+
+    /** Cheap liveness check for non-Twitch staggered status (Phase 1). */
+    suspend fun checkStatus(url: String, optionsJson: String = "{}"): StreamStatus
 
     /** Pre-build session off the critical path. Returns true when ready. */
     suspend fun warmup(url: String? = null): Boolean = true
