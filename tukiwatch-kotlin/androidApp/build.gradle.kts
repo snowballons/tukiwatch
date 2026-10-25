@@ -18,6 +18,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.lifecycle.viewmodelCompose)
+    implementation(libs.androidx.lifecycle.runtimeCompose)
+    implementation(libs.androidx.core.ktx)
 
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)

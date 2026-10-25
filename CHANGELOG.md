@@ -11,6 +11,21 @@ GitHub Releases with the APK attached.
 
 ## [Unreleased]
 
+### Added
+
+- Kotlin Multiplatform port (`tukiwatch-kotlin/`), Android-only, backend removed:
+  - Phase 1 engine parity — the on-device Streamlink engine (Chaquopy) now returns
+    `tukiwatch-core` metadata (title/author/category/stream_id/platform), the full
+    error taxonomy (`no_plugin / browser_required / plugin_error / unexpected`)
+    carrying the structured `{type, error, message, reason, alternative}` payload
+    the Expo app rendered, and `twitch-supported-codecs` widened to `h264,h265,av1`.
+  - Phase 2 data layer — SQLDelight `favorites` table with a schema identical to the
+    Expo SQLite one and a 1:1 DAO port of `lib/db.ts`; JSON export/import v1 as the
+    migration vehicle; DataStore prefs (theme mode, onboarding, update-skip version,
+    BYO Helix keys); `networkErrors.ts` classification ported onto the
+    Chaquopy/Streamlink cause chain; `LivenessRepository` running staggered
+    foreground status with the 5-min cadence and `_fetchedAt` enrichment.
+
 ## [1.1.4] - 2026-09-08
 
 ### Added
