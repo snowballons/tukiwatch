@@ -1,0 +1,32 @@
+-- Byte-compatible with the Expo app's `tukiwatch.db` favorites table (app/lib/db.ts).
+-- Column names, order, types, UNIQUE and the datetime('now') default are load-bearing:
+-- they are the migration contract for JSON export v1 and for future direct-file work.
+CREATE TABLE favorites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  streamer_name TEXT NOT NULL,
+  original_url TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Mirrors db.ts getFavorites(): projects exactly id/streamer_name/original_url,
+-- ordered by id. created_at is deliberately not exposed (matches Favorite type).
+selectAll:
+SELECT id, streamer_name, original_url
+FROM favorites
+ORDER BY id;
+
+-- Mirrors db.ts isFavorite(): existence by unique URL.
+existsByUrl:
+SELECT id
+FROM favorites
+WHERE original_url = ?;
+
+-- Mirrors db.ts addFavorite() INSERT.
+insert:
+INSERT INTO favorites (streamer_name, original_url)
+VALUES (?, ?);
+
+-- Mirrors db.ts removeFavorite(): delete by primary key, not by URL.
+deleteById:
+DELETE FROM favorites
+WHERE id = ?;
