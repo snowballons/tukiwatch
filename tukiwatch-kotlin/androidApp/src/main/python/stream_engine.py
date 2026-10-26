@@ -2,8 +2,9 @@
 
 Parity with tukiwatch-core (errors.py, metadata.py, resolution.py):
 - Error taxonomy: NoPluginError, NoStreamsError, BrowserRequiredError, PluginError
-- Metadata: extract_platform_from_url, normalize_stream_metadata, generate_fallback_thumbnail,
-  get_stream_types_from_streams, extract_category_from_json, extract_viewer_count
+- Metadata: extract_platform_from_url, parse_url_metadata, normalize_stream_metadata,
+  generate_fallback_thumbnail, get_stream_types_from_streams, extract_category_from_json,
+  extract_category_keywords, extract_viewer_count
 - Pinned codec alignment: twitch-supported-codecs = 'h264,h265,av1', twitch-low-latency off
 - Error details contract matching Expo 422 surface: {type, error, message, reason, alternative}
 """
@@ -20,6 +21,7 @@ import streamlink
 from streamlink import Streamlink
 from streamlink.exceptions import (
     NoPluginError as SLNoPluginError,
+    NoStreamsError as SLNoStreamsError,
     PluginError as SLPluginError,
     StreamlinkError,
 )
@@ -57,6 +59,17 @@ def is_browser_error(error_msg: str) -> bool:
     """Detect streamlink errors that require browser automation."""
     error_lower = (error_msg or "").lower()
     return any(keyword in error_lower for keyword in BROWSER_ERROR_KEYWORDS)
+
+
+def unexpected_error_details(error_msg: str) -> dict[str, Any]:
+    """Structured details for the `unexpected` branch of the client contract."""
+    return {
+        "type": "unexpected",
+        "error": "Unexpected error",
+        "message": error_msg,
+        "reason": "Unexpected failure during stream resolution",
+        "alternative": None,
+    }
 
 
 def classify_error(url: str, platform: str, error_msg: str) -> dict[str, Any]:
@@ -149,6 +162,89 @@ def extract_platform_from_url(url: str) -> str:
         return name if name else "unknown"
     except Exception:
         return "unknown"
+
+
+def parse_url_metadata(url: str) -> dict[str, str]:
+    """Parse platform, a preliminary username/ID, and URL type from a URL.
+
+    Mirrors tukiwatch-core.metadata.parse_url_metadata; the KMP side has no
+    data class for it yet (Add-screen preview resolves the URL instead).
+    """
+    if (
+        not isinstance(url, str)
+        or not url.strip()
+        or not url.lower().startswith(("http://", "https://"))
+    ):
+        return {
+            "platform": "Unknown",
+            "username": "unknown_stream",
+            "url_type": "parse_error",
+        }
+
+    try:
+        parsed_uri = urlparse(url)
+        netloc = parsed_uri.netloc.replace("www.", "")
+        path = parsed_uri.path
+    except ValueError:
+        return {
+            "platform": "Unknown",
+            "username": "unknown_stream",
+            "url_type": "parse_error",
+        }
+
+    # Twitch channel
+    if "twitch.tv" in netloc:
+        m = re.match(r"/([a-zA-Z0-9_]{4,25})/?$", path)
+        if m:
+            return {"platform": "Twitch", "username": m.group(1), "url_type": "channel"}
+        return {"platform": "Twitch", "username": "unknown_user", "url_type": "parse_error"}
+
+    # YouTube channel / video
+    if "youtube.com" in netloc or "youtu.be" in netloc:
+        channel_match = re.match(
+            r"/(?:@([a-zA-Z0-9_.-]+)|c/([a-zA-Z0-9_.-]+)|channel/([a-zA-Z0-9_-]+)|user/([a-zA-Z0-9_.-]+))/?",
+            path,
+        )
+        if channel_match:
+            username = next(
+                (g for g in channel_match.groups() if g is not None), "unknown_channel"
+            )
+            return {"platform": "YouTube", "username": username, "url_type": "channel"}
+        video_id_match = re.search(r"(?:/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]{11})", url)
+        if video_id_match:
+            return {
+                "platform": "YouTube",
+                "username": video_id_match.group(1),
+                "url_type": "video",
+            }
+        return {
+            "platform": "YouTube",
+            "username": "unknown_youtube_url",
+            "url_type": "parse_error",
+        }
+
+    # Kick channel
+    if "kick.com" in netloc:
+        m = re.match(r"/([a-zA-Z0-9_]+)/?$", path)
+        if m:
+            return {"platform": "Kick", "username": m.group(1), "url_type": "channel"}
+        return {"platform": "Kick", "username": "unknown_user", "url_type": "parse_error"}
+
+    # Generic fallback
+    try:
+        domain_parts = netloc.split(".")
+        platform_name = domain_parts[-2] if len(domain_parts) > 1 else domain_parts[0]
+    except IndexError:
+        platform_name = "Unknown"
+
+    path_parts = [part for part in path.split("/") if part]
+    username_guess = path_parts[-1] if path_parts else netloc
+
+    return {
+        "platform": platform_name,
+        "username": username_guess,
+        "url_type": "generic_fallback",
+    }
 
 
 def generate_fallback_thumbnail(platform: str, author: str) -> str:
@@ -329,7 +425,12 @@ def get_session(options_dict=None):
 
 def warmup(url=None) -> str:
     t0 = time.perf_counter()
-    session, reused = get_session({})
+    # Never replace an already-configured session: warmup is called at process
+    # start and must not wipe options a later resolve installed.
+    if _SESSION is not None:
+        session, reused = _SESSION, True
+    else:
+        session, reused = get_session({})
     timings = {'session_ms': (time.perf_counter() - t0) * 1000.0, 'reused': reused}
     if url:
         try:
@@ -388,6 +489,7 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
     session_ms = (time.perf_counter() - t0) * 1000.0
 
     t1 = time.perf_counter()
+    plugin_name = None
     try:
         plugin_name, plugin_class, resolved_url = session.resolve_url(url)
         plugin_instance = plugin_class(session, resolved_url)
@@ -407,6 +509,29 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
                 'alternative': 'Try opening in official app',
             },
         })
+    except SLNoStreamsError:
+        # tukiwatch-core maps "plugin resolved, but no streams" to offline, not
+        # to a plugin failure (errors.py: NoStreamsError = "offline").
+        author_fallback = plugin_name or platform
+        return json.dumps({
+            'status': 'offline',
+            'error': None,
+            'message': 'No streams available',
+            'original_url': url,
+            'platform': platform,
+            'author': author_fallback,
+            'title': 'Offline',
+            'thumbnail': generate_fallback_thumbnail(platform, author_fallback),
+            'streams': [],
+            '_timings': {
+                'session_ms': round(session_ms, 1),
+                'streams_ms': round((time.perf_counter() - t1) * 1000.0, 1),
+                'build_ms': 0.0,
+                'total_ms': round((time.perf_counter() - t_total) * 1000.0, 1),
+                'session_reused': reused,
+                'count': 0,
+            },
+        })
     except (SLPluginError, StreamlinkError) as exc:
         error_msg = str(exc)
         classified = classify_error(url, platform, error_msg)
@@ -419,12 +544,14 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
             'error_details': classified,
         })
     except Exception as exc:
+        error_msg = f"{type(exc).__name__}: {exc}"
         return json.dumps({
             'status': 'error',
             'error': 'unexpected',
-            'message': f"{type(exc).__name__}: {exc}",
+            'message': error_msg,
             'original_url': url,
             'platform': platform,
+            'error_details': unexpected_error_details(error_msg),
         })
     streams_ms = (time.perf_counter() - t1) * 1000.0
 
@@ -464,7 +591,9 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
         keep = {wanted, 'best', 'worst'} & set(streams.keys())
 
     items = []
-    best_quality_url = None
+    # tukiwatch-core: best_quality = streams["best"].url. The synonym points at
+    # the same stream object as the best real quality, so this stays in sync.
+    best_quality_url = getattr(streams.get('best'), 'url', None)
     for name, stream in streams.items():
         direct = isinstance(stream, (HLSStream, HTTPStream))
         try:
@@ -472,9 +601,6 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
         except Exception:
             stream_url = None
             direct = False
-
-        if name == 'best' and direct and stream_url:
-            best_quality_url = stream_url
 
         if keep is not None and name not in keep:
             continue
@@ -531,7 +657,11 @@ def check_status(url: str, options_json: str = '{}') -> str:
     """
     platform = extract_platform_from_url(url)
     try:
-        session, _ = get_session({})
+        options_dict = json.loads(options_json) if options_json else {}
+    except Exception:
+        options_dict = {}
+    try:
+        session, _ = get_session(options_dict)
         plugin_name, plugin_class, resolved_url = session.resolve_url(url)
         plugin_instance = plugin_class(session, resolved_url)
         streams = plugin_instance.streams()
@@ -574,6 +704,13 @@ def check_status(url: str, options_json: str = '{}') -> str:
                 'alternative': 'Try opening in official app',
             },
         })
+    except SLNoStreamsError:
+        return json.dumps({
+            'url': url,
+            'status': 'offline',
+            'platform': platform,
+            'error': 'No streams available',
+        })
     except (SLPluginError, StreamlinkError) as exc:
         classified = classify_error(url, platform, str(exc))
         return json.dumps({
@@ -584,11 +721,13 @@ def check_status(url: str, options_json: str = '{}') -> str:
             'error_details': classified,
         })
     except Exception as exc:
+        error_msg = f"{type(exc).__name__}: {exc}"
         return json.dumps({
             'url': url,
             'status': 'error',
             'platform': platform,
-            'error': f"{type(exc).__name__}: {exc}",
+            'error': error_msg,
+            'error_details': unexpected_error_details(error_msg),
         })
 
 
@@ -598,6 +737,14 @@ def list_streams(url: str, options_json: str = '{}', wanted: str = 'all') -> str
 
 
 if __name__ == '__main__':
-    target = sys.argv[1] if len(sys.argv) > 1 else 'hls://https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
-    wanted_arg = sys.argv[2] if len(sys.argv) > 2 else 'all'
-    print(resolve_details(target, '{}', wanted_arg))
+    # Two supported CLIs:
+    #   stream_engine.py <entrypoint> [args...]   (SubprocessStreamEngine)
+    #   stream_engine.py <url> [wanted]           (legacy manual use)
+    _ENTRYPOINTS = {'resolve_details', 'check_status', 'list_streams', 'warmup', 'version'}
+    _argv = sys.argv[1:]
+    if _argv and _argv[0] in _ENTRYPOINTS:
+        print(globals()[_argv[0]](*_argv[1:]))
+    else:
+        _target = _argv[0] if _argv else 'hls://https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+        _wanted = _argv[1] if len(_argv) > 1 else 'all'
+        print(resolve_details(_target, '{}', _wanted))

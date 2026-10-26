@@ -26,6 +26,27 @@ GitHub Releases with the APK attached.
     Chaquopy/Streamlink cause chain; `LivenessRepository` running staggered
     foreground status with the 5-min cadence and `_fetchedAt` enrichment.
 
+### Fixed
+
+- Kotlin `EngineResult`/`StreamStatus` declared camelCase properties without
+  `@SerialName`, so the Python bridge's snake_case keys (`original_url`,
+  `stream_id`, `viewer_count`, `stream_types`, `best_quality`, `error_details`)
+  decoded as null. The player metadata card lost stream types/viewer counts and
+  the result object lost the resolved source URL and stream id.
+- `stream_engine.py` now maps a surfaced Streamlink `NoStreamsError` to
+  `offline` (as `tukiwatch-core` does) instead of classifying it as a plugin
+  error; `check_status` honours the caller's `options_json` instead of silently
+  resetting the session.
+- `unexpected` failures now carry the same structured
+  `{type, error, message, reason, alternative}` payload as the other error
+  classes, so the player error card is populated.
+- Desktop `SubprocessStreamEngine` invocations were parsed as
+  `stream_engine.py <url> [wanted]`, so `resolve_details <url> {} all` used
+  `"{}"` as the wanted quality. The script now dispatches on entrypoint while
+  keeping the legacy URL form.
+- Restored the 14 PNG assets (`app/assets/`, `app/web/assets/`) that the Phase 1
+  commit deleted unintentionally.
+
 ## [1.1.4] - 2026-09-08
 
 ### Added

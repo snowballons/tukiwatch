@@ -137,6 +137,90 @@ class StreamEngineContractTest {
         assertEquals("720p", result.directPlayable[0].quality)
     }
 
+    /**
+     * Regression: the Python bridge emits snake_case. Before the @SerialName
+     * annotations these fields decoded as null, so the metadata card silently
+     * lost stream types, viewer count, stream id, best quality and source URL.
+     */
+    @Test
+    fun decodePythonResolvePayload_mapsSnakeCaseFields() {
+        val raw = """
+            {"status":"online","error":null,"message":null,
+             "original_url":"https://www.twitch.tv/lofigirl","platform":"twitch",
+             "title":"lofi hip hop radio","author":"LofiGirl",
+             "thumbnail":"https://ui-avatars.com/api/?name=LofiGirl",
+             "category":"Music","stream_id":"318064971747","viewer_count":1234,
+             "stream_types":["TWITCHHLS"],"best_quality":"https://example.com/1080p.m3u8",
+             "streams":[{"quality":"1080p60","alias":false,"kind":"TwitchHLSStream",
+                         "playable_direct":true,"url":"https://example.com/1080p.m3u8",
+                         "headers":{"User-Agent":"Mozilla/5.0"}}],
+             "wanted":"all","quality_index":null,
+             "_timings":{"session_ms":75.6,"streams_ms":1224.0,"build_ms":0.1,
+                         "total_ms":1299.7,"session_reused":false,"count":1}}
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(EngineResult.serializer(), raw)
+
+        assertEquals("online", decoded.status)
+        assertEquals("https://www.twitch.tv/lofigirl", decoded.originalUrl)
+        assertEquals("318064971747", decoded.streamId)
+        assertEquals(1234, decoded.viewerCount)
+        assertEquals(listOf("TWITCHHLS"), decoded.streamTypes)
+        assertEquals("https://example.com/1080p.m3u8", decoded.bestQuality)
+        assertEquals("https://example.com/1080p.m3u8", decoded.streams.single().url)
+        assertEquals(1, decoded.timings?.count)
+    }
+
+    @Test
+    fun decodePythonStatusPayload_mapsSnakeCaseFields() {
+        val raw = """
+            {"url":"https://www.twitch.tv/lofigirl","status":"online",
+             "platform":"twitch","title":"lofi hip hop radio","author":"LofiGirl",
+             "thumbnail":"https://ui-avatars.com/api/?name=LofiGirl",
+             "category":"Music","stream_id":"318064971747","viewer_count":1234}
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(StreamStatus.serializer(), raw)
+
+        assertEquals("online", decoded.status)
+        assertEquals("318064971747", decoded.streamId)
+        assertEquals(1234, decoded.viewerCount)
+        assertEquals("Music", decoded.category)
+    }
+
+    @Test
+    fun decodePythonUnexpectedErrorPayload_carriesErrorDetails() {
+        val raw = """
+            {"status":"error","error":"unexpected","message":"RuntimeError: boom",
+             "original_url":"https://example.com/x","platform":"example",
+             "error_details":{"type":"unexpected","error":"Unexpected error",
+                              "message":"RuntimeError: boom",
+                              "reason":"Unexpected failure during stream resolution",
+                              "alternative":null}}
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(EngineResult.serializer(), raw)
+
+        assertEquals("unexpected", decoded.error)
+        assertEquals("https://example.com/x", decoded.originalUrl)
+        assertEquals("unexpected", decoded.errorDetails?.type)
+        assertEquals("RuntimeError: boom", decoded.errorDetails?.message)
+    }
+
+    @Test
+    fun encodeUsesSnakeCaseContract() {
+        val encoded = json.encodeToString(
+            EngineResult.serializer(),
+            EngineResult(originalUrl = "u", streamId = "s", viewerCount = 1,
+                streamTypes = listOf("HLS"), bestQuality = "b")
+        )
+        assertTrue("\"original_url\"" in encoded)
+        assertTrue("\"stream_id\"" in encoded)
+        assertTrue("\"viewer_count\"" in encoded)
+        assertTrue("\"stream_types\"" in encoded)
+        assertTrue("\"best_quality\"" in encoded)
+    }
+
     @Test
     fun defaultNulls_do_not_break_decode() {
         val encoded = """{"status":"offline","original_url":"https://x","platform":"twitch","author":"A","title":"Offline","thumbnail":"t"}"""

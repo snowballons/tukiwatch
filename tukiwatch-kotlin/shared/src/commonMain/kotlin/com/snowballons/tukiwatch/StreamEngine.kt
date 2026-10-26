@@ -43,16 +43,16 @@ data class EngineResult(
     val wanted: String? = null,
     @SerialName("quality_index") val qualityIndex: List<String>? = null,
     @SerialName("_timings") val timings: EngineTimings? = null,
-    val originalUrl: String? = null,
+    @SerialName("original_url") val originalUrl: String? = null,
     val platform: String? = null,
     val title: String? = null,
     val author: String? = null,
     val thumbnail: String? = null,
     val category: String? = null,
-    val streamId: String? = null,
-    val viewerCount: Int? = null,
-    val streamTypes: List<String>? = null,
-    val bestQuality: String? = null,
+    @SerialName("stream_id") val streamId: String? = null,
+    @SerialName("viewer_count") val viewerCount: Int? = null,
+    @SerialName("stream_types") val streamTypes: List<String>? = null,
+    @SerialName("best_quality") val bestQuality: String? = null,
     @SerialName("error_details") val errorDetails: ErrorDetails? = null
 ) {
     val directPlayable: List<StreamItem>
@@ -68,11 +68,11 @@ data class StreamStatus(
     val author: String? = null,
     val thumbnail: String? = null,
     val category: String? = null,
-    val streamId: String? = null,
+    @SerialName("stream_id") val streamId: String? = null,
     val platform: String? = null,
-    val viewerCount: Int? = null,
+    @SerialName("viewer_count") val viewerCount: Int? = null,
     val error: String? = null,
-    val errorDetails: ErrorDetails? = null
+    @SerialName("error_details") val errorDetails: ErrorDetails? = null
 )
 
 interface StreamEngine {
