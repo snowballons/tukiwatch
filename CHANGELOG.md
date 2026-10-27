@@ -25,6 +25,11 @@ GitHub Releases with the APK attached.
     BYO Helix keys); `networkErrors.ts` classification ported onto the
     Chaquopy/Streamlink cause chain; `LivenessRepository` running staggered
     foreground status with the 5-min cadence and `_fetchedAt` enrichment.
+  - Desktop harness — `desktopApp` now opens a real Compose window over the shared
+    engine/repositories instead of the Compose Multiplatform template. It resolves a
+    URL, renders metadata, structured errors, qualities and engine timings, and drives
+    My List (file-backed SQLite) with on-demand liveness. Covered by 5 state tests and
+    3 Compose UI tests (the UI tests run with a display or skip when headless).
 
 ### Fixed
 
@@ -44,6 +49,12 @@ GitHub Releases with the APK attached.
   `stream_engine.py <url> [wanted]`, so `resolve_details <url> {} all` used
   `"{}"` as the wanted quality. The script now dispatches on entrypoint while
   keeping the legacy URL form.
+- Desktop `SubprocessStreamEngine` hardcoded one machine's `python3.11` and an
+  absolute script path, so it failed wherever Streamlink lived in a venv. It now
+  discovers a Streamlink-capable interpreter (repo `.venv` / `tukiwatch-core/.venv`,
+  then PATH) and the engine script by walking up from the working directory, with
+  `PYKOT_PYTHON` / `PYKOT_SCRIPT` still winning. Subprocesses now have a timeout,
+  drain stdout on a side thread, and extract the JSON object past Streamlink logs.
 - Restored the 14 PNG assets (`app/assets/`, `app/web/assets/`) that the Phase 1
   commit deleted unintentionally.
 - The full `:shared:jvmTest` suite deadlocked: `LivenessRepositoryTest` ran its

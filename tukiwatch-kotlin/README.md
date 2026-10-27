@@ -28,14 +28,16 @@ screen map are Phase 3.
   `ChaquopyStreamEngine(context)`.
 - `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, the rotation-safe
   `StreamViewModel`, and `stream_engine.py`.
-- `desktopApp` — JVM iteration harness only. `SubprocessStreamEngine` shells out to a local Python;
-  **not shipped**.
+- `desktopApp` — JVM iteration harness. A real Compose window over the same
+  `SubprocessStreamEngine`, `FavoritesRepository` and `LivenessRepository` as the app, **not shipped**.
+  It resolves URLs, shows metadata/errors/qualities/timings, and exercises My List (file-backed SQLite
+  at `~/.tukiwatch/harness.db`) plus on-demand liveness.
 
 ## Running
 
 ```sh
 ./gradlew :androidApp:assembleDebug   # APK
-./gradlew :desktopApp:run             # desktop iteration
+./gradlew :desktopApp:run             # desktop harness
 ```
 
 Tests:
@@ -43,10 +45,14 @@ Tests:
 ```sh
 ./gradlew :shared:testAndroidHostTest
 ./gradlew :shared:jvmTest
+./gradlew :desktopApp:test            # harness unit + Compose UI tests (needs a display for UI)
 # Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed).
 # Use 8.6.2 to match the version bundled in the APK.
 python -m pytest androidApp/src/main/python/test_stream_engine.py
 ```
+
+The desktop UI tests render a real `ComposeWindow`; run them under `DISPLAY=:0` or
+`xvfb-run -a ./gradlew :desktopApp:test`. They skip themselves when no display can be opened.
 
 The liveness ticker runs only while the activity is `STARTED`
 (`repeatOnLifecycle`), and transport failures are surfaced through
@@ -70,8 +76,10 @@ treating them as plugin errors.
 pinned to `/home/jonnie/.local/bin/python3.11`; override with
 `-Pchaquopy.buildPython=/path/to/python3.11` on other machines.
 
-Desktop iteration reads `PYKOT_SCRIPT` / `PYKOT_PYTHON`; defaults point at this repo's
-`androidApp/src/main/python/stream_engine.py`.
+Desktop iteration auto-discovers a Streamlink-capable interpreter
+(`PYKOT_PYTHON` → repo `.venv` / `tukiwatch-core/.venv` → `python3.11`/`python3`) and
+`androidApp/src/main/python/stream_engine.py` (`PYKOT_SCRIPT`, otherwise found by walking up from
+the working directory). `PYKOT_PYTHON`/`PYKOT_SCRIPT` still override everything.
 
 ## Locked decisions (from the plan, §0)
 

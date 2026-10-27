@@ -7,6 +7,7 @@ import com.snowballons.tukiwatch.db.FavoritesRepository
 import com.snowballons.tukiwatch.db.TukiWatchDatabase
 import com.snowballons.tukiwatch.db.createFavoritesDriver
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -30,6 +31,31 @@ class FavoritesPersistenceTest {
         // AUTOINCREMENT starts at 1: StreamContext joined status rows onto these ids.
         assertEquals(listOf(1L, 2L), all.map { it.id })
         assertEquals("LofiGirl", all.first().streamerName)
+    }
+
+    @Test
+    fun fileBackedDriverReopensWithoutRecreatingTheTable() = runBlocking {
+        // The desktop harness persists favorites; Schema.create emits a plain
+        // CREATE TABLE, so a second open used to throw "table favorites already
+        // exists". user_version must make reopen a no-op.
+        val dir = Files.createTempDirectory("tukiwatch-favorites")
+        val file = dir.resolve("favorites.db").toFile()
+        try {
+            val firstDriver = createFavoritesDriver(file)
+            val first = FavoritesRepository(firstDriver)
+            assertTrue(first.addFavorite("LofiGirl", "https://www.twitch.tv/lofigirl"))
+            firstDriver.close()
+
+            val secondDriver = createFavoritesDriver(file)
+            val second = FavoritesRepository(secondDriver)
+            assertEquals(
+                listOf("https://www.twitch.tv/lofigirl"),
+                second.getFavorites().map { it.originalUrl },
+            )
+            secondDriver.close()
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
     }
 
     @Test
