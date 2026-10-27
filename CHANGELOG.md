@@ -70,6 +70,9 @@ GitHub Releases with the APK attached.
 
 - Phase 3 scope: Discovery v1 is dropped (owner decision). No Discovery tab or
   default discovery source, and `twitch-live` is not part of v1.
+- The KMP build now ships as `com.tukiwatch.app` (versionCode 13, v1.1.5) so it
+  upgrades the Expo app in place. Release builds must be signed with the old
+  keystore; debug installs require uninstalling the Expo app first.
 
 ## [1.1.4] - 2026-09-08
 

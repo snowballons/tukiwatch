@@ -41,11 +41,16 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.snowballons.tukiwatch"
+        // Same package as the Expo release (com.tukiwatch.app) so the KMP build
+        // upgrades it in place. Release builds must be signed with the old
+        // keystore for Android to accept the update.
+        applicationId = "com.tukiwatch.app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        // Must stay above the Expo app's last versionCode (12) to install as
+        // an upgrade rather than a downgrade.
+        versionCode = 13
+        versionName = "1.1.5"
         ndk {
             // Python 3.11 supports 32-bit + 64-bit. arm64 + armeabi-v7a cover
             // physical devices (no emulators per project decision).
