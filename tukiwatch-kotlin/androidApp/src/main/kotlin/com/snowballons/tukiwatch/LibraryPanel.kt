@@ -17,13 +17,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
 import com.snowballons.tukiwatch.liveness.LiveStream
@@ -32,15 +32,15 @@ import com.snowballons.tukiwatch.liveness.LiveStream
  * My List surface for Phase 2: favorites, their live status, and the JSON v1
  * export/import migration vehicle. Deliberately not the full bottom-tab
  * Library screen — that lands with navigation in Phase 3.
+ *
+ * The caller owns the player→library URL sync (`onCurrentUrlChanged`); keeping
+ * it out of here avoids two `LaunchedEffect`s racing on the same state.
  */
 @Composable
 fun LibraryPanel(
-    currentUrl: String,
     modifier: Modifier = Modifier,
     vm: LibraryViewModel = viewModel(),
 ) {
-    LaunchedEffect(currentUrl) { vm.setCurrentUrl(currentUrl) }
-
     val streams by vm.streams.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle()
     val degraded by vm.degraded.collectAsStateWithLifecycle()
@@ -135,7 +135,11 @@ private fun StreamRow(row: LiveStream) {
         )
         Column(Modifier.weight(1f)) {
             Text(row.streamerName, style = MaterialTheme.typography.bodyMedium)
-            val subtitle = row.title.ifBlank { row.error.orEmpty() }
+            // `error` is only meaningful for STATUS_ERROR; an offline row must
+            // not read like a failure.
+            val subtitle = row.title.ifBlank {
+                if (row.status == STATUS_ERROR) row.error.orEmpty() else ""
+            }
             if (subtitle.isNotBlank()) {
                 Text(subtitle, style = MaterialTheme.typography.bodySmall)
             }

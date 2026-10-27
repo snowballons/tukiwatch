@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 fun deviceOfflineFlow(context: Context): Flow<Boolean> = callbackFlow {
     val cm = context.getSystemService(ConnectivityManager::class.java)
-        ?: return@callbackFlow close()
+        ?: return@callbackFlow
 
     fun probe(network: Network?): Boolean {
         val caps = network?.let { cm.getNetworkCapabilities(it) }
@@ -38,15 +38,20 @@ fun deviceOfflineFlow(context: Context): Flow<Boolean> = callbackFlow {
 
     trySend(probe(null))
     val callback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(network: Network) = trySend(probe(network))
+        override fun onAvailable(network: Network) {
+            trySend(probe(network))
+        }
 
-        override fun onLost(network: Network) = trySend(probe(network))
+        override fun onLost(network: Network) {
+            trySend(probe(network))
+        }
 
-        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) =
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
             trySend(
                 !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
                     !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
             )
+        }
     }
     val request = NetworkRequest.Builder()
         .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)

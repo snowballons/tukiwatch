@@ -44,7 +44,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     var busy by mutableStateOf(false)
         private set
 
-    fun setCurrentUrl(url: String) {
+    fun onCurrentUrlChanged(url: String) {
         if (url.trim() == currentUrl) return
         currentUrl = url.trim()
         isFavorite = null
