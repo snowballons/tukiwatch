@@ -189,6 +189,25 @@ class StreamEngineContractTest {
     }
 
     @Test
+    fun decodeNetworkErrorClass_fromPluginErrorPayload() {
+        // Python keeps type=plugin_error for the client taxonomy and adds
+        // error_class=network for transport failures (DNS/timeout/refused).
+        val raw = """
+            {"url":"https://example.invalid/live.m3u8","status":"error","platform":"example",
+             "error":"plugin_error",
+             "error_details":{"type":"plugin_error",
+                              "message":"Max retries exceeded with url: /live.m3u8",
+                              "reason":"Plugin reported an error during extraction",
+                              "alternative":null,"error_class":"network"}}
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(StreamStatus.serializer(), raw)
+
+        assertEquals("plugin_error", decoded.errorDetails?.type)
+        assertEquals("network", decoded.errorDetails?.errorClass)
+    }
+
+    @Test
     fun decodePythonUnexpectedErrorPayload_carriesErrorDetails() {
         val raw = """
             {"status":"error","error":"unexpected","message":"RuntimeError: boom",

@@ -32,6 +32,66 @@ class TestErrorTaxonomy:
         classified = stream_engine.classify_error("https://twitch.tv/x", "twitch", "stream went offline")
         assert classified["type"] == "plugin_error"
         assert classified["message"] == "stream went offline"
+        assert classified["error_class"] == "plugin_error"
+
+
+class TestNetworkErrorClassification:
+    """Transport failures reach us wrapped in PluginError; classify by text."""
+
+    DNS = (
+        "Unable to open URL: https://example.invalid/live.m3u8 "
+        "(HTTPSConnectionPool(host='example.invalid', port=443): Max retries exceeded "
+        "with url: /live.m3u8 (Caused by NameResolutionError(\"Failed to resolve "
+        "'example.invalid' ([Errno -2] Name or service not known)\")))"
+    )
+
+    def test_dns_failure_is_network(self):
+        assert stream_engine.is_network_error(self.DNS)
+
+    def test_dns_failure_keeps_plugin_error_type_but_flags_network(self):
+        classified = stream_engine.classify_error(
+            "https://example.invalid/live.m3u8", "example", self.DNS
+        )
+        assert classified["type"] == "plugin_error"
+        assert classified["error_class"] == "network"
+
+    def test_connection_refused_is_network(self):
+        assert stream_engine.is_network_error("Connection refused")
+        assert stream_engine.is_network_error("Read timed out. (read timeout=30)")
+
+    def test_plain_plugin_failure_is_not_network(self):
+        assert not stream_engine.is_network_error("stream went offline")
+        assert not stream_engine.is_network_error("Unsupported URL")
+
+    def test_unexpected_network_failure_carries_class(self):
+        details = stream_engine.unexpected_error_details(self.DNS)
+        assert details["type"] == "unexpected"
+        assert details["error_class"] == "network"
+
+    def test_unexpected_non_network_failure(self):
+        details = stream_engine.unexpected_error_details("RuntimeError: boom")
+        assert details["error_class"] == "unexpected"
+
+    def test_check_status_flags_network_failure(self, monkeypatch):
+        from streamlink.exceptions import PluginError
+
+        class _NetworkPlugin:
+            def __init__(self, session, url):
+                pass
+
+            def streams(self):
+                raise PluginError(TestNetworkErrorClassification.DNS)
+
+        class _Session:
+            def resolve_url(self, url):
+                return "fakeplugin", _NetworkPlugin, url
+
+        monkeypatch.setattr(
+            stream_engine, "get_session", lambda opts=None: (_Session(), False)
+        )
+        parsed = json.loads(stream_engine.check_status("https://example.invalid/live"))
+        assert parsed["status"] == "error"
+        assert parsed["error_details"]["error_class"] == "network"
 
 
 class TestPlatformExtraction:
@@ -225,7 +285,9 @@ class TestNoStreamsErrorFlow:
         )
         parsed = json.loads(stream_engine.check_status("https://twitch.tv/offline"))
         assert parsed["status"] == "offline"
-        assert parsed["error"] == "No streams available"
+        assert parsed["error"] is None
+        assert parsed["title"] == "Offline"
+        assert parsed["author"] == "fakeplugin"
 
 
 class TestUnexpectedErrorFlow:

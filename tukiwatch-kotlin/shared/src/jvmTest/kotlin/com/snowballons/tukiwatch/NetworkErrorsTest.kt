@@ -39,6 +39,22 @@ class NetworkErrorsTest {
     }
 
     @Test
+    fun pythonTransportErrorsMatch() {
+        // A PyException from the Chaquopy bridge carries only Python text; the
+        // axios-era hints alone would miss every real DNS/connection failure.
+        assertTrue(
+            isNetworkError(
+                RuntimeException(
+                    "Max retries exceeded with url: /live.m3u8 " +
+                        "(Caused by NameResolutionError(\"Failed to resolve 'example.invalid'\"))",
+                ),
+            ),
+        )
+        assertTrue(isNetworkError(RuntimeException("HTTPSConnectionPool: connection refused")))
+        assertTrue(isNetworkError(RuntimeException("Read timed out. (read timeout=30)")))
+    }
+
+    @Test
     fun pluginAndAppErrorsAreNotOffline() {
         assertFalse(isNetworkError(IllegalStateException("No plugin matches this URL")))
         assertFalse(isNetworkError(RuntimeException("403 client error: forbidden")))

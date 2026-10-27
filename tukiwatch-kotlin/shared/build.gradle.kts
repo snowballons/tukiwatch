@@ -1,3 +1,4 @@
+import java.time.Duration
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -74,4 +75,10 @@ sqldelight {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+// A hanging coroutine test must fail the build instead of blocking CI forever.
+// The liveness suite deadlocked on a shared single-thread dispatcher before.
+tasks.withType<Test>().configureEach {
+    timeout.set(Duration.ofMinutes(5))
 }

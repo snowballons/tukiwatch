@@ -30,7 +30,13 @@ data class ErrorDetails(
     val error: String? = null,
     val message: String? = null,
     val reason: String? = null,
-    val alternative: String? = null
+    val alternative: String? = null,
+    /**
+     * `network` when the failure is transport-level (DNS, timeout, refused
+     * connection) rather than a plugin verdict. Drives the offline banner;
+     * `type` deliberately stays `plugin_error` so the client taxonomy is stable.
+     */
+    @SerialName("error_class") val errorClass: String? = null
 )
 
 /** Full stream resolution with metadata, mirroring `StreamResolution` from tukiwatch-core. */

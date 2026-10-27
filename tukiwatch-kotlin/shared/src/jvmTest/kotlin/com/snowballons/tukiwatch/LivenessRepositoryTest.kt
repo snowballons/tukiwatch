@@ -8,6 +8,8 @@ import com.snowballons.tukiwatch.liveness.LivenessSource
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
+import com.snowballons.tukiwatch.net.NETWORK_ERROR_CLASS
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.net.SocketTimeoutException
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -27,16 +28,21 @@ import kotlin.test.assertTrue
  * Favorites come from real SQLite; only the network source is faked.
  *
  * A single-threaded dispatcher is used deliberately: `JdbcSqliteDriver` owns one
- * connection, and production serializes ticks anyway, so confining the work to
+ * connection, and production serializes ticks anyway, so confining the DB to
  * one thread matches the real concurrency profile instead of racing it.
+ *
+ * The test coroutines deliberately do NOT run on that dispatcher. `runBlocking`
+ * on the same single thread the repository dispatches onto deadlocks as soon as
+ * a DB call suspends — the thread is busy running the test body, so the queued
+ * `withContext` can never resume.
  */
 class LivenessRepositoryTest {
     private val executor = Executors.newSingleThreadExecutor()
-    private val testDispatcher = executor.asCoroutineDispatcher()
+    private val dbDispatcher = executor.asCoroutineDispatcher()
 
     @AfterTest
     fun tearDown() {
-        testDispatcher.close()
+        dbDispatcher.close()
         executor.shutdown()
     }
 
@@ -48,19 +54,19 @@ class LivenessRepositoryTest {
         }
     }
 
-    private fun repoWith(
+    private suspend fun repoWith(
         source: LivenessSource,
         connectivity: DeviceConnectivity? = null,
         seed: suspend (FavoritesRepository) -> Unit,
     ): Pair<LivenessRepository, FavoritesRepository> {
-        val favorites = FavoritesRepository(createFavoritesDriver(), testDispatcher)
-        runBlocking(testDispatcher) { seed(favorites) }
+        val favorites = FavoritesRepository(createFavoritesDriver(), dbDispatcher)
+        seed(favorites)
         return LivenessRepository(
             favorites,
             source,
             nowMs = { 1234L },
             connectivity = connectivity,
-            dispatcher = testDispatcher,
+            dispatcher = dbDispatcher,
         ) to favorites
     }
 
@@ -76,7 +82,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun tickEnrichesFavoritesAndStampsOnce() = runBlocking(testDispatcher) {
+    fun tickEnrichesFavoritesAndStampsOnce() = runBlocking {
         val (liveness, _) = repoWith(online) { f ->
             f.addFavorite("A", "https://twitch.tv/a")
             f.addFavorite("B", "https://twitch.tv/b")
@@ -96,7 +102,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun oneFailingUrlDoesNotAbortTheTick() = runBlocking(testDispatcher) {
+    fun oneFailingUrlDoesNotAbortTheTick() = runBlocking {
         val source = LivenessSource { url ->
             if (url.endsWith("bad")) throw SocketTimeoutException("radio died")
             StreamStatus(url = url, status = STATUS_OFFLINE)
@@ -117,7 +123,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun pluginFailureIsNotReportedAsDegraded() = runBlocking(testDispatcher) {
+    fun pluginFailureIsNotReportedAsDegraded() = runBlocking {
         val source = LivenessSource { throw IllegalStateException("No plugin matches this URL") }
         val (liveness, _) = repoWith(source) { it.addFavorite("A", "https://example.com/a") }
         liveness.refresh()
@@ -126,7 +132,45 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun blankStatusFallsBackToError() = runBlocking(testDispatcher) {
+    fun pythonClassifiedNetworkFailureMarksDegraded() = runBlocking {
+        // The engine returns transport failures as a normal result; only the
+        // typed error_class distinguishes them from a plugin verdict.
+        val source = LivenessSource { url ->
+            StreamStatus(
+                url = url,
+                status = STATUS_ERROR,
+                error = "plugin_error",
+                errorDetails = ErrorDetails(
+                    type = "plugin_error",
+                    message = "Failed to resolve 'example.invalid'",
+                    errorClass = NETWORK_ERROR_CLASS,
+                ),
+            )
+        }
+        val (liveness, _) = repoWith(source) { it.addFavorite("A", "https://twitch.tv/a") }
+        liveness.refresh()
+        assertEquals(STATUS_ERROR, liveness.streams.value.single().status)
+        assertTrue(liveness.tickDegraded.value)
+    }
+
+    @Test
+    fun statusShapedPluginFailureIsNotDegraded() = runBlocking {
+        val source = LivenessSource { url ->
+            StreamStatus(
+                url = url,
+                status = STATUS_ERROR,
+                error = "plugin_error",
+                errorDetails = ErrorDetails(type = "plugin_error", message = "extraction failed"),
+            )
+        }
+        val (liveness, _) = repoWith(source) { it.addFavorite("A", "https://example.com/a") }
+        liveness.refresh()
+        assertEquals(STATUS_ERROR, liveness.streams.value.single().status)
+        assertFalse(liveness.tickDegraded.value)
+    }
+
+    @Test
+    fun blankStatusFallsBackToError() = runBlocking {
         // Python always fills `status`; a bridge returning "{}" must not yield a
         // row whose status the UI cannot branch on.
         val source = LivenessSource { url -> StreamStatus(url = url) }
@@ -136,7 +180,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun offlineShortCircuitKeepsLastKnownRows() = runBlocking(testDispatcher) {
+    fun offlineShortCircuitKeepsLastKnownRows() = runBlocking {
         val connectivity = FakeConnectivity()
         var generation = 0
         val source = LivenessSource { url ->
@@ -157,7 +201,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun emptyFavoritesClearsStreams() = runBlocking(testDispatcher) {
+    fun emptyFavoritesClearsStreams() = runBlocking {
         val (liveness, _) = repoWith(online) { }
         liveness.refresh()
         assertTrue(liveness.streams.value.isEmpty())
@@ -166,7 +210,7 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun removedFavoriteDropsOnNextTick() = runBlocking(testDispatcher) {
+    fun removedFavoriteDropsOnNextTick() = runBlocking {
         val (liveness, favorites) = repoWith(online) { f ->
             f.addFavorite("A", "https://twitch.tv/a")
             f.addFavorite("B", "https://twitch.tv/b")
@@ -180,17 +224,19 @@ class LivenessRepositoryTest {
     }
 
     @Test
-    fun refreshIsDroppedWhileOneIsInFlight() = runBlocking(testDispatcher) {
+    fun refreshIsDroppedWhileOneIsInFlight() = runBlocking {
         // A tick can outrun the 5-min interval on a large list; an overlapping
         // call must be dropped rather than queued into N Streamlink resolves.
-        // Deterministic: the first source call blocks until the second refresh
-        // has been attempted, proving the in-flight lock was held.
+        // Deterministic: the first source call suspends until the second refresh
+        // has been attempted, proving the in-flight lock was held. Suspending
+        // (CompletableDeferred) rather than blocking keeps the DB dispatcher
+        // free to finish the first tick.
         var calls = 0
-        val release = CountDownLatch(1)
-        val entered = CountDownLatch(1)
+        val release = CompletableDeferred<Unit>()
+        val entered = CompletableDeferred<Unit>()
         val source = LivenessSource { url ->
             if (calls++ == 0) {
-                entered.countDown()
+                entered.complete(Unit)
                 release.await()
             }
             StreamStatus(url = url, status = STATUS_ONLINE)
@@ -200,7 +246,7 @@ class LivenessRepositoryTest {
         val first = launch { liveness.refresh() }
         withTimeout(5_000) { entered.await() }
         liveness.refresh()
-        release.countDown()
+        release.complete(Unit)
         first.join()
         assertEquals(1, calls, "second refresh must be dropped while one is in flight")
     }

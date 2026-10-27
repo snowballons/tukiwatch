@@ -61,6 +61,38 @@ def is_browser_error(error_msg: str) -> bool:
     return any(keyword in error_lower for keyword in BROWSER_ERROR_KEYWORDS)
 
 
+# Transport failures reach us wrapped in Streamlink's PluginError, so they have
+# to be recognised by text. The Kotlin liveness layer uses `error_class` to
+# distinguish "no internet / host unreachable" from a plugin verdict; without
+# this the offline banner never fires for a real DNS/connection failure.
+NETWORK_ERROR_KEYWORDS = (
+    "name or service not known",
+    "name resolution error",
+    "failed to resolve",
+    "nodename nor servname",
+    "temporary failure in name resolution",
+    "max retries exceeded",
+    "connection refused",
+    "connection reset",
+    "connection aborted",
+    "connection error",
+    "network is unreachable",
+    "no route to host",
+    "timed out",
+    "timeout",
+    "eof occurred",
+    "remote end closed connection",
+    "ssl: certificate_verify_failed",
+    "certificate verify failed",
+)
+
+
+def is_network_error(error_msg: str) -> bool:
+    """True when the failure is transport-level, not a plugin verdict."""
+    error_lower = (error_msg or "").lower()
+    return any(keyword in error_lower for keyword in NETWORK_ERROR_KEYWORDS)
+
+
 def unexpected_error_details(error_msg: str) -> dict[str, Any]:
     """Structured details for the `unexpected` branch of the client contract."""
     return {
@@ -69,6 +101,7 @@ def unexpected_error_details(error_msg: str) -> dict[str, Any]:
         "message": error_msg,
         "reason": "Unexpected failure during stream resolution",
         "alternative": None,
+        "error_class": "network" if is_network_error(error_msg) else "unexpected",
     }
 
 
@@ -86,6 +119,7 @@ def classify_error(url: str, platform: str, error_msg: str) -> dict[str, Any]:
             "message": f"Browser automation required for {platform or url}: {url}",
             "reason": "Platform uses anti-bot protection (e.g. Cloudflare / JS challenge)",
             "alternative": "Open this stream in the official app or website.",
+            "error_class": "browser_required",
         }
     return {
         "type": "plugin_error",
@@ -93,6 +127,7 @@ def classify_error(url: str, platform: str, error_msg: str) -> dict[str, Any]:
         "message": error_msg,
         "reason": "Plugin reported an error during extraction",
         "alternative": None,
+        "error_class": "network" if is_network_error(error_msg) else "plugin_error",
     }
 
 
@@ -507,6 +542,7 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
                 'message': f"No plugin available for URL: {url}",
                 'reason': 'Streamlink does not have a plugin for this site',
                 'alternative': 'Try opening in official app',
+                'error_class': 'no_plugin',
             },
         })
     except SLNoStreamsError:
@@ -702,14 +738,22 @@ def check_status(url: str, options_json: str = '{}') -> str:
                 'message': f"No plugin available for URL: {url}",
                 'reason': 'Streamlink does not support this domain',
                 'alternative': 'Try opening in official app',
+                'error_class': 'no_plugin',
             },
         })
     except SLNoStreamsError:
+        # Offline is not an error: no `error` string, and the same fallback
+        # title/author/thumbnail the resolve path returns so My List rows read
+        # "Offline" instead of surfacing an internal sentinel.
+        author_fallback = plugin_name or platform
         return json.dumps({
             'url': url,
             'status': 'offline',
             'platform': platform,
-            'error': 'No streams available',
+            'title': 'Offline',
+            'author': author_fallback,
+            'thumbnail': generate_fallback_thumbnail(platform, author_fallback),
+            'error': None,
         })
     except (SLPluginError, StreamlinkError) as exc:
         classified = classify_error(url, platform, str(exc))

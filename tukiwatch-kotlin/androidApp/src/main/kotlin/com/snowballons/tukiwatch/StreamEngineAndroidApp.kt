@@ -10,6 +10,8 @@ import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.snowballons.tukiwatch.net.NETWORK_ERROR_CLASS
+import com.snowballons.tukiwatch.net.isNetworkError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -77,7 +79,8 @@ class ChaquopyStreamEngine(appContext: Context) : StreamEngine {
                     error = "Unexpected error: ${e.message}",
                     message = "${e.javaClass.simpleName}: ${e.message}",
                     reason = "Kotlin/Python bridge failure",
-                    alternative = null
+                    alternative = null,
+                    errorClass = if (isNetworkError(e)) NETWORK_ERROR_CLASS else "unexpected"
                 )
             )
         }
@@ -98,7 +101,8 @@ class ChaquopyStreamEngine(appContext: Context) : StreamEngine {
                         error = "Unexpected error: ${e.message}",
                         message = "${e.javaClass.simpleName}: ${e.message}",
                         reason = "Kotlin/Python bridge failure",
-                        alternative = null
+                        alternative = null,
+                        errorClass = if (isNetworkError(e)) NETWORK_ERROR_CLASS else "unexpected"
                     )
                 )
             }

@@ -5,6 +5,7 @@ import com.snowballons.tukiwatch.StreamEngine
 import com.snowballons.tukiwatch.StreamStatus
 import com.snowballons.tukiwatch.model.Favorite
 import com.snowballons.tukiwatch.db.FavoritesRepository
+import com.snowballons.tukiwatch.net.NETWORK_ERROR_CLASS
 import com.snowballons.tukiwatch.net.isNetworkError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -133,24 +134,28 @@ class LivenessRepository(
         val rows = ArrayList<LiveStream>(favs.size)
         var sawNetworkFailure = false
         for (fav in favs) {
-            rows += try {
-                enrich(fav, source.status(fav.originalUrl), stamp)
+            val status = try {
+                source.status(fav.originalUrl)
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
                 // One dead URL must not abort the other N-1: unlike the server's
                 // single batch POST, failures here are per-row.
                 if (isNetworkError(t)) sawNetworkFailure = true
-                enrich(
-                    fav,
-                    StreamStatus(
-                        url = fav.originalUrl,
-                        status = STATUS_ERROR,
-                        error = "${t::class.simpleName}: ${t.message}",
-                    ),
-                    stamp,
+                StreamStatus(
+                    url = fav.originalUrl,
+                    status = STATUS_ERROR,
+                    error = "${t::class.simpleName}: ${t.message}",
                 )
             }
+
+            // The engine reports transport failures as a normal result
+            // (`status=error`, `type=plugin_error`) with an `error_class` flag,
+            // so the throw-only check above cannot see them.
+            if (status.errorDetails?.errorClass == NETWORK_ERROR_CLASS) {
+                sawNetworkFailure = true
+            }
+            rows += enrich(fav, status, stamp)
         }
         _streams.value = rows
         _tickDegraded.value = sawNetworkFailure

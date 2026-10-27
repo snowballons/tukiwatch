@@ -12,12 +12,31 @@ package com.snowballons.tukiwatch.net
 
 const val OFFLINE_MESSAGE = "No internet connection. Check your connection and try again."
 
+/** `error_details.error_class` value the engine uses for transport failures. */
+const val NETWORK_ERROR_CLASS = "network"
+
 private val NETWORK_MESSAGE_HINTS = listOf(
+    // axios / React Native (the original networkErrors.ts set)
     "network error",
     "network request failed",
     "failed to fetch",
     "load failed",
     "network connection lost",
+    // Python requests / urllib3, as surfaced through Chaquopy and Streamlink
+    "name or service not known",
+    "name resolution error",
+    "failed to resolve",
+    "nodename nor servname",
+    "temporary failure in name resolution",
+    "max retries exceeded",
+    "connection refused",
+    "connection reset",
+    "connection aborted",
+    "network is unreachable",
+    "no route to host",
+    "timed out",
+    "remote end closed connection",
+    "certificate verify failed",
 )
 
 /**
