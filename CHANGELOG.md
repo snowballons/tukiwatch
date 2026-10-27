@@ -46,6 +46,30 @@ GitHub Releases with the APK attached.
   keeping the legacy URL form.
 - Restored the 14 PNG assets (`app/assets/`, `app/web/assets/`) that the Phase 1
   commit deleted unintentionally.
+- The full `:shared:jvmTest` suite deadlocked: `LivenessRepositoryTest` ran its
+  own `runBlocking` on the same single-thread dispatcher it dispatched DB work
+  to, then blocked that thread on a `CountDownLatch`. The fixture now seeds
+  outside the DB dispatcher, uses `CompletableDeferred`, and a hanging test
+  fails the build after five minutes.
+- The offline banner was unreachable for real engine failures.
+  `ChaquopyStreamEngine.checkStatus()` returns `plugin_error` results instead of
+  throwing, so `isNetworkError()` never saw them. Python now flags transport
+  failures with `error_details.error_class = "network"` (DNS, timeout,
+  connection refused/reset, urllib3 retry text), `LivenessRepository` sets
+  `tickDegraded` from that typed result, and the classifier also matches
+  Python/urllib3 messages.
+- Liveness was documented as foreground-only but used a composition-scoped
+  `LaunchedEffect`; it now runs inside `repeatOnLifecycle(STARTED)`.
+- Offline My List rows displayed the internal `"No streams available"` sentinel
+  as a subtitle. `check_status` now returns the same `title`/`author`/
+  `thumbnail` fallbacks as the resolve path with `error = null`.
+- Removed `discovery.md`, which `3c08ce1` reintroduced identically to the file
+  intentionally deleted in `2c67f22`.
+
+### Changed
+
+- Phase 3 scope: Discovery v1 is dropped (owner decision). No Discovery tab or
+  default discovery source, and `twitch-live` is not part of v1.
 
 ## [1.1.4] - 2026-09-08
 

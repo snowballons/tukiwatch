@@ -42,10 +42,16 @@ Tests:
 
 ```sh
 ./gradlew :shared:testAndroidHostTest
-./gradlew :shared:jvmTest --tests "com.snowballons.tukiwatch.StreamEngineContractTest"
-# Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed)
+./gradlew :shared:jvmTest
+# Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed).
+# Use 8.6.2 to match the version bundled in the APK.
 python -m pytest androidApp/src/main/python/test_stream_engine.py
 ```
+
+The liveness ticker runs only while the activity is `STARTED`
+(`repeatOnLifecycle`), and transport failures are surfaced through
+`error_details.error_class = "network"` so the offline banner can fire without
+treating them as plugin errors.
 
 ## Toolchain pins
 
