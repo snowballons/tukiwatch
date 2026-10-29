@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.snowballons.tukiwatch.liveness.autoRefreshLoop
+import com.snowballons.tukiwatch.ui.TukiWatchTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +24,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val app = application as TukiWatchApp
-        setContent { AppContent(app) }
+        setContent {
+            TukiWatchTheme {
+                AppContent(app)
+            }
+        }
     }
 }
 
@@ -59,10 +63,4 @@ fun AppContent(app: TukiWatchApp) {
         }
         LibraryPanel(vm = libraryVm)
     }
-}
-
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
 }

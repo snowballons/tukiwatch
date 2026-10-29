@@ -2,7 +2,6 @@ package com.snowballons.tukiwatch
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,10 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.snowballons.tukiwatch.liveness.STATUS_ERROR
-import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
-import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
-import com.snowballons.tukiwatch.liveness.LiveStream
+import com.snowballons.tukiwatch.ui.FavoriteRow
 
 /**
  * My List surface for Phase 2: favorites, their live status, and the JSON v1
@@ -106,42 +102,7 @@ fun LibraryPanel(
             when {
                 streams.isEmpty() && loading -> Text("Checking…", style = MaterialTheme.typography.bodySmall)
                 streams.isEmpty() -> Text("No favorites yet.", style = MaterialTheme.typography.bodySmall)
-                else -> streams.forEach { row -> StreamRow(row) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StreamRow(row: LiveStream) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            when (row.status) {
-                STATUS_ONLINE -> "LIVE"
-                STATUS_OFFLINE -> "OFF"
-                else -> "ERR"
-            },
-            style = MaterialTheme.typography.labelLarge,
-            color = when (row.status) {
-                STATUS_ONLINE -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.outline
-            },
-        )
-        Column(Modifier.weight(1f)) {
-            Text(row.streamerName, style = MaterialTheme.typography.bodyMedium)
-            // `error` is only meaningful for STATUS_ERROR; an offline row must
-            // not read like a failure.
-            val subtitle = row.title.ifBlank {
-                if (row.status == STATUS_ERROR) row.error.orEmpty() else ""
-            }
-            if (subtitle.isNotBlank()) {
-                Text(subtitle, style = MaterialTheme.typography.bodySmall)
+                else -> streams.forEach { row -> FavoriteRow(row) }
             }
         }
     }

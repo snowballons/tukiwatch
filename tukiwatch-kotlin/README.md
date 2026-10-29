@@ -8,9 +8,9 @@ Plan: [`TUKIWATCH_KMP_PORTING_PLAN.md`](../../../kotlin-python-app/TUKIWATCH_KMP
 
 ## Status
 
-**Phases 0–2 landed; Phase 3 (UI) pending.** The on-device engine and data layer are in place and
-covered by tests. The current Compose surface is the player + My List panel; navigation and the full
-screen map are Phase 3.
+**Phases 0–2 landed; Phase 3 (UI) in progress.** The on-device engine and data layer are in place and
+covered by tests. `:ui` now holds the shared Compose surface, and the Android player + My List use it;
+navigation and the full screen map are still Phase 3.
 
 | Phase | Scope | State |
 |---|---|---|
@@ -21,11 +21,14 @@ screen map are Phase 3.
 
 ## Modules
 
-- `shared` — `StreamEngine` interface, `EngineResult`/`StreamStatus`/`ErrorDetails`/`StreamItem`
-  (`@Serializable`, snake_case wire contract), SQLDelight favorites + JSON backup, DataStore prefs,
-  `LivenessRepository`, network error classification, plus the Compose Multiplatform UI shell.
-  `androidMain` throws from `createStreamEngine()` by design — Android uses
-  `ChaquopyStreamEngine(context)`.
+- `shared` — headless core: `StreamEngine` interface,
+  `EngineResult`/`StreamStatus`/`ErrorDetails`/`StreamItem` (`@Serializable`, snake_case wire
+  contract), SQLDelight favorites + JSON backup, DataStore prefs, `LivenessRepository`, network error
+  classification. No Compose dependency. `androidMain` throws from `createStreamEngine()` by design —
+  Android uses `ChaquopyStreamEngine(context)`.
+- `ui` — shared Compose surface: `TukiWatchTheme`/palette, status pill, metadata card, error card,
+  My List row and quality chips. Android is the reference implementation; desktop renders the same
+  components.
 - `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, the rotation-safe
   `StreamViewModel`, and `stream_engine.py`.
 - `desktopApp` — JVM iteration harness. A real Compose window over the same

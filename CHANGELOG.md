@@ -30,6 +30,10 @@ GitHub Releases with the APK attached.
     URL, renders metadata, structured errors, qualities and engine timings, and drives
     My List (file-backed SQLite) with on-demand liveness. Covered by 5 state tests and
     3 Compose UI tests (the UI tests run with a display or skip when headless).
+  - Shared UI module — `:ui` owns the Compose surface (theme/palette, status pill,
+    metadata card, error card, My List row, quality chips). Android's player and
+    My List consume it, and the desktop harness renders the same components. `:shared`
+    is now headless: the template `App.kt` and its Compose dependencies were removed.
 
 ### Fixed
 

@@ -14,6 +14,7 @@ kotlin {
 }
 dependencies {
     implementation(project(":shared"))
+    implementation(project(":ui"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.serialization.json)

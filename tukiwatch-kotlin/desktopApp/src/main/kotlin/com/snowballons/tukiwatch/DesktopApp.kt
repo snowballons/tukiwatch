@@ -31,7 +31,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,10 +42,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
-import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
-import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
+import com.snowballons.tukiwatch.ui.FavoriteRow
+import com.snowballons.tukiwatch.ui.StreamErrorCard
+import com.snowballons.tukiwatch.ui.StreamMetadataCard
+import com.snowballons.tukiwatch.ui.TukiWatchPalette
+import com.snowballons.tukiwatch.ui.TukiWatchTheme
 import java.awt.Desktop
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -62,34 +63,15 @@ object DesktopTestTags {
     const val FAVORITES = "favorites-list"
 }
 
-private val TwitchPurple = Color(0xFF9146FF)
-private val SurfaceDark = Color(0xFF18181B)
-private val SurfaceRaised = Color(0xFF26262C)
-private val BackgroundDark = Color(0xFF0E0E10)
-private val LiveGreen = Color(0xFF2ED573)
-private val ErrorRed = Color(0xFFFF5C5C)
-
-private val HarnessColors = darkColorScheme(
-    primary = TwitchPurple,
-    onPrimary = Color.White,
-    secondary = Color(0xFFB18CFF),
-    background = BackgroundDark,
-    onBackground = Color(0xFFEFEFF1),
-    surface = SurfaceDark,
-    onSurface = Color(0xFFEFEFF1),
-    surfaceVariant = SurfaceRaised,
-    onSurfaceVariant = Color(0xFFB5B5BE),
-    error = ErrorRed,
-    errorContainer = Color(0xFF3A1418),
-    onErrorContainer = Color(0xFFFFD5D8),
-)
+private val TwitchPurple = TukiWatchPalette.Purple
+private val LiveGreen = TukiWatchPalette.Live
 
 @Composable
 fun DesktopHarnessApp(
     harness: DesktopHarness,
     modifier: Modifier = Modifier,
 ) {
-    MaterialTheme(colorScheme = HarnessColors) {
+    TukiWatchTheme(darkTheme = true) {
         Column(
             modifier
                 .fillMaxSize()
@@ -167,8 +149,14 @@ private fun ResolvePane(harness: DesktopHarness, modifier: Modifier) {
         ResolveCard(harness)
         val result = harness.result
         if (result != null) {
-            MetadataCard(result)
-            result.errorDetails?.let { ErrorCard(it, harness.elapsedMs) }
+            StreamMetadataCard(
+                result = result,
+                showStreamId = true,
+                showThumbnailUrl = true,
+            )
+            result.errorDetails?.let {
+                StreamErrorCard(it, elapsedMs = harness.elapsedMs)
+            }
             if (result.streams.isNotEmpty()) QualitiesCard(harness, result)
             TimingsCard(harness, result)
         }
@@ -244,101 +232,6 @@ private fun ResolveCard(harness: DesktopHarness) {
 private fun SampleChip(label: String, onClick: () -> Unit) {
     TextButton(onClick = onClick) {
         Text(label, style = MaterialTheme.typography.labelMedium)
-    }
-}
-
-@Composable
-private fun MetadataCard(result: EngineResult) {
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusPill(result.status.orEmpty())
-                Spacer(Modifier.weight(1f))
-                result.platform?.let {
-                    Text(
-                        it.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Text(
-                result.title ?: "Untitled stream",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            result.author?.let {
-                Text("by $it", style = MaterialTheme.typography.bodyMedium)
-            }
-            val details = listOfNotNull(
-                result.category,
-                result.streamTypes?.takeIf { it.isNotEmpty() }?.joinToString(" + "),
-                result.viewerCount?.let { "$it viewers" },
-            )
-            if (details.isNotEmpty()) {
-                Text(
-                    details.joinToString("  ·  "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            result.streamId?.let {
-                Text(
-                    "stream id $it",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            result.thumbnail?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ErrorCard(details: ErrorDetails, elapsedMs: Long?) {
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                details.error ?: details.type ?: "Error",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-            )
-            Text(
-                listOfNotNull(details.type, details.errorClass).joinToString(" · "),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-            )
-            details.reason?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall)
-            }
-            details.message?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall)
-            }
-            details.alternative?.let {
-                Text(it, style = MaterialTheme.typography.labelMedium)
-            }
-            elapsedMs?.let {
-                Text(
-                    "Failed after ${it}ms",
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-        }
     }
 }
 
@@ -536,82 +429,22 @@ private fun MyListPane(harness: DesktopHarness, modifier: Modifier) {
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     items(streams, key = { it.id }) { row ->
-                        FavoriteRow(harness, row)
+                        FavoriteRow(
+                            row = row,
+                            onClick = { harness.resolveUrl(row.url) },
+                            trailing = {
+                                TextButton(
+                                    onClick = { harness.removeFavorite(row.id) },
+                                    modifier = Modifier.testTag("remove-${row.id}"),
+                                ) {
+                                    Text("✕", style = MaterialTheme.typography.labelMedium)
+                                }
+                            },
+                        )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun FavoriteRow(harness: DesktopHarness, row: LiveStream) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .clickable { harness.resolveUrl(row.url) }
-            .padding(vertical = 6.dp, horizontal = 4.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        StatusPill(row.status)
-        Column(Modifier.weight(1f)) {
-            Text(row.streamerName, style = MaterialTheme.typography.bodyMedium)
-            val subtitle = row.title.ifBlank {
-                if (row.status == STATUS_ERROR) row.error.orEmpty() else ""
-            }
-            if (subtitle.isNotBlank()) {
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            val meta = listOfNotNull(
-                row.platform,
-                row.category,
-                row.viewerCount?.let { "$it viewers" },
-            )
-            if (meta.isNotEmpty()) {
-                Text(
-                    meta.joinToString(" · "),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        TextButton(
-            onClick = { harness.removeFavorite(row.id) },
-            modifier = Modifier.testTag("remove-${row.id}"),
-        ) {
-            Text("✕", style = MaterialTheme.typography.labelMedium)
-        }
-    }
-}
-
-@Composable
-private fun StatusPill(status: String) {
-    val (label, color) = when (status) {
-        STATUS_ONLINE -> "LIVE" to LiveGreen
-        STATUS_OFFLINE -> "OFF" to MaterialTheme.colorScheme.onSurfaceVariant
-        STATUS_ERROR -> "ERR" to ErrorRed
-        else -> (status.take(3).uppercase().ifEmpty { "?" }) to MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color.copy(alpha = 0.16f))
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = color,
-        )
     }
 }
 
