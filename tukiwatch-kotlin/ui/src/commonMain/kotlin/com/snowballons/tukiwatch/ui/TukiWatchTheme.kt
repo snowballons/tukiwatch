@@ -23,6 +23,24 @@ object TukiWatchPalette {
     val BackgroundDark = Color(0xFF0E0E10)
     val TextOnDark = Color(0xFFEFEFF1)
     val TextMutedOnDark = Color(0xFFB5B5BE)
+
+    // Platform brand colors
+    val Twitch = Color(0xFF9146FF)
+    val YouTube = Color(0xFFFF0000)
+    val Kick = Color(0xFF53FC18)
+    val TikTok = Color(0xFFEE1D52)
+    val Facebook = Color(0xFF1877F2)
+    val Instagram = Color(0xFFE4405F)
+
+    fun platformColor(platform: String?): Color = when (platform?.lowercase()) {
+        "twitch" -> Twitch
+        "youtube", "youtu-be" -> YouTube
+        "kick" -> Kick
+        "tiktok" -> TikTok
+        "facebook" -> Facebook
+        "instagram" -> Instagram
+        else -> PurpleSoft
+    }
 }
 
 private val LightColors = lightColorScheme(

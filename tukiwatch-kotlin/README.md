@@ -8,16 +8,17 @@ Plan: [`TUKIWATCH_KMP_PORTING_PLAN.md`](../../../kotlin-python-app/TUKIWATCH_KMP
 
 ## Status
 
-**Phases 0–2 landed; Phase 3 (UI) in progress.** The on-device engine and data layer are in place and
-covered by tests. `:ui` now holds the shared Compose surface, and the Android player + My List use it;
-navigation and the full screen map are still Phase 3.
+**Phases 0–3 landed.** The on-device engine, data layer, navigation shell, and screens
+are in place and covered by tests. `:ui` holds the shared Compose screens (Home, My List, Add,
+Settings, Legal, Onboarding, Player, StreamCard) and state controllers; Android wires the
+ExoPlayer surface, SAF file pickers, lifecycle, and system intents.
 
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Engine transplant into this repo | **done** |
 | 1 | Engine parity: metadata, error taxonomy, codec alignment | **done** |
-| 2 | Data layer: SQLDelight favorites, DataStore, JSON import, liveness | **done** (data layer; UI wiring partial) |
-| 3 | UI: Home / My List / Add / Player / Settings / Onboarding | pending |
+| 2 | Data layer: SQLDelight favorites, DataStore, JSON import, liveness | **done** |
+| 3 | UI: Home / My List / Add / Player / Settings / Onboarding | **done** |
 
 ## Modules
 

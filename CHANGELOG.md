@@ -39,6 +39,19 @@ GitHub Releases with the APK attached.
     `LibraryController` (favorites membership, JSON v1 export/import, liveness state) now
     live in `:ui`. Android's ViewModels only own ExoPlayer, its error-code mapping and SAF
     `Uri` adapters; covered by 11 controller tests on the JVM.
+  - Phase 3 full navigation & screens — Compose bottom navigation (Home / My List / Add /
+    Settings) and stack overlays (Full Player, Privacy Policy, Terms of Service, Onboarding).
+    - `HomeScreen`: live stream catalog with platform filters, search bar, and empty states.
+    - `LibraryScreen`: complete favorites manager with search, platform filters, SAF JSON
+      import/export, and delete confirmation dialogs.
+    - `AddScreen`: preset platform selector (Twitch, YouTube, TikTok, Kick, Facebook,
+      Instagram, custom), identifier input, on-device preview resolve, and direct save/play.
+    - `FullPlayerScreen`: 16:9 ExoPlayer surface, live status badges, quality chip switcher,
+      error card, and official platform app launcher via Android intents.
+    - `SettingsScreen`: theme mode switching (System / Light / Dark), DataStore persistence,
+      JSON backup shortcuts, build info, and legal links.
+    - `OnboardingScreen`: first-run walkthrough with DataStore completion persistence.
+    - `StreamCard`: responsive card with status pills, platform badges, and metadata.
 
 ### Fixed
 

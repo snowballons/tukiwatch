@@ -101,6 +101,26 @@ class LibraryController(
         }
     }
 
+    /** Explicitly add a favorite by URL and display name (Add screen). */
+    fun addFavorite(displayName: String, url: String) {
+        val trimmedUrl = url.trim()
+        if (trimmedUrl.isEmpty()) return
+        scope.launch {
+            busy = true
+            try {
+                val name = displayName.takeIf { it.isNotBlank() } ?: deriveName(trimmedUrl)
+                val added = favorites.addFavorite(name, trimmedUrl)
+                if (trimmedUrl == currentUrl) isFavorite = true
+                message = if (added) "Saved '$name' to My List." else "'$name' is already in My List."
+                liveness.refresh()
+            } catch (t: Throwable) {
+                message = "Could not add to My List: ${t.message}"
+            } finally {
+                busy = false
+            }
+        }
+    }
+
     /** Row-level removal, used by the My List surface. */
     fun removeFavorite(id: Long) {
         scope.launch {

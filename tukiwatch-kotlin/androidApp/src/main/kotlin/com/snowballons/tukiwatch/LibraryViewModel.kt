@@ -36,6 +36,10 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     fun toggleFavorite() = controller.toggleFavorite()
 
+    fun addFavorite(streamerName: String, url: String) = controller.addFavorite(streamerName, url)
+
+    fun removeFavorite(id: Long) = controller.removeFavorite(id)
+
     fun exportTo(uri: Uri) {
         controller.exportTo(SafBackupIo(getApplication(), uri))
     }

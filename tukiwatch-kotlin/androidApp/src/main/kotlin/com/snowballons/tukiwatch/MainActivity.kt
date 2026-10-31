@@ -1,22 +1,65 @@
 package com.snowballons.tukiwatch
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.snowballons.tukiwatch.liveness.autoRefreshLoop
+import com.snowballons.tukiwatch.prefs.Prefs
+import com.snowballons.tukiwatch.prefs.ThemeMode
+import com.snowballons.tukiwatch.ui.AddScreen
+import com.snowballons.tukiwatch.ui.HomeScreen
+import com.snowballons.tukiwatch.ui.LibraryScreen
+import com.snowballons.tukiwatch.ui.OnboardingScreen
+import com.snowballons.tukiwatch.ui.PrivacyPolicyScreen
+import com.snowballons.tukiwatch.ui.SettingsScreen
+import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+enum class MainTab(val label: String, val glyph: String) {
+    HOME("Home", "●"),
+    MY_LIST("My List", "★"),
+    ADD("Add", "+"),
+    SETTINGS("Settings", "⚙"),
+}
+
+enum class OverlayScreen {
+    PLAYER,
+    PRIVACY,
+    TERMS,
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,22 +68,43 @@ class MainActivity : ComponentActivity() {
 
         val app = application as TukiWatchApp
         setContent {
-            TukiWatchTheme {
-                AppContent(app)
+            val scope = rememberCoroutineScope()
+            val prefs by app.prefs.prefs.collectAsStateWithLifecycle(
+                initialValue = Prefs(themeMode = ThemeMode.SYSTEM, onboardingCompleted = true)
+            )
+
+            val darkTheme = when (prefs.themeMode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            TukiWatchTheme(darkTheme = darkTheme) {
+                if (!prefs.onboardingCompleted) {
+                    OnboardingScreen(
+                        onComplete = {
+                            scope.launch { app.prefs.setOnboardingCompleted(true) }
+                        }
+                    )
+                } else {
+                    AppContent(app = app, prefs = prefs)
+                }
             }
         }
     }
 }
 
 @Composable
-fun AppContent(app: TukiWatchApp) {
-    val streamVm: StreamViewModel = viewModel()
-    val libraryVm: LibraryViewModel = viewModel()
+fun AppContent(
+    app: TukiWatchApp,
+    prefs: Prefs,
+    streamVm: StreamViewModel = viewModel(),
+    libraryVm: LibraryViewModel = viewModel(),
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    // 5-min cadence, foreground-only. A plain LaunchedEffect is only
-    // composition-scoped: it keeps ticking while the activity is STOPPED.
-    // repeatOnLifecycle cancels the loop on background and restarts it on
-    // return, which is §3's "only while app is foregrounded".
+    // 5-minute foreground liveness refresh cadence
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -48,19 +112,182 @@ fun AppContent(app: TukiWatchApp) {
         }
     }
 
-    // Sync URL from player to library panel
+    // Keep URL in sync between player and library controller
     LaunchedEffect(streamVm.controller.url) {
         libraryVm.onCurrentUrlChanged(streamVm.controller.url)
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .safeContentPadding(),
-    ) {
-        Box(Modifier.weight(1f)) {
-            AndroidStreamScreen(vm = streamVm)
+    var activeTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    var activeOverlay by rememberSaveable { mutableStateOf<OverlayScreen?>(null) }
+
+    // SAF Document Launchers for JSON backup migration
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> uri?.let(libraryVm::exportTo) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> uri?.let(libraryVm::importFrom) }
+
+    // Streams & liveness state
+    val streams by libraryVm.controller.streams.collectAsStateWithLifecycle()
+    val loading by libraryVm.controller.loading.collectAsStateWithLifecycle()
+    val degraded by libraryVm.controller.degraded.collectAsStateWithLifecycle()
+
+    // Add screen preview state
+    var resolvingPreview by remember { mutableStateOf(false) }
+    var previewResult by remember { mutableStateOf<EngineResult?>(null) }
+
+    val onPlayStream: (String) -> Unit = { targetUrl ->
+        streamVm.controller.resolveAndPlay(targetUrl = targetUrl)
+        activeOverlay = OverlayScreen.PLAYER
+    }
+
+    // Back handling: returns from overlay -> returns to HOME tab -> exits app
+    BackHandler(enabled = activeOverlay != null || activeTab != MainTab.HOME) {
+        if (activeOverlay != null) {
+            if (activeOverlay == OverlayScreen.PLAYER) {
+                streamVm.controller.stop()
+            }
+            activeOverlay = null
+        } else if (activeTab != MainTab.HOME) {
+            activeTab = MainTab.HOME
         }
-        LibraryPanel(vm = libraryVm)
+    }
+
+    Scaffold(
+        bottomBar = {
+            if (activeOverlay == null) {
+                NavigationBar {
+                    MainTab.entries.forEach { tab ->
+                        NavigationBarItem(
+                            selected = activeTab == tab,
+                            onClick = { activeTab = tab },
+                            label = { Text(tab.label) },
+                            icon = {
+                                Text(
+                                    text = tab.glyph,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (activeTab == tab) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (activeOverlay) {
+                OverlayScreen.PLAYER -> {
+                    FullPlayerScreen(
+                        onClose = {
+                            streamVm.controller.stop()
+                            activeOverlay = null
+                        },
+                        vm = streamVm,
+                    )
+                }
+                OverlayScreen.PRIVACY -> {
+                    PrivacyPolicyScreen(
+                        onBack = { activeOverlay = null }
+                    )
+                }
+                OverlayScreen.TERMS -> {
+                    TermsOfServiceScreen(
+                        onBack = { activeOverlay = null }
+                    )
+                }
+                null -> {
+                    when (activeTab) {
+                        MainTab.HOME -> {
+                            HomeScreen(
+                                streams = streams,
+                                loading = loading,
+                                degraded = degraded,
+                                onRefresh = { libraryVm.refresh() },
+                                onStreamClick = { stream -> onPlayStream(stream.url) },
+                            )
+                        }
+                        MainTab.MY_LIST -> {
+                            LibraryScreen(
+                                streams = streams,
+                                loading = loading,
+                                degraded = degraded,
+                                busy = libraryVm.controller.busy,
+                                message = libraryVm.controller.message,
+                                onRefresh = { libraryVm.refresh() },
+                                onExport = {
+                                    exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
+                                },
+                                onImport = {
+                                    importLauncher.launch(arrayOf("application/json", "text/plain"))
+                                },
+                                onDeleteFavorite = { id -> libraryVm.removeFavorite(id) },
+                                onStreamClick = { stream -> onPlayStream(stream.url) },
+                            )
+                        }
+                        MainTab.ADD -> {
+                            AddScreen(
+                                onPreview = { targetUrl ->
+                                    scope.launch {
+                                        resolvingPreview = true
+                                        previewResult = withContext(Dispatchers.IO) {
+                                            runCatching {
+                                                app.engine.resolveDetails(targetUrl, "{}", "all")
+                                            }.getOrNull()
+                                        }
+                                        resolvingPreview = false
+                                    }
+                                },
+                                onSaveFavorite = { name, url ->
+                                    libraryVm.addFavorite(name, url)
+                                },
+                                onPlayUrl = { targetUrl ->
+                                    onPlayStream(targetUrl)
+                                },
+                                resolving = resolvingPreview,
+                                previewResult = previewResult,
+                                statusMessage = libraryVm.controller.message,
+                            )
+                        }
+                        MainTab.SETTINGS -> {
+                            SettingsScreen(
+                                currentTheme = prefs.themeMode,
+                                onThemeChange = { mode ->
+                                    scope.launch { app.prefs.setThemeMode(mode) }
+                                },
+                                onExportBackup = {
+                                    exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
+                                },
+                                onImportBackup = {
+                                    importLauncher.launch(arrayOf("application/json", "text/plain"))
+                                },
+                                onOpenPrivacyPolicy = {
+                                    activeOverlay = OverlayScreen.PRIVACY
+                                },
+                                onOpenTermsOfService = {
+                                    activeOverlay = OverlayScreen.TERMS
+                                },
+                                onOpenGitHub = {
+                                    try {
+                                        val gitHubIntent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            Uri.parse("https://github.com/snowballons/tukiwatch")
+                                        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                                        context.startActivity(gitHubIntent)
+                                    } catch (_: Exception) {}
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
