@@ -58,6 +58,7 @@ fun AddScreen(
     resolving: Boolean,
     previewResult: EngineResult?,
     statusMessage: String?,
+    isFavorite: (String) -> Boolean = { false },
     modifier: Modifier = Modifier,
 ) {
     var selectedPreset by remember { mutableStateOf(PRESET_PLATFORMS.first()) }
@@ -74,9 +75,12 @@ fun AddScreen(
     }
 
     val derivedStreamerName = remember(inputIdentifier, previewResult, resolvedUrl) {
-        previewResult?.author?.takeIf { it.isNotBlank() }
-            ?: inputIdentifier.trim().removePrefix("@").takeIf { it.isNotBlank() }
-            ?: "Stream"
+        previewResult?.author?.takeIf { it.isNotBlank() && it.lowercase() != "live" && it.lowercase() != "video" }
+            ?: StreamUtils.deriveStreamerName(resolvedUrl)
+    }
+
+    val isSaved = remember(resolvedUrl, previewResult, isFavorite) {
+        if (resolvedUrl.isBlank()) false else isFavorite(resolvedUrl)
     }
 
     Column(
@@ -151,7 +155,7 @@ fun AddScreen(
             Button(
                 onClick = { onPreview(resolvedUrl) },
                 enabled = resolvedUrl.isNotBlank() && !resolving,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1.2f),
             ) {
                 if (resolving) {
                     CircularProgressIndicator(
@@ -166,6 +170,15 @@ fun AddScreen(
                 } else {
                     Text("Preview Stream")
                 }
+            }
+
+            OutlinedButton(
+                onClick = { onSaveFavorite(derivedStreamerName, resolvedUrl) },
+                enabled = resolvedUrl.isNotBlank() && !resolving,
+                modifier = Modifier.weight(0.9f),
+            ) {
+                val label = if (isSaved) "★ Saved" else "+ Add"
+                Text(label)
             }
         }
 
@@ -207,7 +220,8 @@ fun AddScreen(
                     },
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Save to My List")
+                    val label = if (isSaved) "★ Saved in My List" else "+ Save to My List"
+                    Text(label)
                 }
 
                 if (result.status == "online" && result.directPlayable.isNotEmpty()) {

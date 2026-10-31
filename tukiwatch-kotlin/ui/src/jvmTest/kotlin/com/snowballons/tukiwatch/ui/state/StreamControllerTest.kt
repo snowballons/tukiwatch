@@ -137,6 +137,26 @@ class StreamControllerTest {
     }
 
     @Test
+    fun switchingStreamsImmediatelyClearsStaleState() {
+        val player = FakePlayer()
+        val c = controller(FakeEngine(online(h264)), player)
+
+        c.resolveAndPlay("https://www.twitch.tv/streamerA")
+        assertEquals("h264_720", c.selected?.quality)
+        assertTrue(player.playWhenReady)
+
+        // Switch to streamerB with placeholder details
+        c.resolveAndPlay(
+            targetUrl = "https://www.tiktok.com/@streamerB/live",
+            placeholderTitle = "Custom Title B",
+            placeholderAuthor = "streamerB",
+        )
+
+        assertEquals("streamerB", c.metadata?.author)
+        assertEquals("https://www.tiktok.com/@streamerB/live", c.url)
+    }
+
+    @Test
     fun backgroundPauseOnlyResumesWhenItPaused() {
         val player = FakePlayer()
         val c = controller(FakeEngine(online(h264)), player)

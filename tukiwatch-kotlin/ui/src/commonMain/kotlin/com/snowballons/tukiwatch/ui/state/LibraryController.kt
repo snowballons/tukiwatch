@@ -7,6 +7,7 @@ import com.snowballons.tukiwatch.db.FavoritesBackup
 import com.snowballons.tukiwatch.db.FavoritesRepository
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.LivenessRepository
+import com.snowballons.tukiwatch.ui.StreamUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -169,8 +170,7 @@ class LibraryController(
         }
     }
 
-    /** Channel name fallback: the last path segment of the URL. */
+    /** Channel name fallback derived cleanly via [StreamUtils.deriveStreamerName]. */
     fun deriveName(url: String): String =
-        url.substringBefore('?').substringBefore('#').trimEnd('/')
-            .substringAfterLast('/').ifEmpty { url }
+        StreamUtils.deriveStreamerName(url)
 }

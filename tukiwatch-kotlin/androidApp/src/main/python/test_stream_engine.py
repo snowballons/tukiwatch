@@ -137,6 +137,18 @@ class TestUrlParsing:
         assert meta["platform"] == "Kick"
         assert meta["username"] == "streamer"
 
+    def test_tiktok_channel_live(self):
+        meta = stream_engine.parse_url_metadata("https://www.tiktok.com/@cukurayanairobibackup/live")
+        assert meta["platform"] == "TikTok"
+        assert meta["username"] == "cukurayanairobibackup"
+        assert meta["url_type"] == "channel"
+
+    def test_tiktok_channel_handle(self):
+        meta = stream_engine.parse_url_metadata("https://www.tiktok.com/@creator")
+        assert meta["platform"] == "TikTok"
+        assert meta["username"] == "creator"
+        assert meta["url_type"] == "channel"
+
     def test_invalid(self):
         meta = stream_engine.parse_url_metadata("garbage")
         assert meta["url_type"] == "parse_error"
@@ -364,6 +376,16 @@ class TestOptionPassThrough:
             "https://example.com/x", '{"twitch-low-latency": false}'
         )
         assert seen == {"twitch-low-latency": False}
+
+    def test_session_user_agent_complete(self):
+        stream_engine._SESSION = None
+        stream_engine._SESSION_OPTS_KEY = None
+        session, _ = stream_engine.get_session({})
+        ua = session.http.headers.get("User-Agent")
+        assert ua is not None
+        assert "Mozilla/5.0" in ua
+        assert "AppleWebKit" in ua
+        assert "Chrome" in ua
 
 
 class TestCli:

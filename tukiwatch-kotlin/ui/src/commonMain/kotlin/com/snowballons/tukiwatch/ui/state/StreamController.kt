@@ -7,6 +7,7 @@ import com.snowballons.tukiwatch.EngineResult
 import com.snowballons.tukiwatch.ErrorDetails
 import com.snowballons.tukiwatch.StreamEngine
 import com.snowballons.tukiwatch.StreamItem
+import com.snowballons.tukiwatch.ui.StreamUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -189,14 +190,44 @@ class StreamController(
         status = "Stopped"
     }
 
-    fun resolveAndPlay(targetUrl: String = url, forceRefresh: Boolean = false) {
+    fun resolveAndPlay(
+        targetUrl: String = url,
+        forceRefresh: Boolean = false,
+        placeholderTitle: String? = null,
+        placeholderAuthor: String? = null,
+        placeholderPlatform: String? = null,
+    ) {
         job?.cancel()
-        job = scope.launch {
-            extracting = true
-            playerError = null
-            errorDetails = null
-            url = targetUrl
 
+        val isDifferentUrl = (targetUrl != url)
+        if (isDifferentUrl) {
+            player.stop()
+            selected = null
+            lastTimings = null
+        }
+        url = targetUrl
+        extracting = true
+        playerError = null
+        errorDetails = null
+
+        val fallbackAuthor = placeholderAuthor?.takeIf { it.isNotBlank() }
+            ?: StreamUtils.deriveStreamerName(targetUrl)
+        val fallbackPlatform = placeholderPlatform ?: StreamUtils.detectPlatform(targetUrl)
+
+        // Pre-populate metadata immediately so UI never flashes stale stream information
+        if (isDifferentUrl || metadata == null) {
+            val placeholder = EngineResult(
+                originalUrl = targetUrl,
+                author = fallbackAuthor,
+                title = placeholderTitle ?: "Loading stream…",
+                platform = fallbackPlatform,
+                status = "loading",
+            )
+            metadata = placeholder
+            result = placeholder
+        }
+
+        job = scope.launch {
             // 1. Fresh cache → instant play, then silent background refresh.
             val cached = cache[targetUrl]
             if (!forceRefresh && cached != null && nowMs() - cached.second < CACHE_TTL_MS) {
@@ -216,9 +247,15 @@ class StreamController(
             }
 
             status = "Resolving..."
-            val full = engine.resolveDetails(targetUrl, "{}", "all")
+            val rawFull = engine.resolveDetails(targetUrl, "{}", "all")
+            val full = if (rawFull.author.isNullOrBlank() || rawFull.author.equals("live", ignoreCase = true)) {
+                rawFull.copy(author = fallbackAuthor)
+            } else {
+                rawFull
+            }
             errorDetails = full.errorDetails
             metadata = full
+            result = full
 
             if (full.status == "error" || full.error != null) {
                 status = "Error ${full.error ?: "unknown"}: ${full.message}"

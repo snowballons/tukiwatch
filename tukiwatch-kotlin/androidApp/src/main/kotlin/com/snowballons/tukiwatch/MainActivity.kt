@@ -139,7 +139,25 @@ fun AppContent(
     var previewResult by remember { mutableStateOf<EngineResult?>(null) }
 
     val onPlayStream: (String) -> Unit = { targetUrl ->
-        streamVm.controller.resolveAndPlay(targetUrl = targetUrl)
+        val author = previewResult?.takeIf { it.originalUrl == targetUrl }?.author
+        val title = previewResult?.takeIf { it.originalUrl == targetUrl }?.title
+        val platform = previewResult?.takeIf { it.originalUrl == targetUrl }?.platform
+        streamVm.controller.resolveAndPlay(
+            targetUrl = targetUrl,
+            placeholderTitle = title,
+            placeholderAuthor = author,
+            placeholderPlatform = platform,
+        )
+        activeOverlay = OverlayScreen.PLAYER
+    }
+
+    val onPlayLiveStream: (com.snowballons.tukiwatch.liveness.LiveStream) -> Unit = { stream ->
+        streamVm.controller.resolveAndPlay(
+            targetUrl = stream.url,
+            placeholderTitle = stream.title,
+            placeholderAuthor = stream.streamerName.takeIf { it.isNotBlank() } ?: stream.author,
+            placeholderPlatform = stream.platform,
+        )
         activeOverlay = OverlayScreen.PLAYER
     }
 
@@ -185,10 +203,19 @@ fun AppContent(
         ) {
             when (activeOverlay) {
                 OverlayScreen.PLAYER -> {
+                    val currentPlayingUrl = streamVm.controller.url
+                    val isFav = streams.any {
+                        it.url.trimEnd('/') == currentPlayingUrl.trimEnd('/')
+                    }
                     FullPlayerScreen(
                         onClose = {
                             streamVm.controller.stop()
                             activeOverlay = null
+                        },
+                        isFavorite = isFav,
+                        onToggleFavorite = {
+                            val author = streamVm.controller.metadata?.author
+                            libraryVm.controller.toggleFavorite(author)
                         },
                         vm = streamVm,
                     )
@@ -211,7 +238,7 @@ fun AppContent(
                                 loading = loading,
                                 degraded = degraded,
                                 onRefresh = { libraryVm.refresh() },
-                                onStreamClick = { stream -> onPlayStream(stream.url) },
+                                onStreamClick = { stream -> onPlayLiveStream(stream) },
                             )
                         }
                         MainTab.MY_LIST -> {
@@ -229,7 +256,7 @@ fun AppContent(
                                     importLauncher.launch(arrayOf("application/json", "text/plain"))
                                 },
                                 onDeleteFavorite = { id -> libraryVm.removeFavorite(id) },
-                                onStreamClick = { stream -> onPlayStream(stream.url) },
+                                onStreamClick = { stream -> onPlayLiveStream(stream) },
                             )
                         }
                         MainTab.ADD -> {
@@ -254,6 +281,9 @@ fun AppContent(
                                 resolving = resolvingPreview,
                                 previewResult = previewResult,
                                 statusMessage = libraryVm.controller.message,
+                                isFavorite = { url ->
+                                    streams.any { it.url.trimEnd('/') == url.trimEnd('/') }
+                                },
                             )
                         }
                         MainTab.SETTINGS -> {

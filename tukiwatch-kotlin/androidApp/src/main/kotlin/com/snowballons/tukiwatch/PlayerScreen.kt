@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -47,6 +48,7 @@ import com.snowballons.tukiwatch.ui.QualityChips
 import com.snowballons.tukiwatch.ui.StatusPill
 import com.snowballons.tukiwatch.ui.StreamErrorCard
 import com.snowballons.tukiwatch.ui.StreamMetadataCard
+import com.snowballons.tukiwatch.ui.StreamUtils
 import com.snowballons.tukiwatch.ui.TukiWatchPalette
 
 /**
@@ -59,6 +61,8 @@ import com.snowballons.tukiwatch.ui.TukiWatchPalette
 fun FullPlayerScreen(
     onClose: () -> Unit,
     vm: StreamViewModel = viewModel(),
+    isFavorite: Boolean? = null,
+    onToggleFavorite: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -87,9 +91,9 @@ fun FullPlayerScreen(
 
     val streamMetadata = controller.metadata
     val streamerName = streamMetadata?.author
-        ?: controller.url.trim().substringAfterLast("/").takeIf { it.isNotBlank() }
-        ?: "Stream"
-    val platform = streamMetadata?.platform
+        ?.takeIf { it.isNotBlank() && it.lowercase() != "live" && it.lowercase() != "video" }
+        ?: StreamUtils.deriveStreamerName(controller.url)
+    val platform = streamMetadata?.platform ?: StreamUtils.detectPlatform(controller.url)
     val platformColor = TukiWatchPalette.platformColor(platform)
 
     Column(
@@ -98,11 +102,11 @@ fun FullPlayerScreen(
             .safeContentPadding()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Header with Back button and streamer title
+        // Header with Back button, streamer title, platform tag, and favorite star
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(onClick = onClose) {
@@ -134,7 +138,15 @@ fun FullPlayerScreen(
                         color = platformColor,
                     )
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(4.dp))
+            }
+
+            IconButton(onClick = onToggleFavorite) {
+                Text(
+                    text = if (isFavorite == true) "★" else "☆",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = if (isFavorite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -186,8 +198,11 @@ fun FullPlayerScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Stream title
+            val displayTitle = streamMetadata?.title
+                ?.takeIf { it.isNotBlank() && it.lowercase() != "live" }
+                ?: if (controller.extracting) "Loading stream…" else "Live Stream"
             Text(
-                text = streamMetadata?.title?.takeIf { it.isNotBlank() } ?: "Live Stream",
+                text = displayTitle,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
@@ -247,13 +262,25 @@ fun FullPlayerScreen(
                 )
             }
 
-            // Action row: Open in Official App + Stop
+            // Action row: Save to My List + Open in Official App + Stop
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                OutlinedButton(
+                    onClick = onToggleFavorite,
+                    modifier = Modifier.weight(1.1f)
+                ) {
+                    val favText = when (isFavorite) {
+                        true -> "★ Saved"
+                        false -> "+ Save"
+                        null -> "Save"
+                    }
+                    Text(favText, maxLines = 1)
+                }
+
                 OutlinedButton(
                     onClick = {
                         PlatformLauncher.openInOfficialApp(
@@ -262,16 +289,16 @@ fun FullPlayerScreen(
                             originalUrl = controller.url
                         )
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.1f)
                 ) {
-                    Text("Open in App")
+                    Text("Open App", maxLines = 1)
                 }
 
                 Button(
                     onClick = { controller.stop() },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(0.8f)
                 ) {
-                    Text("Stop")
+                    Text("Stop", maxLines = 1)
                 }
             }
 

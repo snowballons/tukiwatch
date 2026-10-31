@@ -265,6 +265,13 @@ def parse_url_metadata(url: str) -> dict[str, str]:
             return {"platform": "Kick", "username": m.group(1), "url_type": "channel"}
         return {"platform": "Kick", "username": "unknown_user", "url_type": "parse_error"}
 
+    # TikTok channel / live / video
+    if "tiktok.com" in netloc:
+        m = re.match(r"/@([a-zA-Z0-9_.-]+)(?:/(?:live|video/\d+))?/?$", path)
+        if m:
+            return {"platform": "TikTok", "username": m.group(1), "url_type": "channel"}
+        return {"platform": "TikTok", "username": "unknown_user", "url_type": "parse_error"}
+
     # Generic fallback
     try:
         domain_parts = netloc.split(".")
@@ -272,8 +279,10 @@ def parse_url_metadata(url: str) -> dict[str, str]:
     except IndexError:
         platform_name = "Unknown"
 
-    path_parts = [part for part in path.split("/") if part]
-    username_guess = path_parts[-1] if path_parts else netloc
+    path_parts = [part.strip() for part in path.split("/") if part.strip()]
+    if len(path_parts) > 1 and path_parts[-1].lower() in {"live", "watch", "video", "videos", "stream"}:
+        path_parts.pop()
+    username_guess = path_parts[-1].lstrip("@") if path_parts else netloc
 
     return {
         "platform": platform_name,
@@ -443,9 +452,10 @@ def get_session(options_dict=None):
     if _SESSION is not None and key == _SESSION_OPTS_KEY:
         return _SESSION, True
     session = Streamlink()
-    session.set_option(
-        "http-headers",
-        "User-Agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+    session.http.headers["User-Agent"] = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/128.0.0.0 Safari/537.36"
     )
     skipped = []
     for k, v in FAST_DEFAULTS.items():
@@ -504,6 +514,8 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
     """
     t_total = time.perf_counter()
     platform = extract_platform_from_url(url)
+    parsed_meta = parse_url_metadata(url)
+    default_author = parsed_meta.get("username")
 
     try:
         options_dict = json.loads(options_json) if options_json else {}
@@ -548,7 +560,11 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
     except SLNoStreamsError:
         # tukiwatch-core maps "plugin resolved, but no streams" to offline, not
         # to a plugin failure (errors.py: NoStreamsError = "offline").
-        author_fallback = plugin_name or platform
+        author_fallback = (
+            plugin_name
+            if (plugin_name and plugin_name.lower() != platform.lower())
+            else (default_author or plugin_name or platform)
+        )
         return json.dumps({
             'status': 'offline',
             'error': None,
@@ -592,7 +608,11 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
     streams_ms = (time.perf_counter() - t1) * 1000.0
 
     if not streams:
-        author_fallback = plugin_name or platform
+        author_fallback = (
+            plugin_name
+            if (plugin_name and plugin_name.lower() != platform.lower())
+            else (default_author or plugin_name or platform)
+        )
         return json.dumps({
             'status': 'offline',
             'original_url': url,
@@ -617,7 +637,7 @@ def resolve_details(url: str, options_json: str = '{}', wanted: str = 'all') -> 
     except Exception:
         raw_meta = {}
 
-    normalized = normalize_stream_metadata(raw_meta, platform, author_fallback=plugin_name)
+    normalized = normalize_stream_metadata(raw_meta, platform, author_fallback=default_author or plugin_name)
     stream_types = get_stream_types_from_streams(streams)
 
     t2 = time.perf_counter()
