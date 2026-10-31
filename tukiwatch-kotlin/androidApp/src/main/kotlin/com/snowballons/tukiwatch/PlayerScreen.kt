@@ -1,5 +1,6 @@
 package com.snowballons.tukiwatch
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -281,6 +283,7 @@ fun FullPlayerScreen(
                     Text(favText, maxLines = 1)
                 }
 
+                val targetPlatformName = platform?.replaceFirstChar { it.uppercase() } ?: "App"
                 OutlinedButton(
                     onClick = {
                         PlatformLauncher.openInOfficialApp(
@@ -289,9 +292,18 @@ fun FullPlayerScreen(
                             originalUrl = controller.url
                         )
                     },
-                    modifier = Modifier.weight(1.1f)
+                    modifier = Modifier.weight(1.3f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = platformColor
+                    ),
+                    border = BorderStroke(1.dp, platformColor.copy(alpha = 0.7f))
                 ) {
-                    Text("Open App", maxLines = 1)
+                    Text(
+                        text = "Open in $targetPlatformName ↗",
+                        maxLines = 1,
+                        fontWeight = FontWeight.SemiBold,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Button(

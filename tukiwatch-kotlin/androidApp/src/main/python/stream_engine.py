@@ -712,6 +712,8 @@ def check_status(url: str, options_json: str = '{}') -> str:
     stream_id, platform, error, error_details.
     """
     platform = extract_platform_from_url(url)
+    parsed_meta = parse_url_metadata(url)
+    default_author = parsed_meta.get("username")
     try:
         options_dict = json.loads(options_json) if options_json else {}
     except Exception:
@@ -723,7 +725,11 @@ def check_status(url: str, options_json: str = '{}') -> str:
         streams = plugin_instance.streams()
 
         if not streams:
-            author_fallback = plugin_name or platform
+            author_fallback = (
+                plugin_name
+                if (plugin_name and plugin_name.lower() != platform.lower())
+                else (default_author or plugin_name or platform)
+            )
             return json.dumps({
                 'url': url,
                 'status': 'offline',
@@ -734,7 +740,7 @@ def check_status(url: str, options_json: str = '{}') -> str:
             })
 
         raw_meta = plugin_instance.get_metadata() or {}
-        normalized = normalize_stream_metadata(raw_meta, platform, author_fallback=plugin_name)
+        normalized = normalize_stream_metadata(raw_meta, platform, author_fallback=default_author or plugin_name)
         return json.dumps({
             'url': url,
             'status': 'online',
@@ -765,7 +771,11 @@ def check_status(url: str, options_json: str = '{}') -> str:
         # Offline is not an error: no `error` string, and the same fallback
         # title/author/thumbnail the resolve path returns so My List rows read
         # "Offline" instead of surfacing an internal sentinel.
-        author_fallback = plugin_name or platform
+        author_fallback = (
+            plugin_name
+            if (plugin_name and plugin_name.lower() != platform.lower())
+            else (default_author or plugin_name or platform)
+        )
         return json.dumps({
             'url': url,
             'status': 'offline',

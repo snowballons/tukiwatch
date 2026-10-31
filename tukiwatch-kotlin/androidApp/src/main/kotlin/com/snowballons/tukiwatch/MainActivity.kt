@@ -9,10 +9,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -26,8 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,6 +51,7 @@ import com.snowballons.tukiwatch.ui.PrivacyPolicyScreen
 import com.snowballons.tukiwatch.ui.SettingsScreen
 import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
+import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,6 +99,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+private fun getTimeGreeting(): String {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    return when {
+        hour < 12 -> "Good Morning"
+        hour < 17 -> "Good Afternoon"
+        else -> "Good Evening"
     }
 }
 
@@ -181,14 +198,31 @@ fun AppContent(
                         NavigationBarItem(
                             selected = activeTab == tab,
                             onClick = { activeTab = tab },
-                            label = { Text(tab.label) },
+                            label = if (tab == MainTab.ADD) null else { { Text(tab.label) } },
                             icon = {
-                                Text(
-                                    text = tab.glyph,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (activeTab == tab) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                if (tab == MainTab.ADD) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "+",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = tab.glyph,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = if (activeTab == tab) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             },
                         )
                     }
@@ -237,6 +271,7 @@ fun AppContent(
                                 streams = streams,
                                 loading = loading,
                                 degraded = degraded,
+                                greeting = getTimeGreeting(),
                                 onRefresh = { libraryVm.refresh() },
                                 onStreamClick = { stream -> onPlayLiveStream(stream) },
                             )
@@ -288,6 +323,7 @@ fun AppContent(
                         }
                         MainTab.SETTINGS -> {
                             SettingsScreen(
+                                streams = streams,
                                 currentTheme = prefs.themeMode,
                                 onThemeChange = { mode ->
                                     scope.launch { app.prefs.setThemeMode(mode) }
