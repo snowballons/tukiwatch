@@ -33,9 +33,10 @@ import com.snowballons.tukiwatch.ui.StreamMetadataCard
 
 @Composable
 fun AndroidStreamScreen(
-    engine: ChaquopyStreamEngine,
-    vm: StreamViewModel = viewModel()
+    vm: StreamViewModel = viewModel(),
 ) {
+    val controller = vm.controller
+
     // Pause playback when backgrounded (keeps media items for instant resume),
     // resume at the still-valid position on return. PlayerView surface follows.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -85,11 +86,11 @@ fun AndroidStreamScreen(
                 .padding(vertical = 8.dp)
         )
 
-        vm.playerError?.let {
+        controller.playerError?.let {
             Text(it, color = MaterialTheme.colorScheme.error)
         }
 
-        vm.errorDetails?.let { details ->
+        controller.errorDetails?.let { details ->
             StreamErrorCard(
                 details = details,
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -97,8 +98,8 @@ fun AndroidStreamScreen(
         }
 
         OutlinedTextField(
-            value = vm.url,
-            onValueChange = { vm.url = it },
+            value = controller.url,
+            onValueChange = { controller.url = it },
             label = { Text("Stream URL") },
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
             singleLine = true
@@ -106,46 +107,46 @@ fun AndroidStreamScreen(
 
         Row {
             Button(
-                onClick = { vm.resolveAndPlay(engine) },
-                enabled = !vm.extracting
+                onClick = { controller.resolveAndPlay() },
+                enabled = !controller.extracting
             ) {
-                Text(if (vm.extracting) "Resolving..." else "Resolve & Play")
+                Text(if (controller.extracting) "Resolving..." else "Resolve & Play")
             }
             Button(
-                onClick = { vm.stop() },
+                onClick = { controller.stop() },
                 modifier = Modifier.padding(start = 8.dp)
             ) {
                 Text("Stop")
             }
         }
 
-        Text(vm.status, modifier = Modifier.padding(vertical = 8.dp))
-        vm.lastTimings?.let {
+        Text(controller.status, modifier = Modifier.padding(vertical = 8.dp))
+        controller.lastTimings?.let {
             Text(it, style = MaterialTheme.typography.bodySmall)
         }
 
-        vm.metadata?.let { meta ->
+        controller.metadata?.let { meta ->
             StreamMetadataCard(
                 result = meta,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
         }
 
-        if (vm.result.directPlayable.isNotEmpty()) {
-            val qualities = vm.orderedQualities()
+        if (controller.result.directPlayable.isNotEmpty()) {
+            val qualities = controller.orderedQualities()
             Text(
                 "Qualities (${qualities.size}):",
                 style = MaterialTheme.typography.titleSmall
             )
             QualityChips(
                 items = qualities,
-                selectedQuality = vm.selected?.quality,
-                onSelect = vm::play,
+                selectedQuality = controller.selected?.quality,
+                onSelect = controller::play,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
         }
 
-        vm.selected?.let {
+        controller.selected?.let {
             Text("Selected: ${it.quality} (${it.kind})", style = MaterialTheme.typography.titleSmall)
             Text(it.url ?: "no url", style = MaterialTheme.typography.bodySmall)
         }

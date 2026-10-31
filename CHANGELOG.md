@@ -34,9 +34,17 @@ GitHub Releases with the APK attached.
     metadata card, error card, My List row, quality chips). Android's player and
     My List consume it, and the desktop harness renders the same components. `:shared`
     is now headless: the template `App.kt` and its Compose dependencies were removed.
+  - Shared state holders — `StreamController` (resolve, 45-min result cache, h264-first
+    quality ordering, background pause/resume, live-edge recovery, codec fallback) and
+    `LibraryController` (favorites membership, JSON v1 export/import, liveness state) now
+    live in `:ui`. Android's ViewModels only own ExoPlayer, its error-code mapping and SAF
+    `Uri` adapters; covered by 11 controller tests on the JVM.
 
 ### Fixed
 
+- Live-edge recovery replayed the cached tokenized URL instead of re-extracting:
+  `resolveAndPlay` now takes `forceRefresh` and the recovery path sets it, so an
+  expired URL is not served from the 45-minute cache.
 - Kotlin `EngineResult`/`StreamStatus` declared camelCase properties without
   `@SerialName`, so the Python bridge's snake_case keys (`original_url`,
   `stream_id`, `viewer_count`, `stream_types`, `best_quality`, `error_details`)

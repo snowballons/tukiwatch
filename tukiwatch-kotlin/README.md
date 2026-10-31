@@ -26,11 +26,13 @@ navigation and the full screen map are still Phase 3.
   contract), SQLDelight favorites + JSON backup, DataStore prefs, `LivenessRepository`, network error
   classification. No Compose dependency. `androidMain` throws from `createStreamEngine()` by design —
   Android uses `ChaquopyStreamEngine(context)`.
-- `ui` — shared Compose surface: `TukiWatchTheme`/palette, status pill, metadata card, error card,
-  My List row and quality chips. Android is the reference implementation; desktop renders the same
-  components.
-- `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, the rotation-safe
-  `StreamViewModel`, and `stream_engine.py`.
+- `ui` — shared Compose surface and plain state holders. `TukiWatchTheme`/palette, status pill,
+  metadata card, error card, My List row, quality chips, plus `StreamController` (resolve, cache,
+  quality ordering, background pause, live-edge recovery, codec fallback) and `LibraryController`
+  (favorites membership, JSON backup, liveness state). Android wraps them in thin ViewModels; desktop
+  renders the same components.
+- `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, thin `StreamViewModel`/
+  `LibraryViewModel` wrappers over `:ui`, SAF file pickers, and `stream_engine.py`.
 - `desktopApp` — JVM iteration harness. A real Compose window over the same
   `SubprocessStreamEngine`, `FavoritesRepository` and `LivenessRepository` as the app, **not shipped**.
   It resolves URLs, shows metadata/errors/qualities/timings, and exercises My List (file-backed SQLite
@@ -48,6 +50,7 @@ Tests:
 ```sh
 ./gradlew :shared:testAndroidHostTest
 ./gradlew :shared:jvmTest
+./gradlew :ui:jvmTest                 # shared state-holder tests
 ./gradlew :desktopApp:test            # harness unit + Compose UI tests (needs a display for UI)
 # Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed).
 # Use 8.6.2 to match the version bundled in the APK.

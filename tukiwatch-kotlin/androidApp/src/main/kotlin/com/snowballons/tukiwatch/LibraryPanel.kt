@@ -37,9 +37,9 @@ fun LibraryPanel(
     modifier: Modifier = Modifier,
     vm: LibraryViewModel = viewModel(),
 ) {
-    val streams by vm.streams.collectAsStateWithLifecycle()
-    val loading by vm.loading.collectAsStateWithLifecycle()
-    val degraded by vm.degraded.collectAsStateWithLifecycle()
+    val streams by vm.controller.streams.collectAsStateWithLifecycle()
+    val loading by vm.controller.loading.collectAsStateWithLifecycle()
+    val degraded by vm.controller.degraded.collectAsStateWithLifecycle()
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
@@ -59,24 +59,24 @@ fun LibraryPanel(
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = vm::refresh, enabled = !loading) { Text("Refresh") }
                 TextButton(
-                    enabled = !vm.busy,
+                    enabled = !vm.controller.busy,
                     onClick = {
                         exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
                     },
                 ) { Text("Export") }
                 TextButton(
-                    enabled = !vm.busy,
+                    enabled = !vm.controller.busy,
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
                 ) { Text("Import") }
             }
 
             OutlinedButton(
                 onClick = { vm.toggleFavorite() },
-                enabled = !vm.busy && vm.isFavorite != null,
+                enabled = !vm.controller.busy && vm.controller.isFavorite != null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    when (vm.isFavorite) {
+                    when (vm.controller.isFavorite) {
                         true -> "Remove from My List"
                         false -> "Add to My List"
                         null -> "Checking My List…"
@@ -93,7 +93,7 @@ fun LibraryPanel(
                 )
             }
 
-            vm.message?.let {
+            vm.controller.message?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it, style = MaterialTheme.typography.labelMedium)
             }

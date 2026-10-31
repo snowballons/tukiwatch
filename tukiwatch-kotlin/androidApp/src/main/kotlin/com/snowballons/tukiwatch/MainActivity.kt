@@ -49,8 +49,8 @@ fun AppContent(app: TukiWatchApp) {
     }
 
     // Sync URL from player to library panel
-    LaunchedEffect(streamVm.url) {
-        libraryVm.onCurrentUrlChanged(streamVm.url)
+    LaunchedEffect(streamVm.controller.url) {
+        libraryVm.onCurrentUrlChanged(streamVm.controller.url)
     }
 
     Column(
@@ -59,7 +59,7 @@ fun AppContent(app: TukiWatchApp) {
             .safeContentPadding(),
     ) {
         Box(Modifier.weight(1f)) {
-            AndroidStreamScreen(engine = app.engine, vm = streamVm)
+            AndroidStreamScreen(vm = streamVm)
         }
         LibraryPanel(vm = libraryVm)
     }
