@@ -44,6 +44,7 @@ import com.snowballons.tukiwatch.liveness.autoRefreshLoop
 import com.snowballons.tukiwatch.prefs.Prefs
 import com.snowballons.tukiwatch.prefs.ThemeMode
 import com.snowballons.tukiwatch.ui.AddScreen
+import com.snowballons.tukiwatch.ui.CustomSplashScreen
 import com.snowballons.tukiwatch.ui.HomeScreen
 import com.snowballons.tukiwatch.ui.LibraryScreen
 import com.snowballons.tukiwatch.ui.OnboardingScreen
@@ -88,14 +89,25 @@ class MainActivity : ComponentActivity() {
             }
 
             TukiWatchTheme(darkTheme = darkTheme) {
-                if (!prefs.onboardingCompleted) {
-                    OnboardingScreen(
-                        onComplete = {
-                            scope.launch { app.prefs.setOnboardingCompleted(true) }
-                        }
-                    )
-                } else {
-                    AppContent(app = app, prefs = prefs)
+                var showSplash by rememberSaveable { mutableStateOf(true) }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (!prefs.onboardingCompleted) {
+                        OnboardingScreen(
+                            onComplete = {
+                                scope.launch { app.prefs.setOnboardingCompleted(true) }
+                            }
+                        )
+                    } else {
+                        AppContent(app = app, prefs = prefs)
+                    }
+
+                    if (showSplash) {
+                        CustomSplashScreen(
+                            onFinish = { showSplash = false },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }
