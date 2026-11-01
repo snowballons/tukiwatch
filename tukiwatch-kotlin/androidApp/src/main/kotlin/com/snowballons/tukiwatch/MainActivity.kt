@@ -23,6 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -153,6 +158,17 @@ fun AppContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
+
+    // Animated Snackbar host — surfaces all libraryVm feedback messages
+    val snackbarHostState = remember { SnackbarHostState() }
+    val libraryMessage = libraryVm.controller.message
+    LaunchedEffect(libraryMessage) {
+        libraryMessage?.let { msg ->
+            snackbarHostState.showSnackbar(message = msg)
+            libraryVm.controller.clearMessage()
+        }
+    }
 
     // 5-minute foreground liveness refresh cadence
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -230,6 +246,11 @@ fun AppContent(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(snackbarData = data)
+            }
+        },
         bottomBar = {
             if (activeOverlay == null) {
                 NavigationBar {
@@ -287,6 +308,7 @@ fun AppContent(
                         },
                         isFavorite = isFav,
                         onToggleFavorite = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             val author = streamVm.controller.metadata?.author
                             libraryVm.controller.toggleFavorite(author)
                         },
@@ -321,7 +343,6 @@ fun AppContent(
                                 loading = loading,
                                 degraded = degraded,
                                 busy = libraryVm.controller.busy,
-                                message = libraryVm.controller.message,
                                 onRefresh = { libraryVm.refresh() },
                                 onExport = {
                                     exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")

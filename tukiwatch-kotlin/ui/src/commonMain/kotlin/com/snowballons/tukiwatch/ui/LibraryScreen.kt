@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +37,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
@@ -46,7 +52,6 @@ fun LibraryScreen(
     loading: Boolean,
     degraded: Boolean,
     busy: Boolean,
-    message: String?,
     onRefresh: () -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
@@ -54,6 +59,7 @@ fun LibraryScreen(
     onStreamClick: (LiveStream) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
     var selectedPlatform by remember { mutableStateOf("all") }
     var streamToDelete by remember { mutableStateOf<LiveStream?>(null) }
@@ -105,7 +111,13 @@ fun LibraryScreen(
                 )
             }
 
-            TextButton(onClick = onRefresh, enabled = !loading) {
+            TextButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onRefresh()
+                },
+                enabled = !loading,
+            ) {
                 if (loading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -162,16 +174,6 @@ fun LibraryScreen(
             }
         }
 
-        // Status or feedback message
-        message?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(vertical = 2.dp)
-            )
-        }
-
         // Search Bar with Clear (X) icon
         OutlinedTextField(
             value = searchQuery,
@@ -221,55 +223,93 @@ fun LibraryScreen(
 
         Spacer(Modifier.height(4.dp))
 
-        // Content
-        if (filtered.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
+        // Pull-to-refresh wraps both the list and the empty state
+        val pullState = rememberPullToRefreshState()
+        PullToRefreshBox(
+            isRefreshing = loading,
+            onRefresh = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onRefresh()
+            },
+            state = pullState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        ) {
+            if (filtered.isEmpty()) {
+                // Illustrated empty state — scrollable so PTR gesture is reachable
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 80.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
                 ) {
-                    Text(
-                        text = if (streams.isEmpty()) "Your list is empty"
-                        else "No matching channels found",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = if (streams.isEmpty())
-                            "Add your favorite streamers in the Add tab or import an existing backup."
-                        else "Try adjusting your search query or filter.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                items(filtered, key = { it.id }) { stream ->
-                    StreamCard(
-                        stream = stream,
-                        onClick = { onStreamClick(stream) },
-                        trailing = {
-                            TextButton(onClick = { streamToDelete = stream }) {
-                                Text(
-                                    "Remove",
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
+                    item {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 32.dp),
+                        ) {
+                            Text(
+                                text = if (streams.isEmpty()) "⭐" else "🔍",
+                                style = MaterialTheme.typography.displayLarge,
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = if (streams.isEmpty()) "Your list is empty"
+                                    else "No matching channels found",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = if (streams.isEmpty())
+                                    "Save your favorite streamers from the Add tab,\nor import an existing backup."
+                                else "Try adjusting your search query or filter.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                            if (streams.isEmpty()) {
+                                Spacer(Modifier.height(20.dp))
+                                Button(onClick = onImport) {
+                                    Text("Import Backup")
+                                }
                             }
                         }
-                    )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(filtered, key = { it.id }) { stream ->
+                        StreamCard(
+                            stream = stream,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onStreamClick(stream)
+                            },
+                            trailing = {
+                                TextButton(
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        streamToDelete = stream
+                                    },
+                                ) {
+                                    Text(
+                                        "Remove",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -284,6 +324,7 @@ fun LibraryScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         onDeleteFavorite(target.id)
                         streamToDelete = null
                     }

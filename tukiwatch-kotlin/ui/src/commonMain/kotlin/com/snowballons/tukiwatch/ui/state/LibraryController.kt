@@ -51,6 +51,9 @@ class LibraryController(
     var message by mutableStateOf<String?>(null)
         private set
 
+    /** Consume the current feedback message (called after Snackbar has shown it). */
+    fun clearMessage() { message = null }
+
     var busy by mutableStateOf(false)
         private set
 
