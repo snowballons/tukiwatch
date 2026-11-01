@@ -46,14 +46,29 @@ object TukiWatchPalette {
 private val LightColors = lightColorScheme(
     primary = TukiWatchPalette.Purple,
     onPrimary = Color.White,
+    primaryContainer = Color(0xFFEDE4FF),
+    onPrimaryContainer = Color(0xFF2E0066),
     secondary = TukiWatchPalette.PurpleSoft,
+    onSecondary = Color.White,
+    background = Color(0xFFF8F9FA),
+    onBackground = Color(0xFF1A1A1E),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1A1A1E),
+    surfaceVariant = Color(0xFFEEEEF2),
+    onSurfaceVariant = Color(0xFF5A5A66),
     error = TukiWatchPalette.Error,
+    onError = Color.White,
+    errorContainer = Color(0xFFFFEBEE),
+    onErrorContainer = Color(0xFFC62828),
 )
 
 private val DarkColors = darkColorScheme(
     primary = TukiWatchPalette.Purple,
     onPrimary = Color.White,
+    primaryContainer = Color(0xFF381B73),
+    onPrimaryContainer = Color(0xFFEADBFF),
     secondary = TukiWatchPalette.PurpleSoft,
+    onSecondary = Color.White,
     background = TukiWatchPalette.BackgroundDark,
     onBackground = TukiWatchPalette.TextOnDark,
     surface = TukiWatchPalette.SurfaceDark,
@@ -61,6 +76,7 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = TukiWatchPalette.SurfaceRaised,
     onSurfaceVariant = TukiWatchPalette.TextMutedOnDark,
     error = TukiWatchPalette.Error,
+    onError = Color.White,
     errorContainer = Color(0xFF3A1418),
     onErrorContainer = Color(0xFFFFD5D8),
 )

@@ -19,10 +19,70 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
             android:supportsPictureInPicture="true"
             android:launchMode="singleTop">
+
+            <!-- App launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                Share Sheet receiver: handles URLs shared via Android share menu
+                (e.g. share a Twitch/YouTube/TikTok page from Chrome → TukiWatch).
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!--
+                Deep link: tukiwatch://<url-encoded-stream-url>
+                Allows other apps or web pages to launch TukiWatch directly into
+                the player for a specific stream URL.
+                Example: tukiwatch://https%3A%2F%2Fwww.twitch.tv%2Fninja
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tukiwatch" />
+            </intent-filter>
+
+            <!--
+                Web URL interception (http/https) — opted in to catch shared
+                stream URLs from browser "Open with…" / share flows.
+                Only matches known streaming domains to avoid over-claiming.
+            -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.twitch.tv" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="kick.com" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.youtube.com" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="youtu.be" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.tiktok.com" />
             </intent-filter>
         </activity>
     </application>

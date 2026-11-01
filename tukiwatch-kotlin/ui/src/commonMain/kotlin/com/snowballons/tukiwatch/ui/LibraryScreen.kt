@@ -11,18 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -53,8 +54,6 @@ fun LibraryScreen(
     degraded: Boolean,
     busy: Boolean,
     onRefresh: () -> Unit,
-    onExport: () -> Unit,
-    onImport: () -> Unit,
     onDeleteFavorite: (Long) -> Unit,
     onStreamClick: (LiveStream) -> Unit,
     modifier: Modifier = Modifier,
@@ -129,14 +128,6 @@ fun LibraryScreen(
                     Text("Refresh")
                 }
             }
-
-            TextButton(onClick = onExport, enabled = !busy && streams.isNotEmpty()) {
-                Text("Export")
-            }
-
-            TextButton(onClick = onImport, enabled = !busy) {
-                Text("Import")
-            }
         }
 
         // Degraded connection notice with Retry
@@ -174,7 +165,7 @@ fun LibraryScreen(
             }
         }
 
-        // Search Bar with Clear (X) icon
+        // Search Bar with Clear Icon
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -182,10 +173,11 @@ fun LibraryScreen(
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }) {
-                        Text(
-                            text = "✕",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        Icon(
+                            imageVector = TukiIcons.Close,
+                            contentDescription = "Clear search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -266,18 +258,12 @@ fun LibraryScreen(
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 text = if (streams.isEmpty())
-                                    "Save your favorite streamers from the Add tab,\nor import an existing backup."
+                                    "Save your favorite streamers from the Add tab."
                                 else "Try adjusting your search query or filter.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
-                            if (streams.isEmpty()) {
-                                Spacer(Modifier.height(20.dp))
-                                Button(onClick = onImport) {
-                                    Text("Import Backup")
-                                }
-                            }
                         }
                     }
                 }

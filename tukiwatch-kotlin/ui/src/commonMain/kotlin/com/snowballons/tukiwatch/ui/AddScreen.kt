@@ -29,6 +29,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -234,10 +235,11 @@ fun AddScreen(
             trailingIcon = {
                 if (inputIdentifier.isNotEmpty()) {
                     IconButton(onClick = { inputIdentifier = "" }) {
-                        Text(
-                            text = "✕",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        Icon(
+                            imageVector = TukiIcons.Close,
+                            contentDescription = "Clear input",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -426,7 +428,12 @@ fun PlatformPickerModal(
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Text("✕", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(
+                                    imageVector = TukiIcons.Close,
+                                    contentDescription = "Clear search",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                     }

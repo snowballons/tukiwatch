@@ -29,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -102,7 +103,6 @@ fun FullPlayerScreen(
     fun enterFullscreen() {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         activity?.window?.let { win ->
-            WindowCompat.setDecorFitsSystemWindows(win, false)
             WindowInsetsControllerCompat(win, win.decorView).apply {
                 hide(WindowInsetsCompat.Type.systemBars())
                 systemBarsBehavior =
@@ -115,7 +115,6 @@ fun FullPlayerScreen(
     fun exitFullscreen() {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         activity?.window?.let { win ->
-            WindowCompat.setDecorFitsSystemWindows(win, true)
             WindowInsetsControllerCompat(win, win.decorView)
                 .show(WindowInsetsCompat.Type.systemBars())
         }
@@ -167,8 +166,12 @@ fun FullPlayerScreen(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onClose) {
-                Text("‹ Back", style = MaterialTheme.typography.titleMedium)
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = com.snowballons.tukiwatch.ui.TukiIcons.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
 
             Spacer(Modifier.width(8.dp))
@@ -200,10 +203,10 @@ fun FullPlayerScreen(
             }
 
             IconButton(onClick = onToggleFavorite) {
-                Text(
-                    text = if (isFavorite == true) "★" else "☆",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isFavorite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    imageVector = if (isFavorite == true) com.snowballons.tukiwatch.ui.TukiIcons.Star else com.snowballons.tukiwatch.ui.TukiIcons.StarOutline,
+                    contentDescription = if (isFavorite == true) "Favorited" else "Favorite",
+                    tint = if (isFavorite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -212,10 +215,10 @@ fun FullPlayerScreen(
                 isFullscreen = !isFullscreen
                 if (isFullscreen) enterFullscreen() else exitFullscreen()
             }) {
-                Text(
-                    text = if (isFullscreen) "⤡" else "⤢",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                Icon(
+                    imageVector = if (isFullscreen) com.snowballons.tukiwatch.ui.TukiIcons.FullscreenExit else com.snowballons.tukiwatch.ui.TukiIcons.Fullscreen,
+                    contentDescription = if (isFullscreen) "Exit fullscreen" else "Enter fullscreen",
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -394,16 +397,16 @@ fun FullPlayerScreen(
                 }
             }
 
-            // Action row: Save to My List + Open in Official App + Stop
+            // Action row: Save to My List + Open in Official App
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedButton(
                     onClick = onToggleFavorite,
-                    modifier = Modifier.weight(1.1f)
+                    modifier = Modifier.weight(1f)
                 ) {
                     val favText = when (isFavorite) {
                         true -> "★ Saved"
@@ -422,7 +425,7 @@ fun FullPlayerScreen(
                             originalUrl = controller.url
                         )
                     },
-                    modifier = Modifier.weight(1.3f),
+                    modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = platformColor
                     ),
@@ -434,13 +437,6 @@ fun FullPlayerScreen(
                         fontWeight = FontWeight.SemiBold,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-
-                Button(
-                    onClick = { controller.stop() },
-                    modifier = Modifier.weight(0.8f)
-                ) {
-                    Text("Stop", maxLines = 1)
                 }
             }
 

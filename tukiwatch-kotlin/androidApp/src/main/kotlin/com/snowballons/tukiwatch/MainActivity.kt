@@ -1,5 +1,6 @@
 package com.snowballons.tukiwatch
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -10,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,6 +30,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,11 +40,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,17 +64,18 @@ import com.snowballons.tukiwatch.ui.OnboardingScreen
 import com.snowballons.tukiwatch.ui.PrivacyPolicyScreen
 import com.snowballons.tukiwatch.ui.SettingsScreen
 import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
+import com.snowballons.tukiwatch.ui.TukiIcons
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class MainTab(val label: String, val glyph: String) {
-    HOME("Home", "●"),
-    MY_LIST("My List", "★"),
-    ADD("Add", "+"),
-    SETTINGS("Settings", "⚙"),
+enum class MainTab(val label: String, val icon: ImageVector) {
+    HOME("Home", TukiIcons.Home),
+    MY_LIST("My List", TukiIcons.Star),
+    ADD("Add", TukiIcons.Add),
+    SETTINGS("Settings", TukiIcons.Settings),
 }
 
 enum class OverlayScreen {
@@ -86,6 +92,18 @@ class MainActivity : ComponentActivity() {
      */
     var isPlayerActive = false
 
+    /**
+     * URL delivered via share-sheet (ACTION_SEND) or deep link (tukiwatch:// /
+     * https stream URL) that [AppContent] should open in the player.
+     * Wrapped in state so Compose recomposes when a new intent arrives while
+     * the activity is already running (singleTop onNewIntent path).
+     */
+    private val _pendingUrl = mutableStateOf<String?>(null)
+    val pendingUrl: androidx.compose.runtime.State<String?> get() = _pendingUrl
+
+    /** Called by [AppContent] after consuming the pending URL to prevent re-delivery. */
+    fun consumePendingUrl() { _pendingUrl.value = null }
+
     /** Automatically enter PiP when the user leaves the app while a stream is playing. */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
@@ -97,9 +115,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Handle re-delivery of share/deep-link intent when the activity is already
+     * running (singleTop — the OS calls onNewIntent instead of recreating).
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        _pendingUrl.value = extractStreamUrl(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Parse any intent that cold-started the app via share / deep link
+        _pendingUrl.value = extractStreamUrl(intent)
 
         val app = application as TukiWatchApp
         setContent {
@@ -114,10 +144,36 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+            // Keep phone status bar and navigation bar in sync with app theme
+            val view = LocalView.current
+            if (!view.isInEditMode) {
+                SideEffect {
+                    val window = (view.context as? Activity)?.window ?: return@SideEffect
+                    window.statusBarColor = if (darkTheme) {
+                        android.graphics.Color.parseColor("#0E0E10")
+                    } else {
+                        android.graphics.Color.parseColor("#F8F9FA")
+                    }
+                    window.navigationBarColor = if (darkTheme) {
+                        android.graphics.Color.parseColor("#18181B")
+                    } else {
+                        android.graphics.Color.parseColor("#FFFFFF")
+                    }
+                    WindowCompat.getInsetsController(window, view).apply {
+                        isAppearanceLightStatusBars = !darkTheme
+                        isAppearanceLightNavigationBars = !darkTheme
+                    }
+                }
+            }
+
             TukiWatchTheme(darkTheme = darkTheme) {
                 var showSplash by rememberSaveable { mutableStateOf(true) }
 
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
                     if (!prefs.onboardingCompleted) {
                         OnboardingScreen(
                             onComplete = {
@@ -125,7 +181,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     } else {
-                        AppContent(app = app, prefs = prefs)
+                        AppContent(app = app, prefs = prefs, activity = this@MainActivity)
                     }
 
                     if (showSplash) {
@@ -149,10 +205,54 @@ private fun getTimeGreeting(): String {
     }
 }
 
+/**
+ * Extracts a stream URL from an incoming intent (share-sheet or deep link).
+ *
+ * Handles three cases:
+ * 1. **Share sheet** (`ACTION_SEND`, `text/plain`) — the shared text may be a
+ *    plain URL or a sentence containing a URL; we extract the first http/https
+ *    substring.
+ * 2. **Custom scheme** (`tukiwatch://<encoded-url>`) — the path+host portion
+ *    of the URI is the stream URL, URL-decoded automatically by [Uri.parse].
+ * 3. **Web URL interception** (`ACTION_VIEW`, http/https) — the data URI is
+ *    the stream page URL (e.g. https://www.twitch.tv/ninja).
+ *
+ * Returns `null` if no valid URL can be extracted.
+ */
+private fun extractStreamUrl(intent: Intent?): String? {
+    if (intent == null) return null
+    return when (intent.action) {
+        Intent.ACTION_SEND -> {
+            // Share sheet: extract the first http/https URL from shared text
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
+            // Grab the first token that looks like a URL
+            val urlRegex = Regex("""https?://\S+""")
+            urlRegex.find(text)?.value
+        }
+        Intent.ACTION_VIEW -> {
+            val uri = intent.data ?: return null
+            when (uri.scheme) {
+                "tukiwatch" -> {
+                    // tukiwatch://<encoded-url>
+                    // The URI host+path together form the encoded stream URL.
+                    // Uri.parse decodes percent-encoded characters automatically.
+                    val raw = uri.schemeSpecificPart.trimStart('/')
+                    raw.takeIf { it.startsWith("http") }
+                        ?: "https://$raw"
+                }
+                "http", "https" -> uri.toString()
+                else -> null
+            }
+        }
+        else -> null
+    }
+}
+
 @Composable
 fun AppContent(
     app: TukiWatchApp,
     prefs: Prefs,
+    activity: MainActivity? = null,
     streamVm: StreamViewModel = viewModel(),
     libraryVm: LibraryViewModel = viewModel(),
 ) {
@@ -190,6 +290,24 @@ fun AppContent(
     val mainActivity = context as? MainActivity
     LaunchedEffect(activeOverlay) {
         mainActivity?.isPlayerActive = (activeOverlay == OverlayScreen.PLAYER)
+    }
+
+    // Consume any URL delivered via share-sheet or deep link and open the player.
+    // pendingUrl is a Compose State held on MainActivity, so recomposition triggers when
+    // a new intent arrives while the app is already running (singleTop onNewIntent path).
+    val pendingUrl by (activity?.pendingUrl ?: remember { mutableStateOf(null) })
+    LaunchedEffect(pendingUrl) {
+        pendingUrl?.let { url ->
+            streamVm.controller.resolveAndPlay(
+                targetUrl = url,
+                placeholderTitle = null,
+                placeholderAuthor = null,
+                placeholderPlatform = null,
+            )
+            activeOverlay = OverlayScreen.PLAYER
+            // Clear so the same URL is not re-played on recomposition
+            activity?.consumePendingUrl()
+        }
     }
 
     // SAF Document Launchers for JSON backup migration
@@ -268,19 +386,20 @@ fun AppContent(
                                             .background(MaterialTheme.colorScheme.primary),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = "+",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimary,
+                                        Icon(
+                                            imageVector = TukiIcons.Add,
+                                            contentDescription = "Add",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(24.dp)
                                         )
                                     }
                                 } else {
-                                    Text(
-                                        text = tab.glyph,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = if (activeTab == tab) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    Icon(
+                                        imageVector = tab.icon,
+                                        contentDescription = tab.label,
+                                        tint = if (activeTab == tab) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                             },
@@ -344,12 +463,6 @@ fun AppContent(
                                 degraded = degraded,
                                 busy = libraryVm.controller.busy,
                                 onRefresh = { libraryVm.refresh() },
-                                onExport = {
-                                    exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
-                                },
-                                onImport = {
-                                    importLauncher.launch(arrayOf("application/json", "text/plain"))
-                                },
                                 onDeleteFavorite = { id -> libraryVm.removeFavorite(id) },
                                 onStreamClick = { stream -> onPlayLiveStream(stream) },
                             )

@@ -70,6 +70,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -88,7 +89,14 @@ android {
 chaquopy {
     defaultConfig {
         version = "3.11"
-        buildPython("/home/jonnie/.local/bin/python3.11")
+        val customPython = project.findProperty("chaquopy.buildPython") as? String
+        if (!customPython.isNullOrBlank()) {
+            buildPython(customPython)
+        } else if (file("/home/jonnie/.local/bin/python3.11").exists()) {
+            buildPython("/home/jonnie/.local/bin/python3.11")
+        } else {
+            buildPython("python3")
+        }
         pip {
             install("streamlink==8.6.2")
         }

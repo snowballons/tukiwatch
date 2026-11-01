@@ -1,0 +1,114 @@
+# Builds a release APK for the KMP (Kotlin Multiplatform) Android app.
+#
+# Triggered manually via workflow_dispatch.
+# Optionally creates a GitHub Release when a version is supplied.
+#
+# Requirements:
+#   - Java 21 (Zulu)
+#   - Python 3.11 (for Chaquopy / streamlink)
+#   - No signing secrets required for a debug-aligned unsigned release APK.
+#     To sign, add KEYSTORE_BASE64, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
+#     secrets and uncomment the signing step.
+
+name: Android KMP Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version tag (e.g. 1.1.5). Leave empty to just upload the build artifact."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build KMP Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Source ──────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Java ────────────────────────────────────────────────────────────
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
+      # ── 3. Python (Chaquopy / streamlink) ─────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ── 4. Gradle cache ────────────────────────────────────────────────────
+      - name: Cache Gradle wrapper & caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-kmp-${{ hashFiles('tukiwatch-kotlin/**/*.gradle.kts', 'tukiwatch-kotlin/gradle/libs.versions.toml', 'tukiwatch-kotlin/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-kmp-
+
+      # ── 5. Gradle properties (memory) ──────────────────────────────────────
+      - name: Bump Gradle daemon heap for R8
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError
+          EOF
+
+      # ── 6. Build ───────────────────────────────────────────────────────────
+      - name: Build Release APK
+        working-directory: tukiwatch-kotlin
+        run: |
+          ./gradlew :androidApp:assembleRelease \
+            -Pchaquopy.buildPython=python3 \
+            --no-daemon \
+            --stacktrace
+
+      # ── 7. Locate APK ──────────────────────────────────────────────────────
+      - name: Locate built APK
+        id: apk
+        run: |
+          APK_PATH=$(find tukiwatch-kotlin/androidApp/build/outputs/apk/release/ \
+            -name "*.apk" | head -1)
+          echo "path=${APK_PATH}" >> "$GITHUB_OUTPUT"
+          echo "Built APK: ${APK_PATH}"
+
+      # ── 8. Upload artifact ─────────────────────────────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tukiwatch-kmp-release-${{ github.run_number }}
+          path: ${{ steps.apk.outputs.path }}
+          retention-days: 30
+
+      # ── 9. GitHub Release (only when version is supplied) ──────────────────
+      - name: Create GitHub Release
+        if: github.event.inputs.version != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}-kmp
+          name: "TukiWatch KMP v${{ github.event.inputs.version }}"
+          body: |
+            ## TukiWatch KMP v${{ github.event.inputs.version }}
+
+            Kotlin Multiplatform release build — built on GitHub Actions.
+
+            ### Install
+            Download the APK below and install it on your Android device.
+            You may need to enable *Install unknown apps* in your device settings.
+          files: ${{ steps.apk.outputs.path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
