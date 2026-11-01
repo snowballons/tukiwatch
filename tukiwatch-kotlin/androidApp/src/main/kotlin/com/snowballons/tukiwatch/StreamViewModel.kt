@@ -3,6 +3,8 @@ package com.snowballons.tukiwatch
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -25,7 +27,18 @@ import com.snowballons.tukiwatch.ui.state.StreamPlayer
 class StreamViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as TukiWatchApp
 
-    val player: ExoPlayer = ExoPlayer.Builder(application.applicationContext).build().apply {
+    val player: ExoPlayer = run {
+        // Configure audio attributes for proper audio focus management and headphone
+        // disconnect handling (AudioBecomingNoisy = pause on unplug).
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+            .build()
+        ExoPlayer.Builder(application.applicationContext)
+            .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
+            .setHandleAudioBecomingNoisy(true)
+            .build()
+    }.apply {
         addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 controller.onPlayerFailure(

@@ -2,7 +2,10 @@ package com.snowballons.tukiwatch
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.app.PictureInPictureParams
+import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -71,6 +74,24 @@ enum class OverlayScreen {
 }
 
 class MainActivity : ComponentActivity() {
+    /**
+     * Tracks whether the full-screen player overlay is currently visible.
+     * Set by [AppContent] via [LaunchedEffect] so that [onUserLeaveHint] knows
+     * whether to enter Picture-in-Picture mode when the user presses Home.
+     */
+    var isPlayerActive = false
+
+    /** Automatically enter PiP when the user leaves the app while a stream is playing. */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isPlayerActive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val params = PictureInPictureParams.Builder()
+                .setAspectRatio(Rational(16, 9))
+                .build()
+            enterPictureInPictureMode(params)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -148,6 +169,12 @@ fun AppContent(
 
     var activeTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var activeOverlay by rememberSaveable { mutableStateOf<OverlayScreen?>(null) }
+
+    // Inform MainActivity whether the player overlay is active so it can enter PiP on Home press
+    val mainActivity = context as? MainActivity
+    LaunchedEffect(activeOverlay) {
+        mainActivity?.isPlayerActive = (activeOverlay == OverlayScreen.PLAYER)
+    }
 
     // SAF Document Launchers for JSON backup migration
     val exportLauncher = rememberLauncherForActivityResult(

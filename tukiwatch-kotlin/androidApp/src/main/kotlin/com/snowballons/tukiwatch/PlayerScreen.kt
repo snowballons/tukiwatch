@@ -1,5 +1,7 @@
 package com.snowballons.tukiwatch
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.ui.PlayerView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.snowballons.tukiwatch.ui.QualityChips
 import com.snowballons.tukiwatch.ui.StatusPill
 import com.snowballons.tukiwatch.ui.StreamErrorCard
@@ -80,6 +86,45 @@ fun FullPlayerScreen(
     val context = LocalContext.current
     val controller = vm.controller
     var showQualitySheet by remember { mutableStateOf(false) }
+
+    // Keep the screen on while the player is active — prevents dim/sleep during streams.
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+
+    // Fullscreen immersion state
+    var isFullscreen by remember { mutableStateOf(false) }
+    val activity = context as? Activity
+
+    /** Hides system bars and locks landscape for a true fullscreen experience. */
+    fun enterFullscreen() {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        activity?.window?.let { win ->
+            WindowCompat.setDecorFitsSystemWindows(win, false)
+            WindowInsetsControllerCompat(win, win.decorView).apply {
+                hide(WindowInsetsCompat.Type.systemBars())
+                systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
+    }
+
+    /** Restores portrait/unspecified orientation and shows system bars. */
+    fun exitFullscreen() {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        activity?.window?.let { win ->
+            WindowCompat.setDecorFitsSystemWindows(win, true)
+            WindowInsetsControllerCompat(win, win.decorView)
+                .show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    // Restore system bars/orientation when the player screen is dismissed
+    DisposableEffect(Unit) {
+        onDispose { if (isFullscreen) exitFullscreen() }
+    }
 
     // Lifecycle observer to pause ExoPlayer in background and resume on return
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -159,6 +204,18 @@ fun FullPlayerScreen(
                     text = if (isFavorite == true) "★" else "☆",
                     style = MaterialTheme.typography.titleLarge,
                     color = if (isFavorite == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Fullscreen toggle — ⤢ expand / ⤡ shrink
+            IconButton(onClick = {
+                isFullscreen = !isFullscreen
+                if (isFullscreen) enterFullscreen() else exitFullscreen()
+            }) {
+                Text(
+                    text = if (isFullscreen) "⤡" else "⤢",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
