@@ -63,6 +63,28 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        create("release") {
+            val storeFilePath = project.findProperty("TUKIWATCH_KEYSTORE_FILE") as? String
+                ?: System.getenv("TUKIWATCH_KEYSTORE_FILE")
+            val storePasswordProp = project.findProperty("TUKIWATCH_KEYSTORE_PASSWORD") as? String
+                ?: System.getenv("TUKIWATCH_KEYSTORE_PASSWORD")
+            val keyAliasProp = project.findProperty("TUKIWATCH_KEY_ALIAS") as? String
+                ?: System.getenv("TUKIWATCH_KEY_ALIAS")
+            val keyPasswordProp = project.findProperty("TUKIWATCH_KEY_PASSWORD") as? String
+                ?: System.getenv("TUKIWATCH_KEY_PASSWORD")
+
+            if (!storeFilePath.isNullOrBlank() && file(storeFilePath).exists()) {
+                storeFile = file(storeFilePath)
+                storePassword = storePasswordProp
+                keyAlias = keyAliasProp
+                keyPassword = keyPasswordProp
+            } else {
+                // Fallback to debug keystore for development & unconfigured CI
+                initWith(getByName("debug"))
+            }
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -70,7 +92,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
