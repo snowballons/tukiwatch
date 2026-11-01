@@ -71,11 +71,15 @@ jobs:
       # If TUKIWATCH_KEYSTORE_BASE64 secret is configured, decode it for signing.
       # Otherwise, the Gradle build automatically falls back to debug signing.
       - name: Decode Release Keystore
-        if: ${{ secrets.TUKIWATCH_KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_B64: ${{ secrets.TUKIWATCH_KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > tukiwatch-release.jks
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > tukiwatch-release.jks
+            echo "Production release keystore decoded successfully."
+          else
+            echo "No keystore secret found; will fall back to debug signing."
+          fi
 
       # ── 7. Build ───────────────────────────────────────────────────────────
       - name: Build Release APK
