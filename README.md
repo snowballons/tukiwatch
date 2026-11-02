@@ -153,8 +153,8 @@ cd tukiwatch/app
 # APK: androidApp/build/outputs/apk/debug/androidApp-debug.apk
 ```
 
-If `python3` on your `PATH` is not Python 3.11, point Chaquopy at the right
-interpreter:
+Chaquopy needs Python 3.11. The build defaults to `python3.11`; override the
+interpreter if it lives elsewhere:
 
 ```bash
 ./gradlew :androidApp:assembleDebug \
@@ -189,7 +189,7 @@ cd app
 xvfb-run -a ./gradlew :desktopApp:test
 
 # Python engine parity (Python 3.11 + streamlink 8.6.2)
-python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
+python3.11 -m pytest androidApp/src/test/python/test_stream_engine.py
 ```
 
 The desktop UI tests open a real Compose window; on a machine without a display,
@@ -201,8 +201,8 @@ run them under `xvfb-run` or skip them. The Python test path is relative to
 ## Releasing
 
 The Android version is declared in
-[`app/androidApp/build.gradle.kts`](app/androidApp/build.gradle.kts) — currently
-`1.1.5` (`versionCode 13`).
+[`app/gradle.properties`](app/gradle.properties) — currently `1.1.5`
+(`versionCode 13`) — and consumed by the Android and desktop builds.
 
 Releases are built manually with
 [`.github/workflows/release-android.yml`](.github/workflows/release-android.yml):

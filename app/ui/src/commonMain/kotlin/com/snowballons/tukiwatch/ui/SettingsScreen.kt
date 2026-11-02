@@ -41,6 +41,8 @@ fun SettingsScreen(
     onOpenPrivacyPolicy: () -> Unit,
     onOpenTermsOfService: () -> Unit,
     onOpenGitHub: () -> Unit,
+    appVersionName: String,
+    appVersionCode: Int,
     streams: List<LiveStream> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
@@ -239,7 +241,7 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("App Version", style = MaterialTheme.typography.bodyMedium)
-                    Text("1.1.5 (13)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Text("$appVersionName ($appVersionCode)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))

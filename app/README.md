@@ -5,7 +5,8 @@ inside the APK via Chaquopy, with no backend server. Kotlin Multiplatform +
 Compose.
 
 Current version: **1.1.5** (`versionCode 13`), declared in
-[`androidApp/build.gradle.kts`](androidApp/build.gradle.kts).
+[`gradle.properties`](gradle.properties) and consumed by the Android and desktop
+builds.
 
 ## Status
 
@@ -56,8 +57,8 @@ ExoPlayer surface, SAF pickers, lifecycle, and system intents.
 The debug APK is at
 `androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
 
-Chaquopy requires Python 3.11. If `python3` on your `PATH` is not 3.11, pass the
-interpreter explicitly:
+Chaquopy requires Python 3.11. The build defaults to `python3.11`; pass the
+interpreter explicitly if it lives elsewhere:
 
 ```sh
 ./gradlew :androidApp:assembleDebug -Pchaquopy.buildPython=/path/to/python3.11
@@ -80,11 +81,11 @@ Python engine parity (needs Python 3.11 with Streamlink 8.6.2, matching the
 version bundled in the APK):
 
 ```sh
-python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
+python3.11 -m pytest androidApp/src/test/python/test_stream_engine.py
 ```
 
-The engine and its parity test currently live beside each other under
-`androidApp/src/main/python`.
+The engine lives in `androidApp/src/main/python`; its parity test lives in
+`androidApp/src/test/python` so Chaquopy does not package it into the APK.
 
 ## Python engine
 

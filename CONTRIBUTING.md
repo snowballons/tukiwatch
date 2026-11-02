@@ -29,8 +29,8 @@ cd tukiwatch/app
 The debug APK is written to
 `app/androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
 
-If `python3` on your `PATH` is not Python 3.11, point Chaquopy at the correct
-interpreter:
+Chaquopy needs Python 3.11. The build defaults to `python3.11`; override the
+interpreter if it lives elsewhere:
 
 ```bash
 ./gradlew :androidApp:assembleDebug \
@@ -70,7 +70,7 @@ If you change the embedded engine, also run the Python parity suite with Python
 3.11 and Streamlink 8.6.2:
 
 ```bash
-python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
+python3.11 -m pytest androidApp/src/test/python/test_stream_engine.py
 ```
 
 ## Project structure

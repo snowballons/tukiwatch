@@ -91,7 +91,7 @@ jobs:
           TUKIWATCH_KEY_PASSWORD: ${{ secrets.TUKIWATCH_KEY_PASSWORD }}
         run: |
           ./gradlew :androidApp:assembleRelease \
-            -Pchaquopy.buildPython=python3 \
+            -Pchaquopy.buildPython=python3.11 \
             --no-daemon \
             --stacktrace
 

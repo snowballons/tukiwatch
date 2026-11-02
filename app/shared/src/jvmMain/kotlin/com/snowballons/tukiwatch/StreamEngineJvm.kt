@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit
  *
  * Script:
  *  1. `PYKOT_SCRIPT`
- *  2. `androidApp/src/main/python/stream_engine.py` under the working directory
- *     or any of its ancestors (covers `desktopApp`, `tukiwatch-kotlin`, repo root).
+ *  2. `app/androidApp/src/main/python/stream_engine.py` under the working
+ *     directory or any of its ancestors (covers `desktopApp`, `app/`, repo root).
  *
  * @param pythonBin explicit interpreter; skips discovery/validation.
  * @param scriptFile explicit engine script; skips discovery.
@@ -215,10 +215,10 @@ class SubprocessStreamEngine(
     private fun discoverScript(): File? {
         val candidates = buildList {
             add(File("androidApp/src/main/python/stream_engine.py"))
-            add(File("tukiwatch-kotlin/androidApp/src/main/python/stream_engine.py"))
+            add(File("app/androidApp/src/main/python/stream_engine.py"))
             for (base in searchRoots()) {
                 add(File(base, "androidApp/src/main/python/stream_engine.py"))
-                add(File(base, "tukiwatch-kotlin/androidApp/src/main/python/stream_engine.py"))
+                add(File(base, "app/androidApp/src/main/python/stream_engine.py"))
             }
         }
         return candidates.firstOrNull { it.isFile }?.absoluteFile

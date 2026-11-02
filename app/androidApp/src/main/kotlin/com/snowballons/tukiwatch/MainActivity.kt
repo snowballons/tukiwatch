@@ -522,6 +522,8 @@ fun AppContent(
                                         context.startActivity(gitHubIntent)
                                     } catch (_: Exception) {}
                                 },
+                                appVersionName = BuildConfig.VERSION_NAME,
+                                appVersionCode = BuildConfig.VERSION_CODE,
                             )
                         }
                     }

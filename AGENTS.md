@@ -44,10 +44,10 @@ Python engine parity, when changing `stream_engine.py` (Python 3.11 +
 streamlink 8.6.2):
 
 ```bash
-python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
+python3.11 -m pytest androidApp/src/test/python/test_stream_engine.py
 ```
 
-If `python3` on `PATH` is not Python 3.11, pass
+The Gradle build defaults to `python3.11`; if it lives elsewhere, pass
 `-Pchaquopy.buildPython=/path/to/python3.11` to the Gradle build.
 
 ## Constraints

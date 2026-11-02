@@ -38,7 +38,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.snowballons.tukiwatch"
-            packageVersion = "1.1.5"
+            packageVersion = providers.gradleProperty("APP_VERSION_NAME").get()
         }
     }
 }

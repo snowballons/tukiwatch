@@ -2,7 +2,9 @@
 # TukiWatch ProGuard / R8 rules
 # =============================================================================
 # Applied for release builds alongside proguard-android-optimize.txt.
-# isMinifyEnabled is true for release; debug builds are unminified.
+# Minification is currently disabled (isMinifyEnabled = false in
+# androidApp/build.gradle.kts). These rules are retained for a future
+# R8-enabled release and do not affect current builds.
 # =============================================================================
 
 # ---------------------------------------------------------------------------

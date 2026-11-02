@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 The current Android version is declared in
-`app/androidApp/build.gradle.kts`. Releases are published as GitHub Releases with
+`app/gradle.properties`. Releases are published as GitHub Releases with
 the APK attached.
 
 Entries for 1.1.4 and earlier describe the retired Expo/React Native app and
@@ -113,6 +113,12 @@ FastAPI backend; their paths are historical.
   workflows were removed.
 - Root documentation now describes the Kotlin app and the embedded Python
   engine instead of the retired Expo/API stack.
+- Removed leftover KMP template scaffolding (`Greeting`, `Platform`), the three
+  placeholder tests, and the unused `app_logo.png`. The launcher name is now
+  `TukiWatch`.
+- Centralized the app version in `app/gradle.properties`; Settings and desktop
+  packaging read it. Chaquopy now defaults to `python3.11`, and the Python parity
+  test moved to `src/test/python` so it is no longer packaged into the APK.
 - Phase 3 scope: Discovery v1 is dropped (owner decision). No Discovery tab or
   default discovery source, and `twitch-live` is not part of v1.
 - The KMP build now ships as `com.tukiwatch.app` (versionCode 13, v1.1.5) so it

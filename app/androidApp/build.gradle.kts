@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+val appVersionName = providers.gradleProperty("APP_VERSION_NAME").get()
+val appVersionCode = providers.gradleProperty("APP_VERSION_CODE").get().toInt()
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
@@ -49,9 +52,10 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         // Must stay above the Expo app's last versionCode (12) to install as
-        // an upgrade rather than a downgrade.
-        versionCode = 13
-        versionName = "1.1.5"
+        // an upgrade rather than a downgrade. Bump APP_VERSION_CODE in
+        // app/gradle.properties for each release.
+        versionCode = appVersionCode
+        versionName = appVersionName
         ndk {
             // Python 3.11 supports 32-bit + 64-bit. arm64 + armeabi-v7a cover
             // physical devices (no emulators per project decision).
@@ -101,24 +105,20 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 // Chaquopy: Python 3.11 for armeabi-v7a support, Streamlink pinned.
-// buildPython must exist on the build machine.
-// Override with -Pchaquopy.buildPython=/path/to/python3.11 if needed.
-// Default below matches this dev machine.
+// The build defaults to `python3.11`; override with
+// -Pchaquopy.buildPython=/path/to/python3.11 or CHAQUOPY_BUILD_PYTHON.
 chaquopy {
     defaultConfig {
         version = "3.11"
-        val customPython = project.findProperty("chaquopy.buildPython") as? String
-        if (!customPython.isNullOrBlank()) {
-            buildPython(customPython)
-        } else if (file("/home/jonnie/.local/bin/python3.11").exists()) {
-            buildPython("/home/jonnie/.local/bin/python3.11")
-        } else {
-            buildPython("python3")
-        }
+        val configuredPython = (project.findProperty("chaquopy.buildPython") as? String)
+            ?.takeIf { it.isNotBlank() }
+            ?: System.getenv("CHAQUOPY_BUILD_PYTHON")?.takeIf { it.isNotBlank() }
+        buildPython(configuredPython ?: "python3.11")
         pip {
             install("streamlink==8.6.2")
         }

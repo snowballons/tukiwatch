@@ -1,4 +1,4 @@
-rootProject.name = "tukiwatch-kotlin"
+rootProject.name = "tukiwatch"
 
 pluginManagement {
     resolutionStrategy {
