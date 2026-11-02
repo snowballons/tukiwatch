@@ -1,160 +1,95 @@
-# TukiWatch App
+# TukiWatch (Android)
 
-Expo (React Native) mobile client for [TukiWatch](../README.md) — a
-local-first app for tracking and watching live streams, powered by a
-[self-hostable FastAPI backend](../api/README.md).
+Android app that resolves and plays live streams **on-device** — Streamlink runs in the APK via
+Chaquopy, no backend server. Kotlin Multiplatform + Compose.
 
-- **Runtime:** [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/) ·
-  React Native 0.85 · React 19 · TypeScript
-- **Key libs:** [expo-video](https://docs.expo.dev/versions/latest/sdk/video/)
-  (playback), [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/)
-  (favorites), [expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/)
-  (QR connect), [React Navigation](https://reactnavigation.org/)
-- **Package manager:** [Bun](https://bun.sh/)
+Plan: [`TUKIWATCH_KMP_PORTING_PLAN.md`](../../../kotlin-python-app/TUKIWATCH_KMP_PORTING_PLAN.md)
+(local workspace copy; it lives outside this repository).
 
-## Setup
+## Status
 
-```bash
-cd app
-cp .env.example .env   # optional — see Environment variables
-bun install
-bun run start          # Expo dev server
+**Phases 0–3 landed.** The on-device engine, data layer, navigation shell, and screens
+are in place and covered by tests. `:ui` holds the shared Compose screens (Home, My List, Add,
+Settings, Legal, Onboarding, Player, StreamCard) and state controllers; Android wires the
+ExoPlayer surface, SAF file pickers, lifecycle, and system intents.
+
+| Phase | Scope | State |
+|---|---|---|
+| 0 | Engine transplant into this repo | **done** |
+| 1 | Engine parity: metadata, error taxonomy, codec alignment | **done** |
+| 2 | Data layer: SQLDelight favorites, DataStore, JSON import, liveness | **done** |
+| 3 | UI: Home / My List / Add / Player / Settings / Onboarding | **done** |
+
+## Modules
+
+- `shared` — headless core: `StreamEngine` interface,
+  `EngineResult`/`StreamStatus`/`ErrorDetails`/`StreamItem` (`@Serializable`, snake_case wire
+  contract), SQLDelight favorites + JSON backup, DataStore prefs, `LivenessRepository`, network error
+  classification. No Compose dependency. `androidMain` throws from `createStreamEngine()` by design —
+  Android uses `ChaquopyStreamEngine(context)`.
+- `ui` — shared Compose surface and plain state holders. `TukiWatchTheme`/palette, status pill,
+  metadata card, error card, My List row, quality chips, plus `StreamController` (resolve, cache,
+  quality ordering, background pause, live-edge recovery, codec fallback) and `LibraryController`
+  (favorites membership, JSON backup, liveness state). Android wraps them in thin ViewModels; desktop
+  renders the same components.
+- `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, thin `StreamViewModel`/
+  `LibraryViewModel` wrappers over `:ui`, SAF file pickers, and `stream_engine.py`.
+- `desktopApp` — JVM iteration harness. A real Compose window over the same
+  `SubprocessStreamEngine`, `FavoritesRepository` and `LivenessRepository` as the app, **not shipped**.
+  It resolves URLs, shows metadata/errors/qualities/timings, and exercises My List (file-backed SQLite
+  at `~/.tukiwatch/harness.db`) plus on-demand liveness.
+
+## Running
+
+```sh
+./gradlew :androidApp:assembleDebug   # APK
+./gradlew :desktopApp:run             # desktop harness
 ```
 
-Other scripts (`package.json`): `bun run android` / `bun run ios` /
-`bun run web` for platform builds, `bun run lint` / `bun run format` /
-`bun run check` for local quality, and `bun run type-check` (`tsc --noEmit`).
+Tests:
 
-## Environment variables
-
-| Variable | Purpose | Default |
-| :--- | :--- | :--- |
-| `EXPO_PUBLIC_API_URL` | **Build-time default** backend URL the app connects to | `http://localhost:8000/` |
-| `EXPO_PUBLIC_UPDATE_MANIFEST_URL` | URL of the update manifest (`version.json`) used by "Check for Updates" | `https://downloads.snowballons.com/version.json` |
-
-The build-time default is only a fallback. Published builds can switch backends
-at runtime (no rebuild) via **Settings → Backend → Scan QR Code** or a
-`tukiwatch://connect` deep link — see
-[`../docs/SELF_HOSTING.md`](../docs/SELF_HOSTING.md).
-
-## Navigation & screens
-
-```
-App.tsx
-├─ CustomSplashScreen        (until AsyncStorage is read)
-├─ OnboardingScreen          (once; gated by onboarding_complete)
-└─ NavigationContainer       (deep links: tukiwatch://, https://…)
-   └─ Root Stack
-      ├─ MainTabs (bottom tabs)
-      │  ├─ Home      → HomeScreen       # "Live Now" — online favorites
-      │  ├─ My List   → LibraryScreen    # all favorites, add/remove
-      │  ├─ Add       → AddScreen        # 20+ platform picker + verify
-      │  └─ Settings  → SettingsScreen   # backend, updates, export/import
-      ├─ Player        (full-screen modal)
-      └─ Connect       (transient deep-link handler)
+```sh
+./gradlew :shared:testAndroidHostTest
+./gradlew :shared:jvmTest
+./gradlew :ui:jvmTest                 # shared state-holder tests
+./gradlew :desktopApp:test            # harness unit + Compose UI tests (needs a display for UI)
+# Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed).
+# Use 8.6.2 to match the version bundled in the APK.
+python -m pytest androidApp/src/main/python/test_stream_engine.py
 ```
 
-## Data layer
+The desktop UI tests render a real `ComposeWindow`; run them under `DISPLAY=:0` or
+`xvfb-run -a ./gradlew :desktopApp:test`. They skip themselves when no display can be opened.
 
-Favorites are stored **on-device** in SQLite (`expo-sqlite`, WAL mode, DB
-`tukiwatch.db`):
+The liveness ticker runs only while the activity is `STARTED`
+(`repeatOnLifecycle`), and transport failures are surfaced through
+`error_details.error_class = "network"` so the offline banner can fire without
+treating them as plugin errors.
 
-```sql
-CREATE TABLE favorites (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  streamer_name TEXT NOT NULL,
-  original_url TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-```
+## Toolchain pins
 
-`lib/db.ts` provides `addFavorite` (dedupes on `original_url`),
-`removeFavorite`, `getFavorites`, and `exportFavorites` / `importFavorites`
-(JSON payload via the share sheet / document picker).
+| Component | Version |
+|---|---|
+| Chaquopy | 17.0.0 |
+| Python | 3.11 |
+| Streamlink | 8.6.2 |
+| Media3 | 1.11.1 |
+| Kotlin | 2.4.20 |
+| AGP | 9.1.1 |
+| Compose Multiplatform | 1.12.1 |
+| minSdk / targetSdk | 26 / 37 |
 
-`AsyncStorage` keys:
+`minSdk 26` is fixed by the Python 3.11 ABI split (`armeabi-v7a` + `arm64-v8a`). `buildPython` is
+pinned to `/home/jonnie/.local/bin/python3.11`; override with
+`-Pchaquopy.buildPython=/path/to/python3.11` on other machines.
 
-| Key | Contents |
-| :--- | :--- |
-| `username` | Display name shown in Settings (`useProfile`); local only |
-| `backend_config` | Runtime backend override (`{ apiUrl, updateManifestUrl? }`) |
-| `onboarding_complete` | Gate for the onboarding carousel |
+Desktop iteration auto-discovers a Streamlink-capable interpreter
+(`PYKOT_PYTHON` → repo `.venv` / `tukiwatch-core/.venv` → `python3.11`/`python3`) and
+`androidApp/src/main/python/stream_engine.py` (`PYKOT_SCRIPT`, otherwise found by walking up from
+the working directory). `PYKOT_PYTHON`/`PYKOT_SCRIPT` still override everything.
 
-There is **no account system and no cloud sync** — everything is local.
+## Locked decisions (from the plan, §0)
 
-## Backend connectivity
-
-- `src/services/engine.ts` — axios client. `checkHealth` (`GET /health`),
-  `resolveStream` (`GET /api/resolve?url=…&bypass_cache=`), and
-  `streamService.checkBatchStatus` (`POST /api/status-batch`). Tracks
-  `x-ratelimit-*` headers and maps 400/429 to user-facing messages.
-- `src/context/StreamContext.tsx` — the app-wide provider. Reads favorites,
-  batch-checks their status, and auto-refreshes every 5 minutes (matches the
-  backend status-cache TTL).
-- `src/lib/backendConfig.ts` — AsyncStorage-backed config, plus the connect-URI
-  format:
-
-```
-tukiwatch://connect?url=<backend-url>&updates=<manifest-url>
-```
-
-  `verifyBackend()` pings `/health` before a config is accepted; a plain URL in
-  the QR is also accepted (treated as the backend base URL).
-
-## Update flow
-
-- `src/services/updateService.ts` fetches the manifest (`version.json`) and
-  reports an update when the manifest code for the device's asset is newer.
-  The manifest shape: `{ version, versionCode, versionCodeArm64, apkUrl, apkUrlArm64, releaseNotes, mandatory, minAndroidVersion }`.
-- "Check for Updates" in Settings downloads the arm64 APK on arm64 devices
-  (`expo-device`), otherwise the universal APK, via `selectApkUrl()`.
-
-## Android builds: arm64 primary + universal fallback
-
-Two APK variants are built from the same source (see `eas.json`):
-
-- `tukiwatch-<version>-arm64.apk` — arm64-v8a only, the primary download (~50MB).
-- `tukiwatch-<version>-universal.apk` — all ABIs, fallback for 32-bit devices.
-
-Per-variant ABI filtering is driven by the `ANDROID_ABI` env var
-(`production-arm64` sets it; `production-universal` leaves it unset),
-consumed by `app.config.js` through the local `plugins/withAbiFilter.js`
-config plugin (verified via `expo prebuild`: `abiFilters 'arm64-v8a'` lands
-in `defaultConfig`, absent for universal).
-
-## Releasing a new version
-
-Trigger the **Android APK Release** workflow (manual dispatch with a version
-like `1.0.6`):
-
-1. If GitHub release `v<version>` already ships **both** APKs, the workflow
-   exits without rebuilding (fully idempotent rerun).
-2. Otherwise, finished EAS builds are reused **per profile**
-   (`production-arm64`, `production-universal`) when a finished build with the
-   same `appVersion` already exists.
-3. Otherwise EAS builds each missing variant
-   (`eas build --platform android --profile production-<variant>`).
-4. The workflow downloads both APKs, creates a GitHub Release with both
-   assets, and commits a bumped `version.json` + `app.json` back to `main`.
-5. The in-app **Check for Updates** and the [web download page](../app/web/)
-   read `version.json` to point users at the right APK per architecture.
-
-Pass the `force` input (`true`) to rebuild a version that is already
-released. Note: the `production` profile uses `autoIncrement`, so the actual
-`versionCode` of a build is set by EAS — the workflow records the real built
-code in `version.json`, not the one in `app.json`.
-
-## Quality gates
-
-```bash
-bun install --frozen-lockfile
-bunx @biomejs/biome ci .
-bun run type-check
-```
-
-## See also
-
-- [TukiWatch](../README.md) — repository root
-- [TukiWatch API](../api/README.md) — the backend this app talks to
-- [Self-hosting guide](../docs/SELF_HOSTING.md) — run your own backend and wire
-  the app to it
+Android only. Twitch-led. No server — Polar licensing, session tokens, rate limiting, Redis and all
+deployment artifacts are deleted, not ported. **No API secrets in the APK**: anything shipped is
+extractable, so Helix access is BYO-key only.
