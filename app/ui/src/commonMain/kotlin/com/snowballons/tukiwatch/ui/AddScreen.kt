@@ -2,7 +2,6 @@ package com.snowballons.tukiwatch.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,9 +79,6 @@ val FULL_PRESET_PLATFORMS = listOf(
     PlatformPreset("aloula", "Aloula", "https://www.aloula.sa/{identifier}", "Enter channel or video path"),
     PlatformPreset("custom", "Custom URL", "{identifier}", "https://example.com/live/stream.m3u8"),
 )
-
-// Popular platforms displayed in the quick bar
-val QUICK_PLATFORMS = listOf("twitch", "youtube", "tiktok", "kick", "facebook", "custom")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,29 +196,6 @@ fun AddScreen(
                     )
                 }
             }
-        }
-
-        // Quick platform chips row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FULL_PRESET_PLATFORMS.filter { it.key in QUICK_PLATFORMS }.forEach { preset ->
-                FilterChip(
-                    selected = selectedPreset.key == preset.key,
-                    onClick = { selectedPreset = preset },
-                    label = { Text(preset.name) },
-                )
-            }
-
-            FilterChip(
-                selected = false,
-                onClick = { showPlatformPickerModal = true },
-                label = { Text("More… ▾") },
-            )
         }
 
         // Input field with Clear (X) icon

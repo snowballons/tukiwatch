@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.snowballons.tukiwatch.EngineResult
 import com.snowballons.tukiwatch.ErrorDetails
-import com.snowballons.tukiwatch.StreamItem
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
@@ -239,28 +234,5 @@ fun FavoriteRow(
             }
         }
         trailing?.invoke()
-    }
-}
-
-/** Selectable quality chips used by the Android player. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun QualityChips(
-    items: List<StreamItem>,
-    selectedQuality: String?,
-    onSelect: (StreamItem) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyRow(
-        modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(items, key = { it.quality }) { item ->
-            FilterChip(
-                selected = item.quality == selectedQuality,
-                onClick = { onSelect(item) },
-                label = { Text(item.quality) },
-            )
-        }
     }
 }

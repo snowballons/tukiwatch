@@ -73,7 +73,6 @@ class StreamController(
     var errorDetails by mutableStateOf<ErrorDetails?>(null)
     var selected by mutableStateOf<StreamItem?>(null)
     var playerError by mutableStateOf<String?>(null)
-    var lastTimings by mutableStateOf<String?>(null)
 
     private val cache = mutableMapOf<String, Pair<EngineResult, Long>>()
     private var job: Job? = null
@@ -96,11 +95,6 @@ class StreamController(
         result.directPlayable.sortedWith(
             compareBy({ !it.quality.startsWith("h264") }, { it.quality })
         )
-
-    private fun timingsText(prefix: String, r: EngineResult): String? {
-        val t = r.timings ?: return null
-        return "$prefix py=${t.totalMs}ms (streams=${t.streamsMs}ms reused=${t.sessionReused})"
-    }
 
     fun play(item: StreamItem) {
         selected = item
@@ -203,7 +197,6 @@ class StreamController(
         if (isDifferentUrl) {
             player.stop()
             selected = null
-            lastTimings = null
         }
         url = targetUrl
         extracting = true
@@ -239,7 +232,6 @@ class StreamController(
                 if (best != null) {
                     play(best)
                     status = "Playing from cache (${cr.directPlayable.size} qualities)"
-                    lastTimings = timingsText("cache", cr)
                 }
                 launch { refreshFull(targetUrl, silent = true) }
                 extracting = false
@@ -278,7 +270,6 @@ class StreamController(
             cache[targetUrl] = full to nowMs()
             result = full
             play(best)
-            lastTimings = timingsText("full", full)
             extracting = false
         }
     }
@@ -294,7 +285,6 @@ class StreamController(
                 cache[targetUrl] = full to nowMs()
                 result = full
                 metadata = full
-                lastTimings = timingsText("full", full)
                 if (!silent) status = "Found ${full.streams.size} qualities"
             }
         } catch (_: Exception) {

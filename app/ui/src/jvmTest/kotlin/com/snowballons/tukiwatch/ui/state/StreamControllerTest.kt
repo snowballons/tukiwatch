@@ -44,7 +44,7 @@ class StreamControllerTest {
     )
 
     @Test
-    fun resolvePlaysH264FirstAndRecordsTimings() {
+    fun resolvePlaysH264First() {
         val engine = FakeEngine(online(h265, h264))
         val player = FakePlayer()
         val c = controller(engine, player)
@@ -54,7 +54,6 @@ class StreamControllerTest {
         assertEquals("h264_720", player.played.single().quality)
         assertEquals("Playing h264_720 (HLS)", c.status)
         assertFalse(c.extracting)
-        assertNotNull(c.lastTimings)
         assertNull(c.errorDetails)
     }
 

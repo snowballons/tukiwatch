@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -62,7 +61,6 @@ import androidx.media3.ui.PlayerView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.snowballons.tukiwatch.ui.QualityChips
 import com.snowballons.tukiwatch.ui.StatusPill
 import com.snowballons.tukiwatch.ui.StreamErrorCard
 import com.snowballons.tukiwatch.ui.StreamMetadataCard
@@ -369,32 +367,6 @@ fun FullPlayerScreen(
                         }
                     }
                 }
-
-                // Quick chips row with "+more" option
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    QualityChips(
-                        items = directQualities.take(3),
-                        selectedQuality = controller.selected?.quality,
-                        onSelect = controller::play,
-                    )
-                    if (directQualities.size > 3) {
-                        TextButton(
-                            onClick = { showQualitySheet = true },
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-                        ) {
-                            Text(
-                                text = "+${directQualities.size - 3} more ▾",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                }
             }
 
             // Action row: Save to My List + Open in Official App
@@ -440,15 +412,6 @@ fun FullPlayerScreen(
                 }
             }
 
-            // Diagnostic Timings (subtle)
-            controller.lastTimings?.let { timings ->
-                Text(
-                    text = timings,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
         }
     }
 
