@@ -18,6 +18,8 @@ FastAPI backend; their paths are historical.
 
 - Branded launcher icon and splash screen built from the TukiWatch mark, with
   the “Every stream. One watchlist.” slogan and a dark, cyan-accented theme.
+- GitHub Actions CI workflow covering Kotlin unit/UI tests, desktop harness
+  tests, debug APK assembly, and the Python engine parity suite.
 - Kotlin Multiplatform port (`app/`), Android-only, backend removed:
   - Phase 1 engine parity — the on-device Streamlink engine (Chaquopy) now returns
     `tukiwatch-core` metadata (title/author/category/stream_id/platform), the full

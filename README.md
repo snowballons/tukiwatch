@@ -6,6 +6,7 @@
 
 **A privacy-first Android app for tracking and watching live streams — with Streamlink running on-device inside the APK.**
 
+[![CI](https://img.shields.io/github/actions/workflow/status/snowballons/tukiwatch/ci.yml?branch=main&label=CI&logo=github)](https://github.com/snowballons/tukiwatch/actions)
 [![License](https://img.shields.io/github/license/snowballons/tukiwatch?color=blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/snowballons/tukiwatch?style=social)](https://github.com/snowballons/tukiwatch)
 
@@ -77,6 +78,7 @@ powers a desktop harness used for development.
 | Playback | AndroidX Media3 / ExoPlayer 1.11.1 |
 | Data | SQLDelight 2.4.1 · DataStore 1.3.0 · kotlinx.serialization |
 | Build | Gradle wrapper in [`app/`](app/) |
+| CI | GitHub Actions: Kotlin tests, desktop harness tests, debug APK, Python engine parity |
 | Release | GitHub Actions, manual APK workflow |
 
 ---
