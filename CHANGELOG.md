@@ -16,6 +16,8 @@ FastAPI backend; their paths are historical.
 
 ### Added
 
+- Branded launcher icon and splash screen built from the TukiWatch mark, with
+  the “Every stream. One watchlist.” slogan and a dark, cyan-accented theme.
 - Kotlin Multiplatform port (`app/`), Android-only, backend removed:
   - Phase 1 engine parity — the on-device Streamlink engine (Chaquopy) now returns
     `tukiwatch-core` metadata (title/author/category/stream_id/platform), the full

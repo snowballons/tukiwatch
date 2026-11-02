@@ -45,6 +45,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -144,31 +145,33 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
-            // Keep phone status bar and navigation bar in sync with app theme
+            var showSplash by rememberSaveable { mutableStateOf(true) }
+            val systemBarsDark = darkTheme || showSplash
+
+            // Keep phone status bar and navigation bar in sync with app theme.
+            // The splash is always dark, so keep the bars dark until it finishes.
             val view = LocalView.current
             if (!view.isInEditMode) {
                 SideEffect {
                     val window = (view.context as? Activity)?.window ?: return@SideEffect
-                    window.statusBarColor = if (darkTheme) {
+                    window.statusBarColor = if (systemBarsDark) {
                         android.graphics.Color.parseColor("#0E0E10")
                     } else {
                         android.graphics.Color.parseColor("#F8F9FA")
                     }
-                    window.navigationBarColor = if (darkTheme) {
+                    window.navigationBarColor = if (systemBarsDark) {
                         android.graphics.Color.parseColor("#18181B")
                     } else {
                         android.graphics.Color.parseColor("#FFFFFF")
                     }
                     WindowCompat.getInsetsController(window, view).apply {
-                        isAppearanceLightStatusBars = !darkTheme
-                        isAppearanceLightNavigationBars = !darkTheme
+                        isAppearanceLightStatusBars = !systemBarsDark
+                        isAppearanceLightNavigationBars = !systemBarsDark
                     }
                 }
             }
 
             TukiWatchTheme(darkTheme = darkTheme) {
-                var showSplash by rememberSaveable { mutableStateOf(true) }
-
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -186,6 +189,7 @@ class MainActivity : ComponentActivity() {
 
                     if (showSplash) {
                         CustomSplashScreen(
+                            logo = painterResource(R.drawable.tukiwatch_logo),
                             onFinish = { showSplash = false },
                             modifier = Modifier.fillMaxSize()
                         )

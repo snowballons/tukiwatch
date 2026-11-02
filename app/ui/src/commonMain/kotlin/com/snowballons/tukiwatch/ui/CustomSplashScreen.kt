@@ -11,10 +11,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,8 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,205 +36,215 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private val SplashCyan = Color(0xFF2FC5F7)
+private val SplashDeep = Color(0xFF070A12)
+private val SplashText = Color(0xFFEFEFF1)
+private val SplashMuted = Color(0xFFB5B5BE)
+
 /**
- * Branded custom splash transition matching the original mobile app design.
- * Features entrance scaling, glowing logo badge, tagline, and pulsing loading dots
- * followed by a smooth fade-out transition into the main application.
+ * First-run brand moment: the TukiWatch mark, a quiet cyan glow, and the
+ * "Every stream. One watchlist." promise, followed by a fade into the app.
  */
 @Composable
 fun CustomSplashScreen(
+    logo: Painter,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
-    minDisplayTimeMs: Long = 1300L,
+    minDisplayTimeMs: Long = 1600L,
 ) {
     var isVisible by remember { mutableStateOf(true) }
 
-    val logoScale = remember { Animatable(0.78f) }
+    val logoScale = remember { Animatable(0.84f) }
     val logoAlpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
 
-    // Pulsing loading dots animation
-    val infiniteTransition = rememberInfiniteTransition(label = "SplashDots")
+    val infiniteTransition = rememberInfiniteTransition(label = "Splash")
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.20f,
+        targetValue = 0.42f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "logoGlow",
+    )
     val dot1Alpha by infiniteTransition.animateFloat(
         initialValue = 0.25f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(400, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "dot1"
+        label = "dot1",
     )
     val dot2Alpha by infiniteTransition.animateFloat(
         initialValue = 0.25f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(400, delayMillis = 150, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "dot2"
+        label = "dot2",
     )
     val dot3Alpha by infiniteTransition.animateFloat(
         initialValue = 0.25f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(400, delayMillis = 300, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "dot3"
+        label = "dot3",
     )
 
     LaunchedEffect(Unit) {
-        // Parallel logo entrance with spring bounce
         launch {
-            logoAlpha.animateTo(1f, animationSpec = tween(600))
+            logoAlpha.animateTo(1f, animationSpec = tween(550))
         }
         launch {
             logoScale.animateTo(
                 targetValue = 1f,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
+                    stiffness = Spring.StiffnessLow,
+                ),
             )
         }
         launch {
-            delay(250)
-            textAlpha.animateTo(1f, animationSpec = tween(500))
+            delay(260)
+            textAlpha.animateTo(1f, animationSpec = tween(600))
         }
 
-        // Keep visible for the branded moment, then trigger fade out
         delay(minDisplayTimeMs)
         isVisible = false
-        delay(400) // allow exit fade to complete
+        delay(400)
         onFinish()
     }
 
     AnimatedVisibility(
         visible = isVisible,
         exit = fadeOut(animationSpec = tween(400)),
-        modifier = modifier
+        modifier = modifier,
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surface,
-                            Color(0xFF0F172A)
-                        )
-                    )
+                            Color(0xFF0E0E10),
+                            Color(0xFF0B1020),
+                            SplashDeep,
+                        ),
+                    ),
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
+            val compact = maxHeight < 560.dp
+            val glowSize = if (compact) 210.dp else 248.dp
+            val logoSize = if (compact) 132.dp else 156.dp
+            val bottomGap = if (compact) 34.dp else 52.dp
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(28.dp),
             ) {
-                // Branded Logo Container with Glow Effect
-                Box(
-                    modifier = Modifier
-                        .scale(logoScale.value)
-                        .alpha(logoAlpha.value)
-                        .size(118.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 1.5.dp,
-                            brush = Brush.linearGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                )
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .size(glowSize)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(
+                                        SplashCyan.copy(alpha = glowAlpha),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                                CircleShape,
                             ),
-                            shape = RoundedCornerShape(32.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Stylized Play / TV Glyph
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = "▶",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 6.dp)
-                        )
-                    }
+                    )
+                    Image(
+                        painter = logo,
+                        contentDescription = "TukiWatch logo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(logoSize)
+                            .scale(logoScale.value)
+                            .alpha(logoAlpha.value),
+                    )
                 }
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(18.dp))
 
-                // App Title
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.alpha(textAlpha.value)
+                    modifier = Modifier.alpha(textAlpha.value),
                 ) {
                     Text(
                         text = "TukiWatch",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = SplashText,
                         letterSpacing = 1.sp,
                     )
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(42.dp)
+                            .height(2.dp)
+                            .background(SplashCyan),
+                    )
+                    Spacer(Modifier.height(14.dp))
                     Text(
-                        text = "Your Streaming Hub",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.5.sp,
+                        text = "EVERY STREAM.\nONE WATCHLIST.",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = SplashCyan,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 2.4.sp,
+                        lineHeight = 24.sp,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "ON-DEVICE  ·  NO ACCOUNT",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SplashMuted,
+                        letterSpacing = 1.2.sp,
                     )
                 }
 
-                Spacer(Modifier.height(54.dp))
+                Spacer(Modifier.height(bottomGap))
 
-                // Pulsing loading dots
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .alpha(dot1Alpha)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .size(8.dp)
+                            .background(SplashCyan.copy(alpha = dot1Alpha), CircleShape),
                     )
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .alpha(dot2Alpha)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .size(8.dp)
+                            .background(SplashCyan.copy(alpha = dot2Alpha), CircleShape),
                     )
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .alpha(dot3Alpha)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .size(8.dp)
+                            .background(SplashCyan.copy(alpha = dot3Alpha), CircleShape),
                     )
                 }
             }
