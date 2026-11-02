@@ -117,6 +117,8 @@ FastAPI backend; their paths are historical.
   workflows were removed.
 - Root documentation now describes the Kotlin app and the embedded Python
   engine instead of the retired Expo/API stack.
+- Player and Add Stream now each use a single dropdown selector. Removed the
+  redundant quick quality/platform chip rows and the player's Python timing line.
 - Removed leftover KMP template scaffolding (`Greeting`, `Platform`), the three
   placeholder tests, and the unused `app_logo.png`. The launcher name is now
   `TukiWatch`.
