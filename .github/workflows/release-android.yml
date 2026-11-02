@@ -55,7 +55,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-kmp-${{ hashFiles('tukiwatch-kotlin/**/*.gradle.kts', 'tukiwatch-kotlin/gradle/libs.versions.toml', 'tukiwatch-kotlin/gradle/wrapper/gradle-wrapper.properties') }}
+          key: gradle-kmp-${{ hashFiles('app/**/*.gradle.kts', 'app/gradle/libs.versions.toml', 'app/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-kmp-
 
@@ -83,7 +83,7 @@ jobs:
 
       # ── 7. Build ───────────────────────────────────────────────────────────
       - name: Build Release APK
-        working-directory: tukiwatch-kotlin
+        working-directory: app
         env:
           TUKIWATCH_KEYSTORE_FILE: ${{ github.workspace }}/tukiwatch-release.jks
           TUKIWATCH_KEYSTORE_PASSWORD: ${{ secrets.TUKIWATCH_KEYSTORE_PASSWORD }}
@@ -99,7 +99,7 @@ jobs:
       - name: Locate built APK
         id: apk
         run: |
-          APK_PATH=$(find tukiwatch-kotlin/androidApp/build/outputs/apk/release/ \
+          APK_PATH=$(find app/androidApp/build/outputs/apk/release/ \
             -name "*.apk" | head -1)
           echo "path=${APK_PATH}" >> "$GITHUB_OUTPUT"
           echo "Built APK: ${APK_PATH}"
