@@ -1,43 +1,50 @@
 # TukiWatch (Android)
 
-Android app that resolves and plays live streams **on-device** — Streamlink runs in the APK via
-Chaquopy, no backend server. Kotlin Multiplatform + Compose.
+Android app that resolves and plays live streams **on-device** — Streamlink runs
+inside the APK via Chaquopy, with no backend server. Kotlin Multiplatform +
+Compose.
 
-Plan: [`TUKIWATCH_KMP_PORTING_PLAN.md`](../../../kotlin-python-app/TUKIWATCH_KMP_PORTING_PLAN.md)
-(local workspace copy; it lives outside this repository).
+Current version: **1.1.5** (`versionCode 13`), declared in
+[`androidApp/build.gradle.kts`](androidApp/build.gradle.kts).
 
 ## Status
 
-**Phases 0–3 landed.** The on-device engine, data layer, navigation shell, and screens
-are in place and covered by tests. `:ui` holds the shared Compose screens (Home, My List, Add,
-Settings, Legal, Onboarding, Player, StreamCard) and state controllers; Android wires the
-ExoPlayer surface, SAF file pickers, lifecycle, and system intents.
+Phases 0–5B are in place: the on-device engine, data layer, navigation shell,
+screens, visual polish, media/system essentials, and gesture/feedback work.
+`:ui` holds the shared Compose surface and state controllers; Android wires the
+ExoPlayer surface, SAF pickers, lifecycle, and system intents.
 
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Engine transplant into this repo | **done** |
 | 1 | Engine parity: metadata, error taxonomy, codec alignment | **done** |
-| 2 | Data layer: SQLDelight favorites, DataStore, JSON import, liveness | **done** |
+| 2 | Data layer: SQLDelight favourites, DataStore, JSON import, liveness | **done** |
 | 3 | UI: Home / My List / Add / Player / Settings / Onboarding | **done** |
+| 4A/4B | Visual polish, modals, splash, extended player/add flows | **done** |
+| 5A/5B | Media/system essentials, gestures, and feedback | **done** |
 
 ## Modules
 
 - `shared` — headless core: `StreamEngine` interface,
-  `EngineResult`/`StreamStatus`/`ErrorDetails`/`StreamItem` (`@Serializable`, snake_case wire
-  contract), SQLDelight favorites + JSON backup, DataStore prefs, `LivenessRepository`, network error
-  classification. No Compose dependency. `androidMain` throws from `createStreamEngine()` by design —
+  `EngineResult`/`StreamStatus`/`ErrorDetails`/`StreamItem` (`@Serializable`,
+  snake_case wire contract), SQLDelight favourites + JSON backup, DataStore
+  preferences, `LivenessRepository`, and network-error classification. No Compose
+  dependency. `androidMain` throws from `createStreamEngine()` by design —
   Android uses `ChaquopyStreamEngine(context)`.
-- `ui` — shared Compose surface and plain state holders. `TukiWatchTheme`/palette, status pill,
-  metadata card, error card, My List row, quality chips, plus `StreamController` (resolve, cache,
-  quality ordering, background pause, live-edge recovery, codec fallback) and `LibraryController`
-  (favorites membership, JSON backup, liveness state). Android wraps them in thin ViewModels; desktop
-  renders the same components.
-- `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, thin `StreamViewModel`/
-  `LibraryViewModel` wrappers over `:ui`, SAF file pickers, and `stream_engine.py`.
+- `ui` — shared Compose surface and plain state holders. `TukiWatchTheme` /
+  palette, status pill, metadata card, error card, My List row, quality chips,
+  plus `StreamController` (resolve, cache, quality ordering, background pause,
+  live-edge recovery, codec fallback) and `LibraryController` (favourites
+  membership, JSON backup, liveness state). Android wraps them in thin
+  ViewModels; desktop renders the same components.
+- `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, thin
+  `StreamViewModel`/`LibraryViewModel` wrappers over `:ui`, SAF file pickers, and
+  `stream_engine.py`.
 - `desktopApp` — JVM iteration harness. A real Compose window over the same
-  `SubprocessStreamEngine`, `FavoritesRepository` and `LivenessRepository` as the app, **not shipped**.
-  It resolves URLs, shows metadata/errors/qualities/timings, and exercises My List (file-backed SQLite
-  at `~/.tukiwatch/harness.db`) plus on-demand liveness.
+  `SubprocessStreamEngine`, `FavoritesRepository`, and `LivenessRepository` as
+  the app, **not shipped**. It resolves URLs, shows metadata/errors/qualities/
+  timings, and exercises My List (file-backed SQLite at
+  `~/.tukiwatch/harness.db`) plus on-demand liveness.
 
 ## Running
 
@@ -46,20 +53,53 @@ ExoPlayer surface, SAF file pickers, lifecycle, and system intents.
 ./gradlew :desktopApp:run             # desktop harness
 ```
 
-Tests:
+The debug APK is at
+`androidApp/build/outputs/apk/debug/androidApp-debug.apk`.
+
+Chaquopy requires Python 3.11. If `python3` on your `PATH` is not 3.11, pass the
+interpreter explicitly:
+
+```sh
+./gradlew :androidApp:assembleDebug -Pchaquopy.buildPython=/path/to/python3.11
+```
+
+## Tests
 
 ```sh
 ./gradlew :shared:testAndroidHostTest
 ./gradlew :shared:jvmTest
 ./gradlew :ui:jvmTest                 # shared state-holder tests
-./gradlew :desktopApp:test            # harness unit + Compose UI tests (needs a display for UI)
-# Phase 1 Python parity suite (needs a Python 3.11 with streamlink installed).
-# Use 8.6.2 to match the version bundled in the APK.
-python -m pytest androidApp/src/main/python/test_stream_engine.py
+./gradlew :desktopApp:test            # harness unit + Compose UI tests (needs a display)
 ```
 
-The desktop UI tests render a real `ComposeWindow`; run them under `DISPLAY=:0` or
-`xvfb-run -a ./gradlew :desktopApp:test`. They skip themselves when no display can be opened.
+The desktop UI tests render a real `ComposeWindow`; run them under `DISPLAY=:0`
+or `xvfb-run -a ./gradlew :desktopApp:test`. They skip themselves when no display
+can be opened.
+
+Python engine parity (needs Python 3.11 with Streamlink 8.6.2, matching the
+version bundled in the APK):
+
+```sh
+python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
+```
+
+The engine and its parity test currently live beside each other under
+`androidApp/src/main/python`.
+
+## Python engine
+
+[`androidApp/src/main/python/stream_engine.py`](androidApp/src/main/python/stream_engine.py)
+exposes the entrypoints used by the Android bridge and the desktop harness:
+
+- `resolve_details(url, options_json, wanted)`
+- `check_status(url, options_json)`
+- `list_streams(url, options_json, wanted)`
+- `warmup(url)`
+- `version()`
+
+It returns JSON with the same snake_case contract consumed by the Kotlin
+`@Serializable` models. Streamlink `8.6.2` is installed into the APK at build
+time by Chaquopy; Python 3.11 is bundled per ABI.
 
 The liveness ticker runs only while the activity is `STARTED`
 (`repeatOnLifecycle`), and transport failures are surfaced through
@@ -76,20 +116,24 @@ treating them as plugin errors.
 | Media3 | 1.11.1 |
 | Kotlin | 2.4.20 |
 | AGP | 9.1.1 |
+| Gradle | 9.5.1 |
 | Compose Multiplatform | 1.12.1 |
 | minSdk / targetSdk | 26 / 37 |
 
-`minSdk 26` is fixed by the Python 3.11 ABI split (`armeabi-v7a` + `arm64-v8a`). `buildPython` is
-pinned to `/home/jonnie/.local/bin/python3.11`; override with
-`-Pchaquopy.buildPython=/path/to/python3.11` on other machines.
+`minSdk 26` is fixed by the Python 3.11 ABI split (`armeabi-v7a` +
+`arm64-v8a`).
 
 Desktop iteration auto-discovers a Streamlink-capable interpreter
-(`PYKOT_PYTHON` → repo `.venv` / `tukiwatch-core/.venv` → `python3.11`/`python3`) and
-`androidApp/src/main/python/stream_engine.py` (`PYKOT_SCRIPT`, otherwise found by walking up from
-the working directory). `PYKOT_PYTHON`/`PYKOT_SCRIPT` still override everything.
+(`PYKOT_PYTHON` → repo `.venv` / `tukiwatch-core/.venv` → `python3.11` /
+`python3`) and `androidApp/src/main/python/stream_engine.py` (`PYKOT_SCRIPT`,
+otherwise found by walking up from the working directory). `PYKOT_PYTHON` /
+`PYKOT_SCRIPT` still override everything.
 
-## Locked decisions (from the plan, §0)
+## Constraints
 
-Android only. Twitch-led. No server — Polar licensing, session tokens, rate limiting, Redis and all
-deployment artifacts are deleted, not ported. **No API secrets in the APK**: anything shipped is
-extractable, so Helix access is BYO-key only.
+Android only. No server, accounts, cloud sync, or bundled API secrets. Stream
+resolution and playback are on-device; anything shipped in the APK is
+extractable, so optional platform credentials are user-supplied only.
+
+See the root [`README.md`](../README.md) for the project overview and
+[`CONTRIBUTING.md`](../CONTRIBUTING.md) for development setup.

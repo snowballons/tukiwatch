@@ -4,433 +4,241 @@
 
 # TukiWatch
 
-**A privacy-first mobile app for tracking and watching live streams across platforms, backed by a self-hostable FastAPI backend.**
+**A privacy-first Android app for tracking and watching live streams — with Streamlink running on-device inside the APK.**
 
-[![App CI](https://img.shields.io/github/actions/workflow/status/snowballons/tukiwatch/app.yml?branch=main&label=App%20CI&logo=github)](https://github.com/snowballons/tukiwatch/actions)
-[![API CI](https://img.shields.io/github/actions/workflow/status/snowballons/tukiwatch/api.yml?branch=main&label=API%20CI&logo=github)](https://github.com/snowballons/tukiwatch/actions)
-[![Release](https://img.shields.io/github/v/release/snowballons/tukiwatch?label=release)](https://github.com/snowballons/tukiwatch/releases)
 [![License](https://img.shields.io/github/license/snowballons/tukiwatch?color=blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/snowballons/tukiwatch?style=social)](https://github.com/snowballons/tukiwatch)
 
-[Download APK](https://github.com/snowballons/tukiwatch/releases) · [Web download page](https://tukiwatch.snowballons.com/)
+[Releases](https://github.com/snowballons/tukiwatch/releases) · [Website](https://tukiwatch.snowballons.com/) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## Table of Contents
-
-<!--
-  This TOC is hand-maintained. If it drifts, regenerate with `doctoc README.md`
-  (npx doctoc) or drop it and rely on GitHub's built-in table of contents.
--->
-
-- [About](#about)
-- [Why This Exists](#why-this-exists)
-- [Features](#features)
-  - [Screenshots](#screenshots)
-- [Non-Goals](#non-goals)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Repository Structure](#repository-structure)
-- [Related Repositories](#related-repositories)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Troubleshooting](#troubleshooting)
-- [Configuration](#configuration)
-- [API Reference](#api-reference)
-- [Testing](#testing)
-- [CI/CD](#cicd)
-- [Deployment](#deployment)
-- [Versioning & Changelog](#versioning--changelog)
-- [Roadmap](#roadmap)
-- [Project Status](#project-status)
-- [Support](#support)
-- [Contributing](#contributing)
-- [Security](#security)
-- [Credits & Acknowledgments](#credits--acknowledgments)
-- [Author](#author)
-- [License](#license)
-
----
-
 ## About
 
-For live-stream fans, **TukiWatch** helps you track and watch your favorite
-streamers across platforms in one place, by resolving stream URLs and checking
-live status through a lightweight, self-hostable backend.
+TukiWatch keeps your favourite live streams in one Android app. Favourites,
+settings, and stream resolution all stay on the device: there is **no backend
+service**, no account system, and no cloud sync.
 
-- **App** — [Expo](https://expo.dev/) (React Native) mobile app: add favorites,
-  see who's live, and play streams in-app. See [`app/README.md`](app/README.md).
-- **API** — [FastAPI](https://fastapi.tiangolo.com/) backend that resolves
-  streams and batch-checks status via https://streamlink.github.io/.
-  See [`api/README.md`](api/README.md).
-
----
-
-## Why This Exists
-
-Streamers are spread across Twitch, YouTube, Kick, Facebook, TikTok, and dozens
-of smaller platforms. Fans juggle multiple apps and tabs just to know who is
-live right now — and most "tracker" apps demand accounts, cloud sync, and
-advertising.
-
-TukiWatch takes the opposite approach:
-
-- **Local-first.** Favorites live in an on-device SQLite database. No accounts,
-  no cloud, no data collection.
-- **Bring your own backend.** Point the app at any self-hosted TukiWatch API
-  instance via QR code or deep link — no rebuild required.
-- **Ad-free where the platform allows.** With a Twitch Turbo token configured on
-  the backend, Twitch streams play without ads.
-- **Open and self-contained.** The app builds on the shared
-  [tukiwatch-core](https://github.com/snowballons/tukiwatch-core) domain
-  package, also used by [streamwatch-cli](https://github.com/snowballons/streamwatch-cli).
+Stream resolution uses [Streamlink](https://streamlink.github.io/) running inside
+the APK through [Chaquopy](https://chaquo.com/chaquopy/), embedded in a Kotlin
+Multiplatform + Compose application. The same shared UI and state layer also
+powers a desktop harness used for development.
 
 ---
 
 ## Features
 
-- **Live Now** — one tab that shows only the favorites currently online, with
-  search, platform filter chips, and pull-to-refresh.
-- **Stream library (My List)** — every saved favorite with its live state
-  (online / offline / error), plus full add/remove management.
-- **Add streams from 20+ platforms** — pick a platform, type a channel or URL,
-  and the app builds and verifies it against the backend before saving.
-- **In-app player** — native video playback with a quality switcher, picture-in-
-  picture, and "open in official app" deep links (Twitch, YouTube, Instagram,
-  Facebook, TikTok, VK, …).
-- **Self-hosted backend connect** — switch the app to your own API by scanning a
-  QR code or opening a `tukiwatch://connect` deep link.
-- **In-app updates** — checks a version manifest (`version.json`) and downloads
-  the latest APK.
-- **Export / import favorites** — share your list as JSON.
-- **Dark-only UI** with onboarding, a custom branded splash, and a privacy-first
-  posture.
+- **Live Now** — a Home screen that shows which saved channels are currently
+  online, with search and platform filters.
+- **My List** — search, filter, add, and remove favourites; every entry keeps its
+  last known live state.
+- **Add streams** — choose from 20 preset platforms (Twitch, YouTube, TikTok,
+  Kick, Facebook, Instagram, and more) or enter a direct URL, preview-resolve it
+  on-device, then save or play it.
+- **In-app player** — Media3 ExoPlayer with quality selection, fullscreen,
+  picture-in-picture, and an “open in official app” action.
+- **Local-first data** — favourites live in SQLDelight/SQLite; preferences live
+  in DataStore. JSON export/import is available for backups and migration.
+- **Foreground liveness** — saved channels are refreshed while the app is in the
+  foreground; network failures are surfaced without treating them as plugin
+  errors.
+- **Share and deep links** — accepts shared stream URLs and
+  `tukiwatch://` links.
+- **Theme, onboarding, and legal screens** — System / Light / Dark appearance,
+  first-run onboarding, and in-app privacy/terms pages.
 
 ### Screenshots
 
 | Onboarding | Onboarding | Home (empty) | Home (live) | Add stream |
 |:----------:|:----------:|:------------:|:-----------:|:----------:|
-| <img src="app/assets/intro1.png" width="150" alt="Onboarding screen" /> | <img src="app/assets/intro2.png" width="150" alt="Onboarding screen continued" /> | <img src="app/assets/empty-live-screen.png" width="150" alt="Home screen with no live streams" /> | <img src="app/assets/live-screen.png" width="150" alt="Home screen showing live streams" /> | <img src="app/assets/add-stream.png" width="150" alt="Add a new stream" /> |
+| <img src="assets/intro1.png" width="150" alt="Onboarding screen" /> | <img src="assets/intro2.png" width="150" alt="Onboarding screen continued" /> | <img src="assets/empty-live-screen.png" width="150" alt="Home screen with no live streams" /> | <img src="assets/live-screen.png" width="150" alt="Home screen showing live streams" /> | <img src="assets/add-stream.png" width="150" alt="Add a new stream" /> |
 
 ---
 
-## Non-Goals
+## Non-goals
 
-- **No accounts or cloud sync** — favorites are intentionally device-local.
-- **No notifications (yet)** — see the [Roadmap](#roadmap).
-- **No iOS release (yet)** — Android only today; iOS is planned.
-- **Not a general-purpose media player** — TukiWatch tracks and plays live
-  streams; it is not a streaming platform itself.
-- **No web app** — the web site is a download/landing page, not a client.
+- **No backend or server component.** Stream resolution happens on-device.
+- **No accounts, cloud sync, or analytics.** Favourites and settings are local.
+- **Android only.** There is no iOS or web client.
+- **Not a general-purpose media player.** TukiWatch tracks and plays live
+  streams; it is not a streaming platform.
 
 ---
 
-## Tech Stack
+## Tech stack
 
-| Component  | Technology                                                                                                                                                                                                                                                                                                                                     |
-|:---------- |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| App        | [Expo](https://expo.dev/) SDK 56 · [React Native](https://reactnative.dev/) 0.85 · [React](https://react.dev/) 19 · TypeScript · [expo-video](https://docs.expo.dev/versions/latest/sdk/video/) · [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) · [React Navigation](https://reactnavigation.org/) · [Bun](https://bun.sh/) |
-| Backend    | [Python](https://www.python.org/) 3.10–3.12 · [FastAPI](https://fastapi.tiangolo.com/) · [streamlink](https://streamlink.github.io/) · [streamwatch-core](https://github.com/snowballons/streamwatch-core) · [Redis](https://redis.io/) (optional) · [uv](https://docs.astral.sh/uv/)                                                          |
-| CI/CD      | [GitHub Actions](https://github.com/features/actions) · [EAS Build](https://docs.expo.dev/build/introduction/)                                                                                                                                                                                                                                 |
-| Deployment | [Docker](https://www.docker.com/) · [Railway](https://railway.app/)                                                                                                                                                                                                                                                                            |
+| Area | Technology |
+|---|---|
+| App | Kotlin 2.4.20 · Compose Multiplatform 1.12.1 · Material 3 |
+| Android | AGP 9.1.1 · Gradle 9.5.1 · JDK 21 toolchain · minSdk 26 / targetSdk 37 |
+| Engine | Chaquopy 17.0.0 · Python 3.11 · Streamlink 8.6.2 |
+| Playback | AndroidX Media3 / ExoPlayer 1.11.1 |
+| Data | SQLDelight 2.4.1 · DataStore 1.3.0 · kotlinx.serialization |
+| Build | Gradle wrapper in [`app/`](app/) |
+| Release | GitHub Actions, manual APK workflow |
 
 ---
 
 ## Architecture
 
 ```mermaid
-graph TD
-    App[TukiWatch App] -->|GET /api/resolve| API[TukiWatch API]
-    App -->|POST /api/status-batch| API
-    API --> Core[streamlink + streamwatch-core]
-    Core -->|Twitch, YouTube, Kick, ...| P[Streaming platforms]
-    API --> Cache[(Cache: Redis / in-memory)]
-    API --> Pool[(Streamlink session pool)]
+flowchart LR
+    UI["Compose UI<br/>androidApp + :ui"] --> Shared[":shared<br/>state, repositories, liveness"]
+    Shared --> Engine["StreamEngine contract"]
+    Engine --> Android["Android: ChaquopyStreamEngine"]
+    Engine --> Desktop["Desktop: SubprocessStreamEngine"]
+    Android --> Bundled["Bundled Python 3.11<br/>stream_engine.py"]
+    Desktop --> HostPython["Host Python 3.11<br/>stream_engine.py"]
+    Bundled --> Streamlink["Streamlink 8.6.2"]
+    HostPython --> Streamlink
+    Streamlink --> Platforms["Twitch · YouTube · Kick · …"]
+    Shared --> DB[("SQLDelight SQLite")]
+    Shared --> Prefs[("DataStore")]
 ```
 
-**Components**
+- **`:shared`** — headless core: engine contract, SQLDelight favourites, JSON
+  backup, DataStore preferences, liveness, and network-error classification.
+- **`:ui`** — shared Compose screens and plain state controllers.
+- **`:androidApp`** — the shipped APK: Compose host, Chaquopy bridge, Media3
+  player, SAF pickers, and the bundled Python engine.
+- **`:desktopApp`** — JVM harness that renders the same UI against a host Python
+  interpreter. Not shipped.
 
-- **App** — Expo / React Native client. Resolves stream URLs, batch-checks the
-  status of favorites, and plays streams in-app.
-- **API** — stateless FastAPI service. No database; the only state is an
-  ephemeral cache (Redis or in-memory fallback) and a recycled streamlink
-  session pool.
-- **streamwatch-core** — shared domain logic (rules, resolvers) installed as a
-  pip dependency and shared with `streamwatch-cli`.
+See [`app/README.md`](app/README.md) for the module-level details.
 
 ---
 
-## Repository Structure
+## Repository layout
 
-```
+```text
 tukiwatch/
-├── app/     # Expo (React Native) mobile application
-├── api/     # FastAPI backend service
-├── docs/    # Documentation (incl. self-hosting guide)
-├── .github/ # CI/CD workflows
-├── LICENSE
-└── README.md
+├── app/
+│   ├── androidApp/   # Android APK, Compose host, Chaquopy, Media3
+│   ├── shared/       # engine contract, SQLDelight, DataStore, liveness
+│   ├── ui/           # shared Compose screens and state controllers
+│   └── desktopApp/   # JVM development harness (not shipped)
+├── web/              # static landing / legal site, deployed separately
+├── assets/           # README screenshots and brand assets
+├── .github/          # release workflow
+├── AGENTS.md         # instructions for coding agents
+├── CONTRIBUTING.md   # contributor setup and quality gates
+├── CHANGELOG.md
+└── LICENSE
 ```
 
 ---
 
-## Related Repositories
-
-- [streamwatch-core](https://github.com/snowballons/streamwatch-core) — shared
-  core library (rules, resolvers) used by the API and the CLI
-- [streamwatch-cli](https://github.com/snowballons/streamwatch-cli) — command-
-  line interface for resolving and watching streams
-
----
-
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
-- **App:** [Bun](https://bun.sh/) ≥ 1.x (Node.js comes via the Expo toolchain)
-- **API:** [Python](https://www.python.org/) 3.10+ and [uv](https://docs.astral.sh/uv/)
-- **Optional:** [Redis](https://redis.io/) for a shared API cache (the API falls
-  back to an in-memory cache without it)
+- **JDK 21** (Gradle toolchain)
+- **Android SDK 37** with platform tools; set `ANDROID_HOME` or create
+  `app/local.properties` with `sdk.dir=...`
+- **Python 3.11** on the build machine for Chaquopy
+- **Streamlink 8.6.2** in that Python 3.11 environment only if you want to run
+  the host-side Python parity tests
 
-### Installation
+No JavaScript build toolchain is required to build the app.
+
+### Build the APK
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/snowballons/tukiwatch.git
-cd tukiwatch
+cd tukiwatch/app
 
-# 2. Install the API
-cd api
-cp .env.example .env   # set ALLOWED_ORIGINS, optionally Redis/Twitch token
-uv sync --all-groups
-
-# 3. Install the app
-cd ../app
-cp .env.example .env   # set EXPO_PUBLIC_API_URL (optional)
-bun install
+./gradlew :androidApp:assembleDebug
+# APK: androidApp/build/outputs/apk/debug/androidApp-debug.apk
 ```
 
-### Quick Start
+If `python3` on your `PATH` is not Python 3.11, point Chaquopy at the right
+interpreter:
 
 ```bash
-# Run the API
-cd api
-uv run uvicorn main:app --host 0.0.0.0 --port 8000
+./gradlew :androidApp:assembleDebug \
+  -Pchaquopy.buildPython=/path/to/python3.11
+```
 
-# Run the app (new terminal)
+### Run the desktop harness
+
+```bash
 cd app
-bun run start
+./gradlew :desktopApp:run
 ```
 
-Verify the API is up, then open the app:
-
-```bash
-curl http://localhost:8000/health
-# {"status":"healthy","service":"streamlink-api"}
-```
-
----
-
-## Usage
-
-- **App** — features, navigation, data layer, and release flow:
-  [`app/README.md`](app/README.md)
-- **API** — endpoints, response shapes, configuration, and internals:
-  [`api/README.md`](api/README.md)
-- **Self-hosting** — Docker, Railway, and connecting the app to your own
-  instance: [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md)
-
----
-
-## Troubleshooting
-
-<details>
-  <summary><b>App can't reach the backend</b></summary>
-
-  **Cause:** `EXPO_PUBLIC_API_URL` points at an unreachable host, or the API
-  isn't running.
-  **Fix:** Confirm the API is up (`curl http://localhost:8000/health`), then
-  either fix `app/.env` and rebuild, or switch the backend at runtime via
-  **Settings → Backend → Scan QR Code**.
-
-</details>
-
-<details>
-  <summary><b>"Browser dependency required" when resolving a stream</b></summary>
-
-  **Cause:** Some platforms (e.g. Twitch) use anti-bot protection that
-  streamlink cannot bypass headlessly.
-  **Fix:** This is a known streamlink limitation for specific URLs — the API
-  returns a structured `error_details` so the app can explain it. Try the
-  platform's own app, or open the stream in a browser.
-
-</details>
-
-<details>
-  <summary><b>docker compose fails with a build-context error</b></summary>
-
-  **Cause:** An old `docker-compose.yml` referenced an absolute local path.
-  **Fix:** Pull the latest version — the compose file now uses a relative
-  `./api` build context that works on any machine.
-
-</details>
-
----
-
-## Configuration
-
-| Variable                          | Where | Description                                 | Required | Default                                          |
-|:--------------------------------- |:----- |:------------------------------------------- |:--------:|:------------------------------------------------ |
-| `ALLOWED_ORIGINS`                 | API   | Comma-separated CORS origins                | No       | `*`                                              |
-| `TWITCH_OAUTH_TOKEN`              | API   | Ad-free Twitch streams (Twitch Turbo)       | No       | —                                                |
-| `REDIS_URL` / `REDIS_*`           | API   | Ephemeral cache (omit for in-memory)        | No       | in-memory                                        |
-| `EXPO_PUBLIC_API_URL`             | App   | Default backend URL (build-time)            | No       | `http://localhost:8000/`                         |
-| `EXPO_PUBLIC_UPDATE_MANIFEST_URL` | App   | URL of the update manifest (`version.json`) | No       | `https://downloads.snowballons.com/version.json` |
-
-Copy `api/.env.example` → `api/.env` and `app/.env.example` → `app/.env` and
-fill in the values. See [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md) for the
-full story, including the runtime QR-code flow.
-
----
-
-## API Reference
-
-| Endpoint                 | Method | Description                                          |
-|:------------------------ |:------ |:---------------------------------------------------- |
-| `/api/resolve?url=<url>` | `GET`  | Resolve a stream URL to playable streams + metadata  |
-| `/api/status-batch`      | `POST` | Batch-check stream status (body: `{"urls": [...]}`)  |
-| `/health`                | `GET`  | Liveness probe (used by the app to verify a backend) |
-
-Both endpoints support `?bypass_cache=true`. Full details, request/response
-examples, and extra stats endpoints are in [`api/README.md`](api/README.md).
+The harness uses a host Python interpreter and the same
+`androidApp/src/main/python/stream_engine.py` as the APK. It is a development
+tool, not a shipped target.
 
 ---
 
 ## Testing
 
 ```bash
-# API — lint + tests
-cd api
-uv run ruff check .
-uv run pytest
-
-# App — lint/format + type check
 cd app
-bunx @biomejs/biome ci .
-bun run type-check
+
+# Shared data/engine and UI state
+./gradlew :shared:jvmTest :ui:jvmTest
+
+# Android host tests
+./gradlew :shared:testAndroidHostTest
+
+# Desktop harness tests (Compose UI tests need a display)
+xvfb-run -a ./gradlew :desktopApp:test
+
+# Python engine parity (Python 3.11 + streamlink 8.6.2)
+python3.11 -m pytest androidApp/src/main/python/test_stream_engine.py
 ```
 
----
-
-## CI/CD
-
-GitHub Actions workflows live in [`.github/workflows/`](.github/workflows):
-
-| Workflow              | Triggers                        | Checks / Output                                                                            |
-|:--------------------- |:------------------------------- |:------------------------------------------------------------------------------------------ |
-| `api.yml`             | Changes under `api/**`          | uv sync, ruff, pytest (Python 3.10–3.12)                                                   |
-| `app.yml`             | Changes under `app/**`          | bun install, biome ci, type-check                                                          |
-| `release-android.yml` | Manual dispatch (version, `force`) | Builds/creates an Android APK via EAS (reuses existing builds), creates a GitHub Release, bumps `version.json` + `app.json` |
+The desktop UI tests open a real Compose window; on a machine without a display,
+run them under `xvfb-run` or skip them. The Python test path is relative to
+`app/`.
 
 ---
 
-## Deployment
+## Releasing
 
-- **Docker Compose** — from the repo root: `cp api/.env.example .env && docker compose up -d`
-  (builds `api/`, exposes port `8000`).
-- **Railway** — create a service from the repo, set the **root directory** to
-  `api/`; Railway auto-detects `nixpacks.toml` and `requirements.txt`.
+The Android version is declared in
+[`app/androidApp/build.gradle.kts`](app/androidApp/build.gradle.kts) — currently
+`1.1.5` (`versionCode 13`).
 
-Full instructions for both, plus pointing the app at your instance, live in
-[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+Releases are built manually with
+[`.github/workflows/release-android.yml`](.github/workflows/release-android.yml):
 
----
+- `./gradlew :androidApp:assembleRelease`
+- optional production signing via repository secrets
+- APK attached to a GitHub Release when a version is supplied
 
-## Versioning & Changelog
-
-This project follows [Semantic Versioning](https://semver.org/). Changes are
-documented in [CHANGELOG.md](CHANGELOG.md). The app's update channel uses a
-`version.json` manifest + GitHub Releases (see [`app/README.md`](app/README.md)).
+Keep the Gradle `versionName`/`versionCode` and the release tag in sync.
 
 ---
 
-## Roadmap
+## Website
 
-Planned — not yet implemented:
-
-- **Live notifications** — alert when a favorite streamer goes live
-- **Trending & discovery** — browse trending streams, recommendations
-- **Custom alerts** — preferences for stream quality, categories, and
-  notification types
-- **Offline mode** — view saved stream info and history without internet
-- **iOS release**
-- **Web client**
+[`web/`](web/) contains the static landing page and legal pages. It is deployed
+separately from the APK and is not part of the Android build.
 
 ---
 
-## Project Status
+## Privacy and security
 
-**Status:** Active development.
-
-Android v1.0.5 is released (APK via GitHub Releases); iOS is planned. The API
-and app are actively maintained.
-
----
-
-## Support
-
-- **Bug reports & feature requests:** [GitHub Issues](https://github.com/snowballons/tukiwatch/issues)
-- **Questions & discussions:** [GitHub Discussions](https://github.com/snowballons/tukiwatch/discussions)
-- **Email:** tukiwatch@snowballons.com
+- Favourites and settings stay on-device.
+- There is no TukiWatch backend, account, or analytics service.
+- Stream resolution and playback make network requests directly to the relevant
+  third-party platforms and their CDNs.
+- No API secrets are bundled in the APK. Any optional platform credentials are
+  supplied by the user and stored locally.
+- To report a vulnerability, email **tukiwatch@snowballons.com** — please do not
+  open a public issue for security bugs.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Start with [`app/CONTRIBUTING.md`](app/CONTRIBUTING.md)
-and the repository's [`AGENTS.md`](AGENTS.md), then:
-
-1. [Open an issue](https://github.com/snowballons/tukiwatch/issues/new) to
-   discuss the change first (or pick an existing one).
-2. **Fork** the repo and create a feature branch (`feat/...`, `fix/...`).
-3. Make your changes and **run the quality gates** (see [Testing](#testing)).
-4. Use clear, conventional commit messages (`feat:`, `fix:`, `docs:`,
-   `refactor:`).
-5. Open a **Pull Request** referencing the issue ("Closes #12").
-
----
-
-## Security
-
-- The API is **stateless and unauthenticated** — anyone who can reach the
-  backend URL can use it. Rate limiting still applies, but protect the service
-  at the network level (firewall / private tunnel) if you want to restrict
-  access.
-- No user data is stored server-side; favorites live on-device in the app.
-- To report a vulnerability, email **tukiwatch@snowballons.com** — do **not**
-  open a public issue for security bugs.
-
----
-
-## Credits & Acknowledgments
-
-- [streamlink](https://streamlink.github.io/) — stream resolution engine
-- [streamwatch-core](https://github.com/snowballons/streamwatch-core) — shared
-  domain package
-- [Expo](https://expo.dev/) / [React Native](https://reactnative.dev/) — app
-  framework
-
----
-
-## Author
-
-**Snowballons** — [GitHub](https://github.com/snowballons) ·
-tukiwatch@snowballons.com
+Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and
+the repository’s [`AGENTS.md`](AGENTS.md), then open an issue or pull request.
 
 ---
 

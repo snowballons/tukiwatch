@@ -5,15 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The app version lives in `app/package.json`, `app/app.json`, and `app/version.json`
-(the update manifest consumed by the in-app updater). Releases are published as
-GitHub Releases with the APK attached.
+The current Android version is declared in
+`app/androidApp/build.gradle.kts`. Releases are published as GitHub Releases with
+the APK attached.
+
+Entries for 1.1.4 and earlier describe the retired Expo/React Native app and
+FastAPI backend; their paths are historical.
 
 ## [Unreleased]
 
 ### Added
 
-- Kotlin Multiplatform port (`tukiwatch-kotlin/`), Android-only, backend removed:
+- Kotlin Multiplatform port (`app/`), Android-only, backend removed:
   - Phase 1 engine parity — the on-device Streamlink engine (Chaquopy) now returns
     `tukiwatch-core` metadata (title/author/category/stream_id/platform), the full
     error taxonomy (`no_plugin / browser_required / plugin_error / unexpected`)
@@ -80,8 +83,8 @@ GitHub Releases with the APK attached.
   then PATH) and the engine script by walking up from the working directory, with
   `PYKOT_PYTHON` / `PYKOT_SCRIPT` still winning. Subprocesses now have a timeout,
   drain stdout on a side thread, and extract the JSON object past Streamlink logs.
-- Restored the 14 PNG assets (`app/assets/`, `app/web/assets/`) that the Phase 1
-  commit deleted unintentionally.
+- Restored the 14 PNG assets that the Phase 1 commit deleted unintentionally.
+  They now live in `assets/` and `web/assets/` after the repository move.
 - The full `:shared:jvmTest` suite deadlocked: `LivenessRepositoryTest` ran its
   own `runBlocking` on the same single-thread dispatcher it dispatched DB work
   to, then blocked that thread on a `CountDownLatch`. The fixture now seeds
@@ -104,11 +107,23 @@ GitHub Releases with the APK attached.
 
 ### Changed
 
+- The repository is now Android-only: the Kotlin Multiplatform app lives in
+  `app/`, the static site in `web/`, and README assets in `assets/`. The Expo
+  client, FastAPI backend, Docker/Railway deployment files, and legacy CI
+  workflows were removed.
+- Root documentation now describes the Kotlin app and the embedded Python
+  engine instead of the retired Expo/API stack.
 - Phase 3 scope: Discovery v1 is dropped (owner decision). No Discovery tab or
   default discovery source, and `twitch-live` is not part of v1.
 - The KMP build now ships as `com.tukiwatch.app` (versionCode 13, v1.1.5) so it
   upgrades the Expo app in place. Release builds must be signed with the old
   keystore; debug installs require uninstalling the Expo app first.
+
+## Legacy — Expo/React Native + FastAPI (1.1.4 and earlier)
+
+The entries below describe the retired Expo client and FastAPI backend. Paths
+such as `app/src/`, `api/`, and the EAS workflows refer to the old layout and no
+longer exist in the current Kotlin-only repository.
 
 ## [1.1.4] - 2026-09-08
 
@@ -231,7 +246,8 @@ GitHub Releases with the APK attached.
 - Initial public release of the TukiWatch mobile app and FastAPI backend.
   Track favorite streams, check live status, and watch in-app.
 
-[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/snowballons/tukiwatch/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/snowballons/tukiwatch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/snowballons/tukiwatch/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/snowballons/tukiwatch/compare/v1.0.6...v1.1.1
