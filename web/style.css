@@ -213,11 +213,6 @@ h1, h2, h3, h4 {
   border: 1px solid var(--color-rule);
 }
 .btn--ghost:hover { border-color: var(--color-ink-2); }
-.btn__version {
-  font-weight: 400;
-  font-size: var(--text-xs);
-  opacity: 0.7;
-}
 
 /* Phone mockup — no re-drawn chrome, real screenshot only */
 .hero__phone {
@@ -520,195 +515,43 @@ h1, h2, h3, h4 {
   html { scroll-behavior: auto; }
 }
 
-/* ── Supporter page: pricing card ─────────────────────────────────────────── */
-.pricing-card {
-  background: var(--color-paper-2);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2xl);
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 0 60px var(--color-accent-dim);
-}
-.pricing-card__badge {
-  font-family: var(--font-display);
-  font-size: var(--text-xs);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  margin-bottom: var(--space-lg);
-}
-.pricing-card__price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0;
-  margin-bottom: var(--space-sm);
-}
-.pricing-card__currency {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 400;
-  color: var(--color-ink-2);
-  align-self: flex-start;
-  margin-top: var(--space-sm);
-}
-.pricing-card__amount {
-  font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 700;
-  color: var(--color-ink);
-  line-height: 1;
-}
-.pricing-card__period {
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  color: var(--color-ink-3);
-  margin-left: var(--space-xs);
-}
-.pricing-card__desc {
-  font-size: var(--text-md);
-  color: var(--color-ink-2);
-  margin-bottom: var(--space-xl);
-}
-.pricing-card__features {
-  text-align: left;
-  margin-bottom: var(--space-xl);
-}
-.pricing-card__features li {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-sm);
-  font-size: var(--text-md);
-  color: var(--color-ink-2);
-  padding-block: var(--space-sm);
-  border-bottom: 1px solid var(--color-rule-hair);
-}
-.pricing-card__features li:last-child { border-bottom: none; }
-.pricing-card__features svg {
-  flex: 0 0 auto;
-  color: var(--color-accent);
-  margin-top: 2px;
-}
-.pricing-card__note {
-  font-size: var(--text-xs);
-  color: var(--color-ink-3);
-  margin-top: var(--space-md);
-}
-
-/* ── Supporter page: post-checkout success banner (hidden until ?checkout=success) */
-.success-banner {
-  max-width: 640px;
-  margin-inline: auto;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-}
-.success-banner__title {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  margin-bottom: var(--space-sm);
-}
-.success-banner__steps {
-  margin: var(--space-md) 0;
-  padding-left: var(--space-xl);
-  color: var(--color-ink-2);
-  font-size: var(--text-md);
-}
-.success-banner__steps li { margin-bottom: var(--space-sm); }
-.success-banner__steps code {
-  background: var(--color-paper-3);
-  border-radius: 6px;
-  padding: 1px 6px;
-  font-size: 0.9em;
-}
-.success-banner__ref {
-  font-size: var(--text-xs);
-  color: var(--color-ink-3);
-}
-
-/* ── Supporter page: comparison table ─────────────────────────────────────── */
-.compare-table {
-  max-width: 640px;
-  margin-inline: auto;
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-.compare-row {
+/* ── Donate page ──────────────────────────────────────────────────────────── */
+.donate-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  border-bottom: 1px solid var(--color-rule);
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  max-width: 880px;
+  margin-inline: auto;
 }
-.compare-row:last-child { border-bottom: none; }
-.compare-row--header {
-  background: var(--color-paper-3);
-  font-family: var(--font-display);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-ink-3);
-}
-.compare-cell {
-  padding: var(--space-md) var(--space-lg);
-  font-size: var(--text-md);
-  color: var(--color-ink-2);
+.donate-card {
   display: flex;
-  align-items: center;
-}
-.compare-row--header .compare-cell { color: var(--color-ink-3); font-weight: 700; }
-.compare-cell--accent {
-  color: var(--color-accent);
-  background: var(--color-accent-muted);
-  font-weight: 600;
-}
-@media (max-width: 40rem) {
-  .compare-cell { padding: var(--space-sm) var(--space-md); font-size: var(--text-sm); }
-  .compare-row--header { font-size: var(--text-xs); }
-}
-
-/* ── Supporter page: FAQ accordion ────────────────────────────────────────── */
-.faq { display: flex; flex-direction: column; gap: var(--space-sm); }
-.faq__item {
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  background: var(--color-paper-2);
   border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  border-radius: var(--radius-lg);
 }
-.faq__question {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-lg);
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: 700;
-  text-align: left;
-  color: var(--color-ink);
-  transition: background-color var(--dur-short) var(--ease-out);
-}
-.faq__question:hover { background: var(--color-paper-2); }
-.faq__question::after {
-  content: '+';
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  color: var(--color-accent);
-  flex: 0 0 auto;
-  margin-left: var(--space-md);
-  transition: transform var(--dur-short) var(--ease-out);
-}
-.faq__item[open] .faq__question::after {
-  transform: rotate(45deg);
-}
-.faq__answer {
-  padding: 0 var(--space-lg) var(--space-lg);
+.donate-card__title { font-size: var(--text-xl); }
+.donate-card__desc {
   font-size: var(--text-md);
   color: var(--color-ink-2);
   line-height: 1.6;
 }
-.faq__answer p { margin: 0; }
+.donate-card .btn {
+  margin-top: auto;
+  justify-content: center;
+}
+.donate-note {
+  max-width: 640px;
+  margin: var(--space-xl) auto 0;
+  text-align: center;
+  color: var(--color-ink-2);
+  font-size: var(--text-md);
+}
+@media (min-width: 48rem) {
+  .donate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ── Fade-in animations ───────────────────────────────────────────────────── */
 .fade-in {

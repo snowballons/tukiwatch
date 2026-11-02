@@ -1,4 +1,4 @@
-// TukiWatch website — interactions and dynamic content
+// TukiWatch website — interactions
 
 document.addEventListener('DOMContentLoaded', () => {
   // Smooth scrolling for anchor links
@@ -16,66 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Fetch latest APK version and update download buttons
-  async function fetchLatestRelease() {
-    try {
-      const response = await fetch('https://downloads.snowballons.com/version.json', {
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-      if (!response.ok) throw new Error('Version fetch failed');
-      const data = await response.json();
-
-      const version = `v${data.version}`;
-      // arm64 build is the primary download; universal is the 32-bit fallback.
-      const downloadUrl = data.apkUrlArm64 || data.apkUrl;
-      const universalUrl = data.apkUrl;
-
-      // Update all download buttons
-      document
-        .querySelectorAll('#hero-download-btn, #footer-download-btn, #nav-download')
-        .forEach((btn) => {
-          if (btn) {
-            btn.href = downloadUrl;
-            const versionSpan = btn.querySelector('.btn__version');
-            if (versionSpan) versionSpan.textContent = `(${version})`;
-          }
-        });
-
-      // Point the 32-bit fallback link at the universal build when published.
-      const universalBtn = document.getElementById('hero-universal-btn');
-      if (universalBtn && universalUrl && universalUrl !== downloadUrl) {
-        universalBtn.href = universalUrl;
-      }
-    } catch (error) {
-      console.warn('Could not fetch latest version:', error);
-      // Buttons keep their default hrefs from HTML
-    }
-  }
-
-  fetchLatestRelease();
-
-  // Post-checkout success banner (supporter.html only).
-  // Polar redirects here with ?checkout=success&checkout_id={CHECKOUT_ID}.
-  (function showCheckoutSuccess() {
-    const banner = document.getElementById('checkout-success');
-    if (!banner) return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('checkout') !== 'success') return;
-    banner.hidden = false;
-    const checkoutId = (params.get('checkout_id') || '').trim();
-    if (checkoutId) {
-      const ref = document.getElementById('checkout-ref');
-      const idSpan = document.getElementById('checkout-id');
-      // textContent only — never inject URL input as HTML.
-      if (ref && idSpan) {
-        idSpan.textContent = checkoutId;
-        ref.hidden = false;
-      }
-    }
-    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  })();
-
-  // Intersection observer for fade-in sections
+  // Fade-in sections on scroll
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -88,30 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
   );
 
-  document.querySelectorAll('.feature, .step, .screens__item').forEach((el) => {
+  document.querySelectorAll('.feature, .step, .screens__item, .donate-card').forEach((el) => {
     el.classList.add('fade-in');
     observer.observe(el);
   });
 });
-
-// Fade-in base styles (injected here to avoid separate file)
-const style = document.createElement('style');
-style.textContent = `
-  .fade-in {
-    opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
-  }
-  .fade-in-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .fade-in {
-      opacity: 1;
-      transform: none;
-      transition: none;
-    }
-  }
-`;
-document.head.appendChild(style);

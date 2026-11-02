@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Privacy Policy — TukiWatch</title>
-  <meta name="description" content="TukiWatch privacy policy. No accounts, no cloud, no data collection. Your favorites live on your device.">
+  <meta name="description" content="TukiWatch privacy policy. No accounts, no cloud, no backend. Your favorites stay on your device.">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon.png">
   <link rel="icon" type="image/svg+xml" href="logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
     <div class="nav__links">
       <a href="index.html#features" class="nav__link">Features</a>
       <a href="index.html#screenshots" class="nav__link">Screens</a>
-      <a href="supporter.html" class="nav__link">Support</a>
+      <a href="donate.html" class="nav__link">Donate</a>
       <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="nav__link">GitHub</a>
     </div>
     <a href="index.html#download" class="nav__cta">Download</a>
@@ -33,31 +33,34 @@
   <div class="container" style="max-width:720px;">
     <a href="index.html" style="font-family:var(--font-display);font-size:var(--text-xs);color:var(--color-ink-3);letter-spacing:0.08em;text-transform:uppercase;display:inline-block;margin-bottom:var(--space-xl);">&larr; Back</a>
     <h1 style="font-size:var(--text-3xl);margin-bottom:var(--space-xl);">Privacy Policy</h1>
-    <p style="color:var(--color-ink-3);font-size:var(--text-sm);margin-bottom:var(--space-2xl);"><strong>Effective Date:</strong> February 9, 2026</p>
+    <p style="color:var(--color-ink-3);font-size:var(--text-sm);margin-bottom:var(--space-2xl);"><strong>Effective Date:</strong> November 2, 2026</p>
 
     <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">1. What We Collect</h2>
-    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We believe in collecting only what is necessary. TukiWatch stores your favorited channels, platforms, and preferences <strong>locally on your device</strong>. This data never leaves your phone unless you explicitly choose to use a self-hosted backend.</p>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch stores your favorited channels, platform choices, and preferences <strong>locally on your device</strong>. It does not create an account and does not send this data to a TukiWatch server.</p>
 
     <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">2. What We Don't Collect</h2>
-    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We do not collect, store, or transmit: your stream history, viewing habits, device identifiers, location data, or any personally identifiable information. The app is designed to be invisible to us.</p>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We do not operate a TukiWatch backend and do not collect, store, or transmit your stream history, viewing habits, device identifiers, location data, or other personally identifiable information.</p>
 
-    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">3. The Backend API</h2>
-    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">When you use our hosted API, requests are processed statelessly. Rate-limit data is cached briefly in memory (or Redis if configured) and never associated with an identity. No logs are retained beyond the cache TTL.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">3. On-Device Processing</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">Stream resolution runs inside the app using Streamlink through Chaquopy. When you resolve or play a stream, your device connects directly to the relevant third-party platform or content delivery network. TukiWatch does not route those requests through a TukiWatch server.</p>
 
-    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">4. Self-Hosted Backends</h2>
-    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">If you run your own TukiWatch API instance, your data stays on your server. We have no access to it. The app connects via QR code or deep link — we are not involved in that connection.</p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">4. Local Storage and Backups</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">Favorites and settings are stored in local SQLite and DataStore. Exporting a backup creates a JSON file in the location you choose through the Android Storage Access Framework. TukiWatch does not upload that file anywhere.</p>
 
     <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">5. Third-Party Platforms</h2>
-    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch accesses public streaming data from platforms like Twitch, YouTube, and Kick. Your interaction with those platforms is governed by their own privacy policies. TukiWatch does not authenticate with them on your behalf.</p>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch accesses public streaming data from platforms such as Twitch, YouTube, and Kick. Your interaction with those platforms is governed by their own privacy policies. TukiWatch does not operate accounts on those platforms; any optional credentials you supply are stored locally on your device.</p>
 
-    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">6. Children's Privacy</h2>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">6. Donations</h2>
+    <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">Donations are optional and are handled by GitHub Sponsors or Buy Me a Coffee. TukiWatch does not receive or store your payment details. The privacy policies of those providers apply to their services.</p>
+
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">7. Children's Privacy</h2>
     <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">TukiWatch is not intended for children under 13. We do not knowingly collect data from children. If we become aware of it, we will remove it.</p>
 
-    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">7. Changes</h2>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">8. Changes</h2>
     <p style="color:var(--color-ink-2);margin-bottom:var(--space-lg);">We may update this policy. Material changes will be noted here with a new effective date. Check back periodically.</p>
 
-    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">8. Contact</h2>
-    <p style="color:var(--color-ink-2);">Questions? Email <a href="mailto:tukiwatch@snowballons.com" style="color:var(--color-accent);">tukiwatch@snowballons.com</a></p>
+    <h2 style="font-size:var(--text-xl);margin-block:var(--space-xl) var(--space-md);">9. Contact</h2>
+    <p style="color:var(--color-ink-2);">Questions? Email <a href="mailto:snowballons@protonmail.com" style="color:var(--color-accent);">snowballons@protonmail.com</a></p>
   </div>
 </main>
 
@@ -67,11 +70,13 @@
     <nav class="footer__links" aria-label="Footer">
       <a href="index.html" class="footer__link">Home</a>
       <a href="index.html#features" class="footer__link">Features</a>
+      <a href="donate.html" class="footer__link">Donate</a>
       <a href="privacy.html" class="footer__link">Privacy</a>
       <a href="terms.html" class="footer__link">Terms</a>
       <a href="https://github.com/snowballons/tukiwatch" target="_blank" rel="noopener" class="footer__link">GitHub</a>
     </nav>
     <p class="footer__copy">&copy; 2026 TukiWatch. Open source under MIT license.</p>
+    <p class="footer__copy"><a href="mailto:snowballons@protonmail.com" class="footer__link">snowballons@protonmail.com</a></p>
   </div>
 </footer>
 <script src="script.js" defer></script>
