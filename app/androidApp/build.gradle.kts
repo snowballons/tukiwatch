@@ -77,9 +77,12 @@ android {
                 ?: System.getenv("TUKIWATCH_KEY_ALIAS")
             val keyPasswordProp = project.findProperty("TUKIWATCH_KEY_PASSWORD") as? String
                 ?: System.getenv("TUKIWATCH_KEY_PASSWORD")
+            val storeTypeProp = project.findProperty("TUKIWATCH_KEYSTORE_TYPE") as? String
+                ?: System.getenv("TUKIWATCH_KEYSTORE_TYPE")
 
             if (!storeFilePath.isNullOrBlank() && file(storeFilePath).exists()) {
                 storeFile = file(storeFilePath)
+                storeType = storeTypeProp ?: "PKCS12"
                 storePassword = storePasswordProp
                 keyAlias = keyAliasProp
                 keyPassword = keyPasswordProp

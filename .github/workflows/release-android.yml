@@ -6,9 +6,10 @@
 # Requirements:
 #   - Java 21 (Zulu)
 #   - Python 3.11 (for Chaquopy / streamlink)
-#   - No signing secrets required for a debug-aligned unsigned release APK.
-#     To sign, add KEYSTORE_BASE64, KEY_ALIAS, KEY_PASSWORD, STORE_PASSWORD
-#     secrets and uncomment the signing step.
+#   - Signing secrets (optional; debug signing is used if absent):
+#     TUKIWATCH_KEYSTORE_BASE64, TUKIWATCH_KEYSTORE_PASSWORD,
+#     TUKIWATCH_KEY_ALIAS, TUKIWATCH_KEY_PASSWORD.
+#     The keystore is PKCS12.
 
 name: Android KMP Release APK
 
@@ -75,7 +76,7 @@ jobs:
           KEYSTORE_B64: ${{ secrets.TUKIWATCH_KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > tukiwatch-release.jks
+            echo "$KEYSTORE_B64" | base64 -d > tukiwatch-release.p12
             echo "Production release keystore decoded successfully."
           else
             echo "No keystore secret found; will fall back to debug signing."
@@ -85,7 +86,8 @@ jobs:
       - name: Build Release APK
         working-directory: app
         env:
-          TUKIWATCH_KEYSTORE_FILE: ${{ github.workspace }}/tukiwatch-release.jks
+          TUKIWATCH_KEYSTORE_FILE: ${{ github.workspace }}/tukiwatch-release.p12
+          TUKIWATCH_KEYSTORE_TYPE: PKCS12
           TUKIWATCH_KEYSTORE_PASSWORD: ${{ secrets.TUKIWATCH_KEYSTORE_PASSWORD }}
           TUKIWATCH_KEY_ALIAS: ${{ secrets.TUKIWATCH_KEY_ALIAS }}
           TUKIWATCH_KEY_PASSWORD: ${{ secrets.TUKIWATCH_KEY_PASSWORD }}
