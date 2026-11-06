@@ -6,9 +6,13 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
 import com.snowballons.tukiwatch.ui.theme.TukiPalette
 import com.snowballons.tukiwatch.ui.theme.TukiWatchDark
+
+/** Read by every haptic call site so one setting silences the whole app. */
+val LocalHapticsEnabled = staticCompositionLocalOf { true }
 
 /** Bridges a palette into the Material3 roles the screens read. */
 fun TukiPalette.toColorScheme(): ColorScheme =
@@ -63,9 +67,13 @@ fun TukiPalette.toColorScheme(): ColorScheme =
 @Composable
 fun TukiWatchTheme(
     palette: TukiPalette = TukiWatchDark,
+    hapticsEnabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalTukiPalette provides palette) {
+    CompositionLocalProvider(
+        LocalTukiPalette provides palette,
+        LocalHapticsEnabled provides hapticsEnabled,
+    ) {
         MaterialTheme(colorScheme = palette.toColorScheme(), content = content)
     }
 }
