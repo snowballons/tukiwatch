@@ -14,22 +14,42 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -42,12 +62,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -69,6 +95,7 @@ import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
 import com.snowballons.tukiwatch.ui.TukiIcons
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
 import com.snowballons.tukiwatch.ui.rememberHaptics
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
 import com.snowballons.tukiwatch.ui.theme.tukiPaletteFor
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
@@ -470,48 +497,22 @@ fun AppContent(
         },
         bottomBar = {
             if (activeOverlay == null) {
-                NavigationBar {
-                    MainTab.entries.forEach { tab ->
-                        NavigationBarItem(
-                            selected = activeTab == tab,
-                            onClick = { activeTab = tab },
-                            label = if (tab == MainTab.ADD) null else { { Text(tab.label) } },
-                            icon = {
-                                if (tab == MainTab.ADD) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(42.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = TukiIcons.Add,
-                                            contentDescription = "Add",
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                } else {
-                                    Icon(
-                                        imageVector = tab.icon,
-                                        contentDescription = tab.label,
-                                        tint = if (activeTab == tab) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                            },
-                        )
-                    }
-                }
+                FloatingBottomBar(
+                    selected = activeTab,
+                    onSelect = { activeTab = it },
+                )
             }
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                // The player manages its own insets (it goes full-bleed), so
+                // adding the scaffold padding here would double the safe area.
+                .then(
+                    if (activeOverlay == OverlayScreen.PLAYER) Modifier
+                    else Modifier.padding(innerPadding)
+                )
         ) {
             when (activeOverlay) {
                 OverlayScreen.PLAYER -> {
@@ -663,6 +664,199 @@ fun AppContent(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Detached capsule navigation bar.
+ *
+ * Floats above the system navigation inset with side and bottom margins so the
+ * content scrolls underneath it instead of ending at a hard edge. Selection is
+ * carried by a tinted pill behind the icon plus a colour/weight change on the
+ * label; the Add action is a raised primary circle so it reads as the one
+ * create-style action in the set.
+ */
+@Composable
+private fun FloatingBottomBar(
+    selected: MainTab,
+    onSelect: (MainTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalTukiPalette.current
+    val haptic = rememberHaptics()
+    val navigationInset = WindowInsets.navigationBars
+        .asPaddingValues()
+        .calculateBottomPadding()
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = 20.dp,
+                end = 20.dp,
+                bottom = navigationInset + 10.dp,
+            )
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(66.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = palette.surfaceRaised.copy(alpha = 0.96f),
+            border = BorderStroke(1.dp, palette.outline.copy(alpha = 0.45f)),
+            shadowElevation = 14.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MainTab.entries.forEach { tab ->
+                    val select = {
+                        if (selected != tab) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        onSelect(tab)
+                    }
+                    if (tab == MainTab.ADD) {
+                        FloatingAddItem(selected = selected == tab, onClick = select)
+                    } else {
+                        FloatingTabItem(tab = tab, selected = selected == tab, onClick = select)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Icon + label tab with an animated selection pill. */
+@Composable
+private fun RowScope.FloatingTabItem(
+    tab: MainTab,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val tint by animateColorAsState(
+        targetValue = if (selected) scheme.primary else scheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 220),
+        label = "tabTint",
+    )
+    val pillColor by animateColorAsState(
+        targetValue = if (selected) scheme.primaryContainer.copy(alpha = 0.75f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 220),
+        label = "tabPill",
+    )
+
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.Tab,
+                interactionSource = interactionSource,
+                indication = ripple(bounded = false, radius = 34.dp),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(28.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(pillColor),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = tab.icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Text(
+                text = tab.label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = tint,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** The raised primary circle used for the Add tab. */
+@Composable
+private fun RowScope.FloatingAddItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1f else 0.94f,
+        animationSpec = tween(durationMillis = 220),
+        label = "addScale",
+    )
+    val elevation by animateDpAsState(
+        targetValue = if (selected) 14.dp else 8.dp,
+        animationSpec = tween(durationMillis = 220),
+        label = "addElevation",
+    )
+    val ringColor by animateColorAsState(
+        targetValue = if (selected) scheme.primary.copy(alpha = 0.4f) else Color.Transparent,
+        animationSpec = tween(durationMillis = 220),
+        label = "addRing",
+    )
+
+    Box(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.Tab,
+                interactionSource = interactionSource,
+                indication = ripple(bounded = false, radius = 36.dp),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .shadow(elevation = elevation, shape = CircleShape, clip = false)
+                .clip(CircleShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            scheme.primary,
+                            lerp(scheme.primary, scheme.background, 0.22f),
+                        )
+                    )
+                )
+                .border(2.dp, ringColor, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TukiIcons.Add,
+                contentDescription = "Add",
+                tint = scheme.onPrimary,
+                modifier = Modifier.size(24.dp),
+            )
         }
     }
 }
