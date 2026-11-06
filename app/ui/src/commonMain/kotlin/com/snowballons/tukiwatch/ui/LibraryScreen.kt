@@ -39,12 +39,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
+import com.snowballons.tukiwatch.prefs.Prefs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,12 +53,14 @@ fun LibraryScreen(
     loading: Boolean,
     degraded: Boolean,
     busy: Boolean,
+    showOffline: Boolean = true,
+    sort: String = Prefs.SORT_LIVE,
     onRefresh: () -> Unit,
     onDeleteFavorite: (Long) -> Unit,
     onStreamClick: (LiveStream) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haptic = LocalHapticFeedback.current
+    val haptic = rememberHaptics()
     var searchQuery by remember { mutableStateOf("") }
     var selectedPlatform by remember { mutableStateOf("all") }
     var streamToDelete by remember { mutableStateOf<LiveStream?>(null) }
@@ -70,8 +72,8 @@ fun LibraryScreen(
         listOf("all") + unique
     }
 
-    val filtered = remember(streams, searchQuery, selectedPlatform) {
-        streams.filter { item ->
+    val filtered = remember(streams, searchQuery, selectedPlatform, showOffline, sort) {
+        val matching = streams.filter { item ->
             val matchesSearch = searchQuery.isBlank() ||
                 item.streamerName.contains(searchQuery, ignoreCase = true) ||
                 item.title.contains(searchQuery, ignoreCase = true) ||
@@ -80,7 +82,16 @@ fun LibraryScreen(
             val matchesPlatform = selectedPlatform == "all" ||
                 item.platform.equals(selectedPlatform, ignoreCase = true)
 
-            matchesSearch && matchesPlatform
+            val visible = showOffline || item.status == STATUS_ONLINE
+
+            matchesSearch && matchesPlatform && visible
+        }
+        when (sort) {
+            Prefs.SORT_NAME -> matching.sortedBy { it.streamerName.lowercase() }
+            Prefs.SORT_RECENT -> matching.sortedByDescending { it.id }
+            else -> matching.sortedWith(
+                compareBy({ it.status != STATUS_ONLINE }, { it.streamerName.lowercase() })
+            )
         }
     }
 

@@ -82,13 +82,31 @@ class StreamController(
     private var codecFallbackDone = false
 
     /**
+     * Preferred rendition keyword from settings ("auto", "source", "1080", …).
+     * "auto" keeps the h264-first default; anything else is matched by name
+     * first, then falls back to the default when no rendition matches.
+     */
+    var preferredQuality: String = "auto"
+
+    /**
      * h264-first: HEVC-in-FLV (TikTok h265_*) is unplayable via ExoPlayer's FLV
      * extractor on most devices, so prefer h264 whenever offered.
      */
-    private fun preferredStream(items: List<StreamItem>): StreamItem? =
-        items.firstOrNull { it.quality.startsWith("h264") }
+    private fun preferredStream(items: List<StreamItem>): StreamItem? {
+        val want = preferredQuality.lowercase()
+        if (want != "auto" && want.isNotBlank()) {
+            val match = items.firstOrNull { it.quality.lowercase().contains(want) }
+            if (match != null) return match
+        }
+        return items.firstOrNull { it.quality.startsWith("h264") }
             ?: items.firstOrNull { it.quality == "best" }
             ?: items.firstOrNull()
+    }
+
+    /** Drops the resolve cache; the next play resolves fresh. */
+    fun clearCache() {
+        cache.clear()
+    }
 
     /** Quality row ordering: h264 first, then the rest alphabetically. */
     fun orderedQualities(): List<StreamItem> =

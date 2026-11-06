@@ -82,15 +82,17 @@ fun FullPlayerScreen(
     isFavorite: Boolean? = null,
     onToggleFavorite: () -> Unit = {},
     modifier: Modifier = Modifier,
+    backgroundPlayback: Boolean = false,
+    keepScreenAwake: Boolean = true,
 ) {
     val context = LocalContext.current
     val controller = vm.controller
     var showQualitySheet by remember { mutableStateOf(false) }
 
-    // Keep the screen on while the player is active — prevents dim/sleep during streams.
+    // Keep the screen on while the player is active — unless the user opted out.
     val view = LocalView.current
-    DisposableEffect(Unit) {
-        view.keepScreenOn = true
+    DisposableEffect(keepScreenAwake) {
+        view.keepScreenOn = keepScreenAwake
         onDispose { view.keepScreenOn = false }
     }
 
@@ -124,14 +126,16 @@ fun FullPlayerScreen(
         onDispose { if (isFullscreen) exitFullscreen() }
     }
 
-    // Lifecycle observer to pause ExoPlayer in background and resume on return
+    // Lifecycle observer to pause ExoPlayer in background and resume on return.
+    // With background playback on, only the surface is released on pause so the
+    // audio keeps going (best-effort; no foreground service yet).
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
-    DisposableEffect(lifecycle, vm) {
+    DisposableEffect(lifecycle, vm, backgroundPlayback) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
-                    vm.onPauseBackground()
+                    if (!backgroundPlayback) vm.onPauseBackground()
                     playerView?.onPause()
                 }
                 Lifecycle.Event.ON_RESUME -> {

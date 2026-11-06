@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +66,7 @@ import com.snowballons.tukiwatch.ui.SettingsScreen
 import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
 import com.snowballons.tukiwatch.ui.TukiIcons
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
+import com.snowballons.tukiwatch.ui.rememberHaptics
 import com.snowballons.tukiwatch.ui.theme.tukiPaletteFor
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
@@ -94,6 +94,9 @@ class MainActivity : ComponentActivity() {
      */
     var isPlayerActive = false
 
+    /** Auto PiP preference; mirrored from settings by [AppContent]. */
+    var autoPipEnabled = true
+
     /**
      * URL delivered via share-sheet (ACTION_SEND) or deep link (tukiwatch:// /
      * https stream URL) that [AppContent] should open in the player.
@@ -109,7 +112,7 @@ class MainActivity : ComponentActivity() {
     /** Automatically enter PiP when the user leaves the app while a stream is playing. */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (isPlayerActive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (isPlayerActive && autoPipEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val params = PictureInPictureParams.Builder()
                 .setAspectRatio(Rational(16, 9))
                 .build()
@@ -160,7 +163,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            TukiWatchTheme(palette = palette) {
+            TukiWatchTheme(palette = palette, hapticsEnabled = prefs.hapticsEnabled) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -251,7 +254,7 @@ fun AppContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val haptic = LocalHapticFeedback.current
+    val haptic = rememberHaptics()
 
     // Animated Snackbar host — surfaces all libraryVm feedback messages
     val snackbarHostState = remember { SnackbarHostState() }
@@ -263,11 +266,33 @@ fun AppContent(
         }
     }
 
-    // 5-minute foreground liveness refresh cadence
+    // Foreground liveness cadence, driven by the Live updates settings. Manual
+    // (interval 0) or auto-check off means a single check, no loop.
     val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(lifecycleOwner) {
+    LaunchedEffect(lifecycleOwner, prefs.autoCheckFavorites, prefs.checkIntervalMinutes) {
+        if (!prefs.autoCheckFavorites || prefs.checkIntervalMinutes <= 0) {
+            app.liveness.refresh()
+            return@LaunchedEffect
+        }
+        val intervalMs = prefs.checkIntervalMinutes * 60_000L
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            app.liveness.autoRefreshLoop()
+            app.liveness.autoRefreshLoop(intervalMs)
+        }
+    }
+
+    // Preferred rendition selection mirrored from settings.
+    LaunchedEffect(prefs.preferredQuality) {
+        streamVm.controller.preferredQuality = prefs.preferredQuality
+    }
+
+    // External links (GitHub, legal, support).
+    val openUrl: (String) -> Unit = { url ->
+        try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+            )
+        } catch (_: Exception) {
         }
     }
 
@@ -283,6 +308,9 @@ fun AppContent(
     val mainActivity = context as? MainActivity
     LaunchedEffect(activeOverlay) {
         mainActivity?.isPlayerActive = (activeOverlay == OverlayScreen.PLAYER)
+    }
+    LaunchedEffect(prefs.autoPip) {
+        mainActivity?.autoPipEnabled = prefs.autoPip
     }
 
     // Consume any URL delivered via share-sheet or deep link and open the player.
@@ -425,6 +453,8 @@ fun AppContent(
                             libraryVm.controller.toggleFavorite(author)
                         },
                         vm = streamVm,
+                        backgroundPlayback = prefs.backgroundPlayback,
+                        keepScreenAwake = prefs.keepScreenAwake,
                     )
                 }
                 OverlayScreen.PRIVACY -> {
@@ -455,6 +485,8 @@ fun AppContent(
                                 loading = loading,
                                 degraded = degraded,
                                 busy = libraryVm.controller.busy,
+                                showOffline = prefs.showOfflineChannels,
+                                sort = prefs.myListSort,
                                 onRefresh = { libraryVm.refresh() },
                                 onDeleteFavorite = { id -> libraryVm.removeFavorite(id) },
                                 onStreamClick = { stream -> onPlayLiveStream(stream) },
@@ -489,32 +521,63 @@ fun AppContent(
                         }
                         MainTab.SETTINGS -> {
                             SettingsScreen(
-                                streams = streams,
-                                currentThemeId = prefs.themeId,
-                                onThemeChange = { id ->
-                                    scope.launch { app.prefs.setThemeId(id) }
+                                prefs = prefs,
+                                onThemeChange = { id -> scope.launch { app.prefs.setThemeId(id) } },
+                                onBackgroundPlaybackChange = { on ->
+                                    scope.launch { app.prefs.setBackgroundPlayback(on) }
+                                },
+                                onAutoPipChange = { on ->
+                                    scope.launch { app.prefs.setAutoPip(on) }
+                                },
+                                onPreferredQualityChange = { quality ->
+                                    scope.launch { app.prefs.setPreferredQuality(quality) }
+                                },
+                                onKeepScreenAwakeChange = { on ->
+                                    scope.launch { app.prefs.setKeepScreenAwake(on) }
+                                },
+                                onAutoCheckChange = { on ->
+                                    scope.launch { app.prefs.setAutoCheckFavorites(on) }
+                                },
+                                onCheckIntervalChange = { minutes ->
+                                    scope.launch { app.prefs.setCheckIntervalMinutes(minutes) }
+                                },
+                                onUpdateRemindersChange = { on ->
+                                    scope.launch { app.prefs.setUpdateReminders(on) }
+                                },
+                                onShowOfflineChange = { on ->
+                                    scope.launch { app.prefs.setShowOfflineChannels(on) }
+                                },
+                                onMyListSortChange = { sort ->
+                                    scope.launch { app.prefs.setMyListSort(sort) }
+                                },
+                                onHapticsChange = { on ->
+                                    scope.launch { app.prefs.setHapticsEnabled(on) }
+                                },
+                                onReduceMotionChange = { on ->
+                                    scope.launch { app.prefs.setReduceMotion(on) }
                                 },
                                 onExportBackup = {
-                                    exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
+                                    exportLauncher.launch(
+                                        "tukiwatch-favorites-${System.currentTimeMillis()}.json"
+                                    )
                                 },
                                 onImportBackup = {
                                     importLauncher.launch(arrayOf("application/json", "text/plain"))
                                 },
-                                onOpenPrivacyPolicy = {
-                                    activeOverlay = OverlayScreen.PRIVACY
+                                onClearCache = { streamVm.controller.clearCache() },
+                                onReplayIntro = {
+                                    scope.launch { app.prefs.setOnboardingCompleted(false) }
                                 },
-                                onOpenTermsOfService = {
-                                    activeOverlay = OverlayScreen.TERMS
+                                onSaveTwitchCredentials = { id, token ->
+                                    scope.launch { app.prefs.setHelixCredentials(id, token) }
                                 },
-                                onOpenGitHub = {
-                                    try {
-                                        val gitHubIntent = Intent(
-                                            Intent.ACTION_VIEW,
-                                            Uri.parse("https://github.com/snowballons/tukiwatch")
-                                        ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                                        context.startActivity(gitHubIntent)
-                                    } catch (_: Exception) {}
+                                onOpenPrivacyPolicy = { activeOverlay = OverlayScreen.PRIVACY },
+                                onOpenTermsOfService = { activeOverlay = OverlayScreen.TERMS },
+                                onOpenGitHub = { openUrl("https://github.com/snowballons/tukiwatch") },
+                                onReportProblem = {
+                                    openUrl("https://github.com/snowballons/tukiwatch/issues/new")
                                 },
+                                onSupport = { openUrl("https://github.com/sponsors/snowballons") },
                                 appVersionName = BuildConfig.VERSION_NAME,
                                 appVersionCode = BuildConfig.VERSION_CODE,
                             )
