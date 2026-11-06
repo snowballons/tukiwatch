@@ -672,7 +672,12 @@ fun AppContent(
                                 onOpenTermsOfService = { activeOverlay = OverlayScreen.TERMS },
                                 onOpenGitHub = { openUrl("https://github.com/snowballons/tukiwatch") },
                                 onReportProblem = {
-                                    openUrl("https://github.com/snowballons/tukiwatch/issues/new")
+                                    // Land on the bug report template rather than a
+                                    // blank form — it has the fields the maintainer
+                                    // needs (version, Android, stream details).
+                                    openUrl(
+                                        "https://github.com/snowballons/tukiwatch/issues/new?template=bug-report.md"
+                                    )
                                 },
                                 onSupport = { openUrl("https://buymeacoffee.com/snowballons") },
                                 appVersionName = BuildConfig.VERSION_NAME,

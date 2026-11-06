@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: mailto:tukiwatch@snowballons.com
+    about: Security bugs must NOT be filed as public issues — email tukiwatch@snowballons.com instead. See the README's Privacy and security section.
+  - name: General questions
+    url: https://github.com/snowballons/tukiwatch/discussions
+    about: Questions, tips, and general discussion belong in Discussions, not issues.
