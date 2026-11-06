@@ -29,14 +29,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -692,6 +698,18 @@ private fun FloatingBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            // Consume the horizontal system-bar / display-cutout insets so
+            // Scaffold excludes them from `innerPadding`. The old NavigationBar
+            // did this via NavigationBarDefaults.windowInsets; without it the
+            // start/end insets leak into the content Box and show up as a gap
+            // (most visible on the right on cutout / gesture-nav devices).
+            // consumeWindowInsets (rather than windowInsetsPadding) keeps the
+            // bar's own 20.dp side margins and floating position unchanged.
+            .consumeWindowInsets(
+                WindowInsets.systemBars
+                    .union(WindowInsets.displayCutout)
+                    .only(WindowInsetsSides.Horizontal)
+            )
             .padding(
                 start = 20.dp,
                 end = 20.dp,
