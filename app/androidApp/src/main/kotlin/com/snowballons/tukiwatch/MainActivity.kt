@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
+import android.view.WindowManager
 import android.os.Bundle
 import android.app.PictureInPictureParams
 import android.util.Rational
@@ -267,6 +268,17 @@ class MainActivity : ComponentActivity() {
                     val window = (view.context as? Activity)?.window ?: return@SideEffect
                     window.statusBarColor = palette.background.toArgb()
                     window.navigationBarColor = palette.surface.toArgb()
+                    // The app is edge-to-edge (transparent status/nav bars, content
+                    // draws behind them), so it must also be allowed to draw under
+                    // the display cutout. DEFAULT would force the system to reserve
+                    // the cutout strip at the window level and clip content out of
+                    // it — a hard constraint that consumeWindowInsets cannot undo.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        window.attributes = window.attributes.apply {
+                            layoutInDisplayCutoutMode =
+                                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        }
+                    }
                     WindowCompat.getInsetsController(window, view).apply {
                         isAppearanceLightStatusBars = !systemBarsDark
                         isAppearanceLightNavigationBars = !systemBarsDark

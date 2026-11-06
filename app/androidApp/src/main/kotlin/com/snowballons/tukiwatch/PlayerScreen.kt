@@ -148,14 +148,25 @@ fun FullPlayerScreen(
         }
     }
 
-    /** Restores portrait/unspecified orientation and shows system bars. */
+    /**
+     * Restores portrait/unspecified orientation and shows system bars.
+     *
+     * Cutout mode is restored to SHORT_EDGES (not DEFAULT): this app is
+     * edge-to-edge and draws under the transparent status/nav bars, so it
+     * must also be allowed to draw under the cutout in portrait. DEFAULT
+     * forces the system to reserve the cutout strip at the window level and
+     * clips content out of it — which can't be undone by consumeWindowInsets
+     * because it's a hard window constraint, not an inset. That left a
+     * persistent right-side gap on cutout devices after exiting fullscreen,
+     * visible across every screen until the process restarted.
+     */
     fun exitFullscreen() {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         activity?.window?.let { win ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 win.attributes = win.attributes.apply {
                     layoutInDisplayCutoutMode =
-                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                 }
             }
             WindowInsetsControllerCompat(win, win.decorView)
