@@ -577,7 +577,7 @@ fun AppContent(
                                 onReportProblem = {
                                     openUrl("https://github.com/snowballons/tukiwatch/issues/new")
                                 },
-                                onSupport = { openUrl("https://github.com/sponsors/snowballons") },
+                                onSupport = { openUrl("https://buymeacoffee.com/snowballons") },
                                 appVersionName = BuildConfig.VERSION_NAME,
                                 appVersionCode = BuildConfig.VERSION_CODE,
                             )
