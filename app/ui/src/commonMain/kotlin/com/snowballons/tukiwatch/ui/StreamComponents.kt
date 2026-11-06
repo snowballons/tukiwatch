@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,6 +27,7 @@ import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
 
 /** Small status chip shared by the player, My List and the desktop harness. */
 @Composable
@@ -35,11 +35,7 @@ fun StatusPill(
     status: String,
     modifier: Modifier = Modifier,
 ) {
-    val liveColor = if (MaterialTheme.colorScheme.background.luminance() > 0.5f) {
-        TukiWatchPalette.LiveOnLight
-    } else {
-        TukiWatchPalette.Live
-    }
+    val liveColor = LocalTukiPalette.current.live
     val (label, color) = when (status) {
         STATUS_ONLINE -> "LIVE" to liveColor
         STATUS_OFFLINE -> "OFF" to MaterialTheme.colorScheme.onSurfaceVariant

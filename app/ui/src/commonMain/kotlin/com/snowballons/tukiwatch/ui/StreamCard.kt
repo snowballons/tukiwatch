@@ -30,6 +30,8 @@ import coil3.compose.AsyncImage
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
+import com.snowballons.tukiwatch.ui.theme.PlatformColors
 
 /**
  * Visual card for streams matching the original mobile design.
@@ -43,7 +45,8 @@ fun StreamCard(
     onClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    val platformColor = TukiWatchPalette.platformColor(stream.platform)
+    val platformColor = PlatformColors.platformColor(stream.platform)
+    val liveColor = LocalTukiPalette.current.live
 
     val titleText = if (stream.status == STATUS_ONLINE && stream.title.isNotBlank()) {
         stream.title
@@ -117,7 +120,7 @@ fun StreamCard(
                             .align(Alignment.BottomEnd)
                             .padding(8.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(TukiWatchPalette.Live.copy(alpha = 0.9f))
+                            .background(liveColor.copy(alpha = 0.9f))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(

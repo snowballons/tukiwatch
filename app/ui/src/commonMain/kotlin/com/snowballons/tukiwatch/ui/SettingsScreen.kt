@@ -1,6 +1,7 @@
 package com.snowballons.tukiwatch.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,12 +32,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
-import com.snowballons.tukiwatch.prefs.ThemeMode
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
+import com.snowballons.tukiwatch.ui.theme.ThemeOption
+import com.snowballons.tukiwatch.ui.theme.TukiThemes
 
 @Composable
 fun SettingsScreen(
-    currentTheme: ThemeMode,
-    onThemeChange: (ThemeMode) -> Unit,
+    currentThemeId: String,
+    onThemeChange: (String) -> Unit,
     onExportBackup: () -> Unit,
     onImportBackup: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
@@ -104,12 +108,12 @@ fun SettingsScreen(
                 StatColumn(
                     label = "Live Now",
                     value = "$liveCount",
-                    valueColor = if (liveCount > 0) TukiWatchPalette.Live else null
+                    valueColor = if (liveCount > 0) LocalTukiPalette.current.live else null
                 )
             }
         }
 
-        // Appearance with Segmented Pill Selector
+        // Appearance — theme picker
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
@@ -119,57 +123,38 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
                     text = "Appearance",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
-
-                // Segmented 3-option control
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    listOf(
-                        ThemeMode.SYSTEM to "System",
-                        ThemeMode.LIGHT to "Light",
-                        ThemeMode.DARK to "Dark"
-                    ).forEach { (mode, label) ->
-                        val selected = currentTheme == mode
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else Color.Transparent
-                                )
-                                .clickable { onThemeChange(mode) }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
                 Text(
-                    text = "System follows your device dark mode setting.",
+                    text = "Pick a theme. System matches your device's dark mode setting.",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                Spacer(Modifier.height(4.dp))
+
+                ThemeRow(
+                    label = "Follow system",
+                    subtitle = "matches your device",
+                    swatch = null,
+                    selected = currentThemeId == "system",
+                    onClick = { onThemeChange("system") },
+                )
+
+                TukiThemes.forEach { theme ->
+                    ThemeRow(
+                        label = theme.label,
+                        subtitle = if (theme.dark) "dark" else "light",
+                        swatch = theme,
+                        selected = currentThemeId == theme.key,
+                        onClick = { onThemeChange(theme.key) },
+                    )
+                }
             }
         }
 
@@ -359,5 +344,77 @@ private fun StatColumn(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * Shows a theme rather than naming it: the candidate's own background chip
+ * with its accent, live and ink as swatches, plus a selected marker. A list of
+ * twenty names tells you nothing; a few squares tell you what matters at a
+ * glance. Pass [swatch] = null for the "follow system" row.
+ */
+@Composable
+private fun ThemeRow(
+    label: String,
+    subtitle: String,
+    swatch: ThemeOption?,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val palette = LocalTukiPalette.current
+    val chipBackground = swatch?.palette?.background ?: palette.surface
+    val chipBorder = swatch?.palette?.outline ?: palette.outline
+    val dots = swatch?.palette?.let { listOf(it.primary, it.live, it.onBackground) }
+        ?: listOf(palette.primary, palette.onBackground, palette.onSurfaceVariant)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(chipBackground)
+                .border(1.dp, chipBorder, RoundedCornerShape(6.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            dots.forEach { dot ->
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(dot),
+                )
+            }
+        }
+
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                color = if (selected) palette.primary else MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (selected) {
+            Text(
+                text = "✓",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = palette.primary,
+            )
+        }
     }
 }

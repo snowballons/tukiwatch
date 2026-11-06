@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.snowballons.tukiwatch.EngineResult
+import com.snowballons.tukiwatch.ui.theme.PlatformColors
 
 data class PlatformPreset(
     val key: String,
@@ -117,7 +118,7 @@ fun AddScreen(
         if (resolvedUrl.isBlank()) false else isFavorite(resolvedUrl)
     }
 
-    val platformColor = TukiWatchPalette.platformColor(selectedPreset.key)
+    val platformColor = PlatformColors.platformColor(selectedPreset.key)
 
     Column(
         modifier = modifier
@@ -420,7 +421,7 @@ fun PlatformPickerModal(
                 ) {
                     items(filteredPlatforms, key = { it.key }) { preset ->
                         val isSelected = preset.key == currentPreset.key
-                        val brandColor = TukiWatchPalette.platformColor(preset.key)
+                        val brandColor = PlatformColors.platformColor(preset.key)
 
                         Row(
                             modifier = Modifier

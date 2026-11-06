@@ -45,17 +45,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val SplashCyan = Color(0xFF2FC5F7)
-private val SplashDeep = Color(0xFF070A12)
-private val SplashText = Color(0xFFEFEFF1)
-private val SplashMuted = Color(0xFFB5B5BE)
-
 /**
- * First-run brand moment: the TukiWatch mark, a quiet cyan glow, and the
- * "Every stream. One watchlist." promise, followed by a fade into the app.
+ * First-run brand moment: the TukiWatch mark, a quiet glow in the active
+ * theme's accent, and the "Every stream. One watchlist." promise, followed by
+ * a fade into the app.
  */
 @Composable
 fun CustomSplashScreen(
@@ -64,6 +61,7 @@ fun CustomSplashScreen(
     modifier: Modifier = Modifier,
     minDisplayTimeMs: Long = 1600L,
 ) {
+    val palette = LocalTukiPalette.current
     var isVisible by remember { mutableStateOf(true) }
 
     val logoScale = remember { Animatable(0.84f) }
@@ -143,9 +141,9 @@ fun CustomSplashScreen(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xFF0E0E10),
-                            Color(0xFF0B1020),
-                            SplashDeep,
+                            palette.background,
+                            palette.surface,
+                            palette.background,
                         ),
                     ),
                 ),
@@ -168,7 +166,7 @@ fun CustomSplashScreen(
                             .background(
                                 Brush.radialGradient(
                                     listOf(
-                                        SplashCyan.copy(alpha = glowAlpha),
+                                        palette.primary.copy(alpha = glowAlpha),
                                         Color.Transparent,
                                     ),
                                 ),
@@ -196,7 +194,7 @@ fun CustomSplashScreen(
                         text = "TukiWatch",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = SplashText,
+                        color = palette.onBackground,
                         letterSpacing = 1.sp,
                     )
                     Spacer(Modifier.height(12.dp))
@@ -204,14 +202,14 @@ fun CustomSplashScreen(
                         modifier = Modifier
                             .width(42.dp)
                             .height(2.dp)
-                            .background(SplashCyan),
+                            .background(palette.primary),
                     )
                     Spacer(Modifier.height(14.dp))
                     Text(
                         text = "EVERY STREAM.\nONE WATCHLIST.",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = SplashCyan,
+                        color = palette.primary,
                         textAlign = TextAlign.Center,
                         letterSpacing = 2.4.sp,
                         lineHeight = 24.sp,
@@ -220,7 +218,7 @@ fun CustomSplashScreen(
                     Text(
                         text = "ON-DEVICE  ·  NO ACCOUNT",
                         style = MaterialTheme.typography.labelSmall,
-                        color = SplashMuted,
+                        color = palette.onSurfaceVariant,
                         letterSpacing = 1.2.sp,
                     )
                 }
@@ -234,17 +232,17 @@ fun CustomSplashScreen(
                     Box(
                         modifier = Modifier
                             .size(8.dp)
-                            .background(SplashCyan.copy(alpha = dot1Alpha), CircleShape),
+                            .background(palette.primary.copy(alpha = dot1Alpha), CircleShape),
                     )
                     Box(
                         modifier = Modifier
                             .size(8.dp)
-                            .background(SplashCyan.copy(alpha = dot2Alpha), CircleShape),
+                            .background(palette.primary.copy(alpha = dot2Alpha), CircleShape),
                     )
                     Box(
                         modifier = Modifier
                             .size(8.dp)
-                            .background(SplashCyan.copy(alpha = dot3Alpha), CircleShape),
+                            .background(palette.primary.copy(alpha = dot3Alpha), CircleShape),
                     )
                 }
             }
