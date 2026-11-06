@@ -46,8 +46,9 @@ import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.ui.FavoriteRow
 import com.snowballons.tukiwatch.ui.StreamErrorCard
 import com.snowballons.tukiwatch.ui.StreamMetadataCard
-import com.snowballons.tukiwatch.ui.TukiWatchPalette
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
+import com.snowballons.tukiwatch.ui.theme.TukiWatchDark
+import com.snowballons.tukiwatch.ui.theme.tukiPaletteFor
 import java.awt.Desktop
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
@@ -63,15 +64,15 @@ object DesktopTestTags {
     const val FAVORITES = "favorites-list"
 }
 
-private val TwitchPurple = TukiWatchPalette.Purple
-private val LiveGreen = TukiWatchPalette.Live
+private val TwitchPurple = TukiWatchDark.primary
+private val LiveGreen = TukiWatchDark.live
 
 @Composable
 fun DesktopHarnessApp(
     harness: DesktopHarness,
     modifier: Modifier = Modifier,
 ) {
-    TukiWatchTheme(darkTheme = true) {
+    TukiWatchTheme(palette = tukiPaletteFor("tukiwatch-dark", systemDark = true)) {
         Column(
             modifier
                 .fillMaxSize()

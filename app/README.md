@@ -32,12 +32,14 @@ ExoPlayer surface, SAF pickers, lifecycle, and system intents.
   preferences, `LivenessRepository`, and network-error classification. No Compose
   dependency. `androidMain` throws from `createStreamEngine()` by design —
   Android uses `ChaquopyStreamEngine(context)`.
-- `ui` — shared Compose surface and plain state holders. `TukiWatchTheme` /
-  palette, status pill, metadata card, error card, My List row, quality chips,
-  plus `StreamController` (resolve, cache, quality ordering, background pause,
-  live-edge recovery, codec fallback) and `LibraryController` (favourites
-  membership, JSON backup, liveness state). Android wraps them in thin
-  ViewModels; desktop renders the same components.
+- `ui` — shared Compose surface and plain state holders. The `theme` package
+  owns the role-based `TukiPalette` contract, the curated `TukiThemes` set and
+  the `tukiPaletteFor` resolver, applied by `TukiWatchTheme`. Plus status pill,
+  metadata card, error card, My List row, quality chips, `StreamController`
+  (resolve, cache, quality ordering, background pause, live-edge recovery,
+  codec fallback) and `LibraryController` (favourites membership, JSON backup,
+  liveness state). Android wraps them in thin ViewModels; desktop renders the
+  same components.
 - `androidApp` — the shipped APK. Chaquopy + Streamlink, Media3 ExoPlayer, thin
   `StreamViewModel`/`LibraryViewModel` wrappers over `:ui`, SAF file pickers, and
   `stream_engine.py`.

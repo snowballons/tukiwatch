@@ -65,7 +65,8 @@ import com.snowballons.tukiwatch.ui.StatusPill
 import com.snowballons.tukiwatch.ui.StreamErrorCard
 import com.snowballons.tukiwatch.ui.StreamMetadataCard
 import com.snowballons.tukiwatch.ui.StreamUtils
-import com.snowballons.tukiwatch.ui.TukiWatchPalette
+import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
+import com.snowballons.tukiwatch.ui.theme.PlatformColors
 
 /**
  * Dedicated player screen for Phase 3.
@@ -149,7 +150,8 @@ fun FullPlayerScreen(
         ?.takeIf { it.isNotBlank() && it.lowercase() != "live" && it.lowercase() != "video" }
         ?: StreamUtils.deriveStreamerName(controller.url)
     val platform = streamMetadata?.platform ?: StreamUtils.detectPlatform(controller.url)
-    val platformColor = TukiWatchPalette.platformColor(platform)
+    val platformColor = PlatformColors.platformColor(platform)
+    val palette = LocalTukiPalette.current
 
     Column(
         modifier = modifier
@@ -485,14 +487,14 @@ fun FullPlayerScreen(
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(4.dp))
-                                                .background(TukiWatchPalette.Live.copy(alpha = 0.15f))
+                                                .background(palette.liveWash)
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = "HD / SOURCE",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold,
-                                                color = TukiWatchPalette.Live
+                                                color = palette.live
                                             )
                                         }
                                     }

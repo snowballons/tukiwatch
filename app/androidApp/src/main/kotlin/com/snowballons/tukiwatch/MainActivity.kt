@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -56,7 +57,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.snowballons.tukiwatch.liveness.autoRefreshLoop
 import com.snowballons.tukiwatch.prefs.Prefs
-import com.snowballons.tukiwatch.prefs.ThemeMode
 import com.snowballons.tukiwatch.ui.AddScreen
 import com.snowballons.tukiwatch.ui.CustomSplashScreen
 import com.snowballons.tukiwatch.ui.HomeScreen
@@ -67,6 +67,7 @@ import com.snowballons.tukiwatch.ui.SettingsScreen
 import com.snowballons.tukiwatch.ui.TermsOfServiceScreen
 import com.snowballons.tukiwatch.ui.TukiIcons
 import com.snowballons.tukiwatch.ui.TukiWatchTheme
+import com.snowballons.tukiwatch.ui.theme.tukiPaletteFor
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -136,34 +137,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             val scope = rememberCoroutineScope()
             val prefs by app.prefs.prefs.collectAsStateWithLifecycle(
-                initialValue = Prefs(themeMode = ThemeMode.SYSTEM, onboardingCompleted = true)
+                initialValue = Prefs(themeId = "system", onboardingCompleted = true)
             )
 
-            val darkTheme = when (prefs.themeMode) {
-                ThemeMode.DARK -> true
-                ThemeMode.LIGHT -> false
-                ThemeMode.SYSTEM -> isSystemInDarkTheme()
-            }
+            val palette = tukiPaletteFor(prefs.themeId, isSystemInDarkTheme())
 
             var showSplash by rememberSaveable { mutableStateOf(true) }
-            val systemBarsDark = darkTheme || showSplash
+            val systemBarsDark = palette.dark
 
             // Keep phone status bar and navigation bar in sync with app theme.
-            // The splash is always dark, so keep the bars dark until it finishes.
+            // The splash is palette-painted too, so both follow the palette.
             val view = LocalView.current
             if (!view.isInEditMode) {
                 SideEffect {
                     val window = (view.context as? Activity)?.window ?: return@SideEffect
-                    window.statusBarColor = if (systemBarsDark) {
-                        android.graphics.Color.parseColor("#0E0E10")
-                    } else {
-                        android.graphics.Color.parseColor("#F8F9FA")
-                    }
-                    window.navigationBarColor = if (systemBarsDark) {
-                        android.graphics.Color.parseColor("#18181B")
-                    } else {
-                        android.graphics.Color.parseColor("#FFFFFF")
-                    }
+                    window.statusBarColor = palette.background.toArgb()
+                    window.navigationBarColor = palette.surface.toArgb()
                     WindowCompat.getInsetsController(window, view).apply {
                         isAppearanceLightStatusBars = !systemBarsDark
                         isAppearanceLightNavigationBars = !systemBarsDark
@@ -171,7 +160,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            TukiWatchTheme(darkTheme = darkTheme) {
+            TukiWatchTheme(palette = palette) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -501,9 +490,9 @@ fun AppContent(
                         MainTab.SETTINGS -> {
                             SettingsScreen(
                                 streams = streams,
-                                currentTheme = prefs.themeMode,
-                                onThemeChange = { mode ->
-                                    scope.launch { app.prefs.setThemeMode(mode) }
+                                currentThemeId = prefs.themeId,
+                                onThemeChange = { id ->
+                                    scope.launch { app.prefs.setThemeId(id) }
                                 },
                                 onExportBackup = {
                                     exportLauncher.launch("tukiwatch-favorites-${System.currentTimeMillis()}.json")
