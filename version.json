@@ -1,10 +1,10 @@
 {
-  "version": "1.1.4",
-  "versionCode": 12,
-  "versionCodeArm64": 11,
-  "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.4/tukiwatch-1.1.4-universal.apk",
-  "apkUrlArm64": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.4/tukiwatch-1.1.4-arm64.apk",
-  "releaseNotes": "Released via GitHub Actions.",
+  "version": "1.1.8",
+  "versionCode": 15,
+  "versionCodeArm64": 14,
+  "apkUrl": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.8/tukiwatch-1.1.8-universal.apk",
+  "apkUrlArm64": "https://github.com/snowballons/tukiwatch/releases/download/v1.1.8/tukiwatch-1.1.8-arm64.apk",
+  "releaseNotes": "See CHANGELOG.md for details.",
   "mandatory": false,
   "minAndroidVersion": 8
 }

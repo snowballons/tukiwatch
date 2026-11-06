@@ -131,7 +131,39 @@ FastAPI backend; their paths are historical.
   upgrades the Expo app in place. Release builds must be signed with the old
   keystore; debug installs require uninstalling the Expo app first.
 
-## Legacy — Expo/React Native + FastAPI (1.1.4 and earlier)
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [1.1.8] - 2026-11-06
+
+### Added
+
+- Floating capsule bottom navigation bar — detached rounded pill with animated
+  selection pill, raised Add circle, haptic ticks, and accessibility `selectable(role = Tab)`.
+- Full-bleed fullscreen and modern picture-in-picture — Media3 ExoPlayer surface
+  goes edge-to-edge, no header in fullscreen, PiP window matches stream aspect ratio.
+- GitHub issue templates (bug report, feature request, regression report) with
+  app-specific guidance; "Report a problem" in Settings now lands on the bug
+  template. Security issues route to email per the README.
+
+### Fixed
+
+- Right-side gap appearing across all screens on cutout / gesture-nav devices.
+  The custom `FloatingBottomBar` did not consume horizontal system-bar/cutout
+  insets, so `Scaffold` forwarded them into `innerPadding` which stacked on top
+  of each screen's own horizontal padding. Fixed by consuming the horizontal
+  insets on the bar's outer box.
+- Persistent right-side gap after exiting fullscreen. `exitFullscreen()` set
+  `layoutInDisplayCutoutMode = DEFAULT` on the window, a window-level constraint
+  that forces the system to reserve the cutout strip and clip content out of it
+  — a hard constraint `consumeWindowInsets` cannot undo. Restored
+  `SHORT_EDGES` on exit and at app startup so the edge-to-edge content draws
+  under the cutout in portrait, matching the transparent status/nav bars.
 
 The entries below describe the retired Expo client and FastAPI backend. Paths
 such as `app/src/`, `api/`, and the EAS workflows refer to the old layout and no
