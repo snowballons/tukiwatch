@@ -2,6 +2,8 @@ package com.snowballons.tukiwatch
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -89,13 +91,38 @@ enum class OverlayScreen {
 class MainActivity : ComponentActivity() {
     /**
      * Tracks whether the full-screen player overlay is currently visible.
-     * Set by [AppContent] via [LaunchedEffect] so that [onUserLeaveHint] knows
-     * whether to enter Picture-in-Picture mode when the user presses Home.
+     * Set by [AppContent] via [LaunchedEffect]; changing it also refreshes the
+     * PiP params so auto-enter is only armed while a stream is on screen.
      */
     var isPlayerActive = false
+        set(value) {
+            if (field == value) return
+            field = value
+            applyPipParams()
+        }
 
     /** Auto PiP preference; mirrored from settings by [AppContent]. */
     var autoPipEnabled = true
+        set(value) {
+            if (field == value) return
+            field = value
+            applyPipParams()
+        }
+
+    /** True while the activity is hosted in a PiP window. Compose-observable. */
+    var isInPip by mutableStateOf(false)
+        private set
+
+    /** Video bounds in window pixels; animates the PiP enter transition. */
+    private var pipSourceRect: Rect? = null
+
+    /** Actual stream aspect ratio, so the PiP window is not hard-coded 16:9. */
+    private var pipAspectRatio: Rational = Rational(16, 9)
+
+    private companion object {
+        /** Widest ratio the platform accepts for a PiP window. */
+        const val MAX_PIP_ASPECT = 2.39f
+    }
 
     /**
      * URL delivered via share-sheet (ACTION_SEND) or deep link (tukiwatch:// /
@@ -109,14 +136,65 @@ class MainActivity : ComponentActivity() {
     /** Called by [AppContent] after consuming the pending URL to prevent re-delivery. */
     fun consumePendingUrl() { _pendingUrl.value = null }
 
-    /** Automatically enter PiP when the user leaves the app while a stream is playing. */
+    /** Called by the player as its video surface moves or resizes. */
+    fun updatePipSourceRect(rect: Rect) {
+        if (rect == pipSourceRect) return
+        pipSourceRect = rect
+        applyPipParams()
+    }
+
+    /** Called by the player when Media3 reports a new video size. */
+    fun updatePipAspectRatio(width: Int, height: Int) {
+        if (width <= 0 || height <= 0) return
+        // Android only accepts ratios between 1:2.39 and 2.39:1 for PiP windows.
+        val ratio = width.toFloat() / height
+        val rational = when {
+            ratio > MAX_PIP_ASPECT -> Rational(239, 100)
+            ratio < 1f / MAX_PIP_ASPECT -> Rational(100, 239)
+            else -> Rational(width, height)
+        }
+        if (rational == pipAspectRatio) return
+        pipAspectRatio = rational
+        applyPipParams()
+    }
+
+    private fun pipEligible(): Boolean = isPlayerActive && autoPipEnabled && !isInPip
+
+    private fun buildPipParams(): PictureInPictureParams {
+        val builder = PictureInPictureParams.Builder().setAspectRatio(pipAspectRatio)
+        pipSourceRect?.let { builder.setSourceRectHint(it) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(pipEligible())
+        }
+        return builder.build()
+    }
+
+    /**
+     * Pushes the current PiP state to the system. Auto-enter is sticky per
+     * activity, so it must be explicitly disarmed when the player closes.
+     */
+    private fun applyPipParams() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        runCatching { setPictureInPictureParams(buildPipParams()) }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        isInPip = isInPictureInPictureMode
+        applyPipParams()
+    }
+
+    /**
+     * Legacy PiP entry for Android 8–11. Android 12+ uses auto-enter instead,
+     * which follows the system gesture rather than relying on this callback.
+     */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (isPlayerActive && autoPipEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(Rational(16, 9))
-                .build()
-            enterPictureInPictureMode(params)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && pipEligible()) {
+            enterPictureInPictureMode(buildPipParams())
         }
     }
 
