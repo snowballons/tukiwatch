@@ -9,11 +9,10 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-enum class ThemeMode { SYSTEM, LIGHT, DARK }
-
 /** Snapshot of everything the app persists outside the favorites DB. */
 data class Prefs(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** Theme id resolved by `tukiPaletteFor`; "system" follows the device. */
+    val themeId: String = "system",
     val onboardingCompleted: Boolean = false,
     /** versionCode the user chose to skip; drives the update prompt (plan §6.2). */
     val updateSkipVersion: Long? = null,
@@ -37,11 +36,13 @@ class PrefsRepository(private val store: DataStore<Preferences>) {
 
     val prefs: Flow<Prefs> = store.data.map { entries ->
         Prefs(
-            themeMode = when (entries[THEME_MODE]) {
-                "light" -> ThemeMode.LIGHT
-                "dark" -> ThemeMode.DARK
-                else -> ThemeMode.SYSTEM
-            },
+            themeId = entries[THEME_ID]
+                ?: when (entries[THEME_MODE]) {
+                    // One-time migration from the retired ThemeMode enum.
+                    "light" -> "tukiwatch-light"
+                    "dark" -> "tukiwatch-dark"
+                    else -> "system"
+                },
             onboardingCompleted = entries[ONBOARDING_COMPLETED] ?: false,
             updateSkipVersion = entries[UPDATE_SKIP_VERSION],
             helixClientId = entries[HELIX_CLIENT_ID]?.takeIf { it.isNotBlank() },
@@ -49,7 +50,11 @@ class PrefsRepository(private val store: DataStore<Preferences>) {
         )
     }
 
-    suspend fun setThemeMode(mode: ThemeMode) = store.edit { it[THEME_MODE] = mode.storageValue }
+    /** Persists the chosen theme id and folds away the legacy mode key. */
+    suspend fun setThemeId(id: String) = store.edit {
+        it[THEME_ID] = id
+        it.remove(THEME_MODE)
+    }
 
     suspend fun setOnboardingCompleted(completed: Boolean) =
         store.edit { it[ONBOARDING_COMPLETED] = completed }
@@ -68,6 +73,9 @@ class PrefsRepository(private val store: DataStore<Preferences>) {
     }
 
     companion object {
+        val THEME_ID = stringPreferencesKey("theme_id")
+
+        /** Retired `ThemeMode` key; read once to migrate, removed on next write. */
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val UPDATE_SKIP_VERSION = longPreferencesKey("update_skip_version")
@@ -75,10 +83,3 @@ class PrefsRepository(private val store: DataStore<Preferences>) {
         val HELIX_ACCESS_TOKEN = stringPreferencesKey("helix_access_token")
     }
 }
-
-private val ThemeMode.storageValue: String
-    get() = when (this) {
-        ThemeMode.SYSTEM -> "system"
-        ThemeMode.LIGHT -> "light"
-        ThemeMode.DARK -> "dark"
-    }
