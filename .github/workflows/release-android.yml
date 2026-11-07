@@ -11,7 +11,7 @@
 #     TUKIWATCH_KEY_ALIAS, TUKIWATCH_KEY_PASSWORD.
 #     The keystore is PKCS12.
 
-name: Android KMP Release APK
+name: Android Release APK
 
 on:
   workflow_dispatch:
@@ -56,7 +56,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-kmp-${{ hashFiles('app/**/*.gradle.kts', 'app/gradle/libs.versions.toml', 'app/gradle/wrapper/gradle-wrapper.properties') }}
+          key: gradle-${{ hashFiles('app/**/*.gradle.kts', 'app/gradle/libs.versions.toml', 'app/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-kmp-
 
@@ -110,7 +110,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tukiwatch-kmp-release-${{ github.run_number }}
+          name: tukiwatch-release-${{ github.run_number }}
           path: ${{ steps.apk.outputs.path }}
           retention-days: 30
 
@@ -119,10 +119,10 @@ jobs:
         if: github.event.inputs.version != ''
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}-kmp
-          name: "TukiWatch KMP v${{ github.event.inputs.version }}"
+          tag_name: v${{ github.event.inputs.version }}
+          name: "TukiWatch v${{ github.event.inputs.version }}"
           body: |
-            ## TukiWatch KMP v${{ github.event.inputs.version }}
+            ## TukiWatch v${{ github.event.inputs.version }}
 
             Kotlin Multiplatform release build — built on GitHub Actions.
 
