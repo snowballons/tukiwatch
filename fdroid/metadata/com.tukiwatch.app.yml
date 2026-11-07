@@ -14,7 +14,7 @@ Repo: https://github.com/snowballons/tukiwatch.git
 Builds:
   - versionName: '1.1.8'
     versionCode: 15
-    commit: 1e167e025a1b377759b152d19b7803dfa5ba3e4c
+    commit: c32a4f2ef4348337e444807304ebe6b790e898b6
     subdir: app
     gradle:
       - yes
