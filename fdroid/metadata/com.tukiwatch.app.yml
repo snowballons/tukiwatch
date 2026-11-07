@@ -1,5 +1,5 @@
 Categories:
-  - Video
+  - Online Media Player
   - Internet
 License: MIT
 AuthorName: Snowballons
@@ -8,20 +8,24 @@ IssueTracker: https://github.com/snowballons/tukiwatch/issues
 Changelog: https://github.com/snowballons/tukiwatch/blob/main/CHANGELOG.md
 Donate: https://buymeacoffee.com/snowballons
 
+AutoName: TukiWatch
+
 RepoType: git
 Repo: https://github.com/snowballons/tukiwatch.git
 
 Builds:
-  - versionName: '1.1.8'
+  - versionName: 1.1.8
     versionCode: 15
     commit: c32a4f2ef4348337e444807304ebe6b790e898b6
     subdir: app
     gradle:
       - yes
+    output: androidApp/build/outputs/apk/release/androidApp-release.apk
 
 AutoUpdateMode: Version
-UpdateCheckMode: Tags
-CurrentVersion: '1.1.8'
+UpdateCheckMode: Tags ^v[0-9.]+$
+UpdateCheckData: app/gradle.properties|APP_VERSION_CODE=(\d+)|.|APP_VERSION_NAME=(.*)
+CurrentVersion: 1.1.8
 CurrentVersionCode: 15
 
 Binaries: https://github.com/snowballons/tukiwatch/releases/download/v%v/androidApp-release.apk
