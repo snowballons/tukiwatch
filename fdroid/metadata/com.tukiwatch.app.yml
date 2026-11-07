@@ -1,0 +1,28 @@
+Categories:
+  - Video
+  - Internet
+License: MIT
+AuthorName: Snowballons
+SourceCode: https://github.com/snowballons/tukiwatch
+IssueTracker: https://github.com/snowballons/tukiwatch/issues
+Changelog: https://github.com/snowballons/tukiwatch/blob/main/CHANGELOG.md
+Donate: https://buymeacoffee.com/snowballons
+
+RepoType: git
+Repo: https://github.com/snowballons/tukiwatch.git
+
+Builds:
+  - versionName: '1.1.8'
+    versionCode: 15
+    commit: 05a9b225f5040339eb3ee77e2b8c00b4a4ae2f2b
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.1.8'
+CurrentVersionCode: 15
+
+Binaries: https://github.com/snowballons/tukiwatch/releases/download/v%v/androidApp-release.apk
+AllowedAPKSigningKeys: 4f081d95c94616b70f78e2fa7e60e5a81780bcc7e99998c3ff19d9641dbd8fd5

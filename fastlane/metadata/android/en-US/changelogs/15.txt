@@ -1,0 +1,6 @@
+- Vector splash screen logo with improved 2.5s display duration
+- Restored live channel tracking statistics on the Settings screen
+- Compact dropdown theme picker in Appearance settings
+- Floating capsule navigation bar and full-bleed edge-to-edge support
+- Picture-in-picture (PiP) and background audio playback refinements
+- Streamlink 8.6.2 engine updates and stream resolution stability

@@ -1,0 +1,13 @@
+<p><b>TukiWatch</b> is a privacy-first Android app for tracking and watching live streams across multiple platforms without accounts, advertisements, or tracking servers.</p>
+
+<p>Every stream resolution runs completely on-device through an embedded Python Streamlink engine. Your favorites, preferences, and watch history never leave your phone.</p>
+
+<p><b>Key Features:</b></p>
+<ul>
+  <li><b>On-Device Streamlink Engine:</b> Extracts high-quality HLS and DASH stream manifests locally using embedded Python 3.11 and Streamlink.</li>
+  <li><b>Multi-Platform Support:</b> Track channels across Twitch, Kick, YouTube, and other platforms supported by Streamlink in a single unified watchlist.</li>
+  <li><b>Modern Video Player:</b> Built on AndroidX Media3 (ExoPlayer) with resolution selection, picture-in-picture (PiP) multitasking, and background playback.</li>
+  <li><b>Privacy by Design:</b> Zero backend services, zero account requirements, zero telemetry, and zero third-party trackers.</li>
+  <li><b>Beautiful UI & Theming:</b> Modern Compose interface with custom themes including Catppuccin, Nord, Tokyo Night, Gruvbox, and Rosé Pine.</li>
+  <li><b>Local Backup:</b> Export and import your watchlist and configuration via encrypted JSON backups using the Android Storage Access Framework.</li>
+</ul>

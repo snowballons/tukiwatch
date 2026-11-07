@@ -1,0 +1,1 @@
+Privacy-first live stream player with an on-device Streamlink engine
