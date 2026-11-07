@@ -59,7 +59,7 @@ fun CustomSplashScreen(
     logo: Painter,
     onFinish: () -> Unit,
     modifier: Modifier = Modifier,
-    minDisplayTimeMs: Long = 1600L,
+    minDisplayTimeMs: Long = 2500L,
 ) {
     val palette = LocalTukiPalette.current
     var isVisible by remember { mutableStateOf(true) }

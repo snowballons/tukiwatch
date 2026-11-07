@@ -306,6 +306,7 @@ class MainActivity : ComponentActivity() {
                         CustomSplashScreen(
                             logo = painterResource(R.drawable.tukiwatch_logo),
                             onFinish = { showSplash = false },
+                            minDisplayTimeMs = 2500L,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -618,6 +619,7 @@ fun AppContent(
                         }
                         MainTab.SETTINGS -> {
                             SettingsScreen(
+                                streams = streams,
                                 prefs = prefs,
                                 onThemeChange = { id -> scope.launch { app.prefs.setThemeId(id) } },
                                 onBackgroundPlaybackChange = { on ->

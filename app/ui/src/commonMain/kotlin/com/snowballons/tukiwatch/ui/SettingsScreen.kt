@@ -22,6 +22,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,6 +44,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.snowballons.tukiwatch.liveness.LiveStream
+import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
 import com.snowballons.tukiwatch.prefs.Prefs
 import com.snowballons.tukiwatch.ui.theme.LocalTukiPalette
 import com.snowballons.tukiwatch.ui.theme.ThemeOption
@@ -79,6 +83,7 @@ fun SettingsScreen(
     onSupport: () -> Unit,
     appVersionName: String,
     appVersionCode: Int,
+    streams: List<LiveStream> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -91,25 +96,15 @@ fun SettingsScreen(
     ) {
         Header()
 
+        // Stats Dashboard Card
+        TrackingStatsCard(streams = streams)
+
         // ---- Appearance ----
         SettingsGroup("Appearance") {
-            ThemeRow(
-                label = "Follow system",
-                subtitle = "matches your device",
-                swatch = null,
-                selected = prefs.themeId == "system",
-                divider = false,
-                onClick = { onThemeChange("system") },
+            ThemeDropdown(
+                currentThemeId = prefs.themeId,
+                onThemeChange = onThemeChange,
             )
-            TukiThemes.forEach { theme ->
-                ThemeRow(
-                    label = theme.label,
-                    subtitle = if (theme.dark) "dark" else "light",
-                    swatch = theme,
-                    selected = prefs.themeId == theme.key,
-                    onClick = { onThemeChange(theme.key) },
-                )
-            }
         }
 
         // ---- Playback ----
@@ -575,78 +570,227 @@ private fun Footer(versionName: String, versionCode: Int) {
     }
 }
 
-/**
- * Shows a theme rather than naming it: the candidate's own background chip
- * with its accent, live and ink as swatches, plus a selected marker. Pass
- * [swatch] = null for the "follow system" row.
- */
 @Composable
-private fun ThemeRow(
-    label: String,
-    subtitle: String,
-    swatch: ThemeOption?,
-    selected: Boolean,
-    divider: Boolean = true,
-    onClick: () -> Unit,
+private fun TrackingStatsCard(
+    streams: List<LiveStream>,
+    modifier: Modifier = Modifier,
 ) {
-    val palette = LocalTukiPalette.current
-    Column {
-        if (divider) {
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
-                modifier = Modifier.padding(start = 16.dp),
-            )
-        }
+    val trackedCount = streams.size
+    val platformsCount = streams.mapNotNull { it.platform }.distinct().size
+    val liveCount = streams.count { it.status == STATUS_ONLINE }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = TukiShapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(vertical = 16.dp, horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatColumn(label = "Tracked", value = "$trackedCount")
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(30.dp)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)),
+            )
+            StatColumn(label = "Platforms", value = "$platformsCount")
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(30.dp)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)),
+            )
+            StatColumn(
+                label = "Live Now",
+                value = "$liveCount",
+                valueColor = if (liveCount > 0) LocalTukiPalette.current.live else null,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatColumn(
+    label: String,
+    value: String,
+    valueColor: Color? = null,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = valueColor ?: MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun ThemeSwatch(
+    swatch: ThemeOption?,
+    modifier: Modifier = Modifier,
+) {
+    val palette = LocalTukiPalette.current
+    val chipBackground = swatch?.palette?.background ?: palette.surface
+    val chipBorder = swatch?.palette?.outline ?: palette.outline
+    val dots = swatch?.palette?.let { listOf(it.primary, it.live, it.onBackground) }
+        ?: listOf(palette.primary, palette.onBackground, palette.onSurfaceVariant)
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(chipBackground)
+            .border(1.dp, chipBorder, RoundedCornerShape(6.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        dots.forEach { dot ->
+            Box(
+                Modifier
+                    .size(12.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(dot),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeDropdown(
+    currentThemeId: String,
+    onThemeChange: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val palette = LocalTukiPalette.current
+    val currentTheme = TukiThemes.find { it.key == currentThemeId }
+    val currentLabel = if (currentThemeId == "system") "Follow system" else (currentTheme?.label ?: "Follow system")
+    val currentSubtitle = if (currentThemeId == "system") "matches your device" else (if (currentTheme?.dark == true) "dark" else "light")
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            val chipBackground = swatch?.palette?.background ?: palette.surface
-            val chipBorder = swatch?.palette?.outline ?: palette.outline
-            val dots = swatch?.palette?.let { listOf(it.primary, it.live, it.onBackground) }
-                ?: listOf(palette.primary, palette.onBackground, palette.onSurfaceVariant)
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(chipBackground)
-                    .border(1.dp, chipBorder, RoundedCornerShape(6.dp))
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-            ) {
-                dots.forEach { dot ->
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(dot),
-                    )
-                }
-            }
+            ThemeSwatch(swatch = currentTheme)
 
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = label,
+                    text = currentLabel,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected) palette.primary else MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = subtitle,
+                    text = currentSubtitle,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
-            if (selected) {
-                Text(
-                    text = "✓",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = palette.primary,
+            Text(
+                text = if (expanded) "▲" else "▼",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(palette.surfaceRaised)
+                .border(1.dp, palette.outline.copy(alpha = 0.5f), TukiShapes.medium),
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Column {
+                        Text(
+                            text = "Follow system",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (currentThemeId == "system") FontWeight.Bold else FontWeight.Medium,
+                            color = if (currentThemeId == "system") palette.primary else MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "matches your device",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                leadingIcon = {
+                    ThemeSwatch(swatch = null)
+                },
+                trailingIcon = if (currentThemeId == "system") {
+                    {
+                        Text(
+                            text = "✓",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = palette.primary,
+                        )
+                    }
+                } else null,
+                onClick = {
+                    onThemeChange("system")
+                    expanded = false
+                },
+            )
+
+            TukiThemes.forEach { theme ->
+                val isSelected = currentThemeId == theme.key
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                text = theme.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) palette.primary else MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = if (theme.dark) "dark" else "light",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        ThemeSwatch(swatch = theme)
+                    },
+                    trailingIcon = if (isSelected) {
+                        {
+                            Text(
+                                text = "✓",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.primary,
+                            )
+                        }
+                    } else null,
+                    onClick = {
+                        onThemeChange(theme.key)
+                        expanded = false
+                    },
                 )
             }
         }

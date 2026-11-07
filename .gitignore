@@ -39,6 +39,7 @@ polar-plan1.md
 # =========================
 .vscode/
 .idea/
+.commandcode/
 *.swp
 *.swo
 *~
