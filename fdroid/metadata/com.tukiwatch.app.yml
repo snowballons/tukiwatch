@@ -1,6 +1,6 @@
 Categories:
-  - Online Media Player
   - Internet
+  - Online Media Player
 License: MIT
 AuthorName: Snowballons
 SourceCode: https://github.com/snowballons/tukiwatch
@@ -18,15 +18,27 @@ Builds:
     versionCode: 15
     commit: c32a4f2ef4348337e444807304ebe6b790e898b6
     subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev liblzma-dev
+        libffi-dev
     gradle:
       - yes
-    output: androidApp/build/outputs/apk/release/androidApp-release.apk
+    srclibs:
+      - cpython@v3.11.17
+    prebuild:
+      - sed -i '/foojay/d' settings.gradle.kts
+      - sed -i "s|python3.11|$(realpath $$cpython$$)/python|" androidApp/build.gradle.kts
+    build:
+      - pushd $$cpython$$
+      - ./configure --with-ensurepip=no
+      - make -j$(nproc)
+      - ./python -c 'import sys, ssl, zlib, bz2, lzma, ctypes; assert sys.version_info[:2]
+        == (3, 11)'
+      - popd
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
 UpdateCheckData: app/gradle.properties|APP_VERSION_CODE=(\d+)|.|APP_VERSION_NAME=(.*)
 CurrentVersion: 1.1.8
 CurrentVersionCode: 15
-
-Binaries: https://github.com/snowballons/tukiwatch/releases/download/v%v/androidApp-release.apk
-AllowedAPKSigningKeys: 4f081d95c94616b70f78e2fa7e60e5a81780bcc7e99998c3ff19d9641dbd8fd5
