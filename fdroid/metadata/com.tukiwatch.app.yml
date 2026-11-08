@@ -24,6 +24,7 @@ Builds:
         libffi-dev
     gradle:
       - yes
+    output: androidApp/build/outputs/apk/release/*.apk
     srclibs:
       - cpython@v3.11.17
     prebuild:
