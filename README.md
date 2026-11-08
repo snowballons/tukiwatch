@@ -54,7 +54,7 @@ powers a desktop harness used for development.
 
 | Onboarding | Onboarding | Home (empty) | Home (live) | Add stream |
 |:----------:|:----------:|:------------:|:-----------:|:----------:|
-| <img src="assets/intro1.png" width="150" alt="Onboarding screen" /> | <img src="assets/intro2.png" width="150" alt="Onboarding screen continued" /> | <img src="assets/empty-live-screen.png" width="150" alt="Home screen with no live streams" /> | <img src="assets/live-screen.png" width="150" alt="Home screen showing live streams" /> | <img src="assets/add-stream.png" width="150" alt="Add a new stream" /> |
+| <img src="assets/intro1.png" width="150" alt="Onboarding screen" /> | <img src="assets/intro1.png" width="150" alt="Onboarding screen continued" /> | <img src="assets/live-screen.png" width="150" alt="Home screen with no live streams" /> | <img src="assets/my-list.png" width="150" alt="Home screen showing live streams" /> | <img src="assets/add-stream.png" width="150" alt="Add a new stream" /> |
 
 ---
 
