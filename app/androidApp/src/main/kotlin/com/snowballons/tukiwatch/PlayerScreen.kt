@@ -203,12 +203,23 @@ fun FullPlayerScreen(
         if (isInPip) vm.onResumeForeground()
     }
 
-    DisposableEffect(lifecycle, vm, backgroundPlayback, isInPip) {
+    val streamMetadata = controller.metadata
+    val streamerName = streamMetadata?.author
+        ?.takeIf { it.isNotBlank() && it.lowercase() != "live" && it.lowercase() != "video" }
+        ?: StreamUtils.deriveStreamerName(controller.url)
+
+    DisposableEffect(lifecycle, vm, backgroundPlayback, isInPip, streamerName, streamMetadata) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
                     val inPip = isInPip || activity?.isInPictureInPictureMode == true
-                    if (!backgroundPlayback && !inPip) vm.onPauseBackground()
+                    if (backgroundPlayback) {
+                        if (vm.player.playWhenReady) {
+                            PlaybackService.start(context, streamerName, streamMetadata?.title)
+                        }
+                    } else if (!inPip) {
+                        vm.onPauseBackground()
+                    }
                     playerView?.onPause()
                 }
                 Lifecycle.Event.ON_RESUME -> {
@@ -235,10 +246,6 @@ fun FullPlayerScreen(
         onDispose { vm.player.removeListener(listener) }
     }
 
-    val streamMetadata = controller.metadata
-    val streamerName = streamMetadata?.author
-        ?.takeIf { it.isNotBlank() && it.lowercase() != "live" && it.lowercase() != "video" }
-        ?: StreamUtils.deriveStreamerName(controller.url)
     val platform = streamMetadata?.platform ?: StreamUtils.detectPlatform(controller.url)
     val platformColor = PlatformColors.platformColor(platform)
     val palette = LocalTukiPalette.current

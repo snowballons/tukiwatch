@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 
 /** StreamContext.tsx AUTO_REFRESH_INTERVAL = 300_000. */
 const val AUTO_REFRESH_INTERVAL_MS = 300_000L
@@ -28,6 +29,7 @@ const val STATUS_ERROR = "error"
  * A favorite enriched with its latest liveness result — the shape
  * StreamContext.tsx built by joining `statusResults` onto `favorites[index]`.
  */
+@Serializable
 data class LiveStream(
     val id: Long,
     val streamerName: String,
@@ -80,6 +82,7 @@ class LivenessRepository(
     private val nowMs: () -> Long,
     private val connectivity: DeviceConnectivity? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val cache: LivenessCache? = null,
 ) {
     private val _streams = MutableStateFlow<List<LiveStream>>(emptyList())
     val streams: StateFlow<List<LiveStream>> = _streams.asStateFlow()
@@ -94,11 +97,26 @@ class LivenessRepository(
 
     private val inFlight = Mutex()
 
+    /** Preloads cached stream list immediately if available. */
+    suspend fun preload() {
+        if (cache != null && _streams.value.isEmpty()) {
+            val cached = withContext(dispatcher) {
+                runCatching { cache.load() }.getOrDefault(emptyList())
+            }
+            if (cached.isNotEmpty() && _streams.value.isEmpty()) {
+                _streams.value = cached
+            }
+        }
+    }
+
     /**
      * One tick. A tick can outrun the 5-min interval on a large list, so an
      * overlapping call is dropped rather than queued.
      */
     suspend fun refresh() {
+        if (_streams.value.isEmpty()) {
+            preload()
+        }
         if (!inFlight.tryLock()) return
         try {
             _loading.value = true
@@ -127,10 +145,12 @@ class LivenessRepository(
         if (favs.isEmpty()) {
             _streams.value = emptyList()
             _tickDegraded.value = false
+            cache?.save(emptyList())
             return
         }
 
         val stamp = nowMs()
+        val currentStreams = _streams.value.associateBy { it.id }.toMutableMap()
         val rows = ArrayList<LiveStream>(favs.size)
         var sawNetworkFailure = false
         for (fav in favs) {
@@ -155,10 +175,15 @@ class LivenessRepository(
             if (status.errorDetails?.errorClass == NETWORK_ERROR_CLASS) {
                 sawNetworkFailure = true
             }
-            rows += enrich(fav, status, stamp)
+            val enriched = enrich(fav, status, stamp)
+            rows += enriched
+            currentStreams[fav.id] = enriched
+            // Progressively emit so UI reflects each channel as soon as it resolves
+            _streams.value = favs.mapNotNull { f -> currentStreams[f.id] }
         }
         _streams.value = rows
         _tickDegraded.value = sawNetworkFailure
+        cache?.save(rows)
     }
 
     private fun enrich(fav: Favorite, status: StreamStatus, stamp: Long) = LiveStream(

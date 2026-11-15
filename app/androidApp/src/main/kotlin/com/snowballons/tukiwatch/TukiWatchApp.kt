@@ -5,10 +5,12 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.snowballons.tukiwatch.db.FavoritesRepository
 import com.snowballons.tukiwatch.db.createFavoritesDriver
+import com.snowballons.tukiwatch.liveness.JsonFileLivenessCache
 import com.snowballons.tukiwatch.liveness.LivenessRepository
 import com.snowballons.tukiwatch.liveness.StreamlinkLivenessSource
 import com.snowballons.tukiwatch.prefs.PrefsRepository
 import com.snowballons.tukiwatch.prefs.createPrefsDataStore
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +36,10 @@ class TukiWatchApp : Application() {
 
     private val connectivity: AndroidDeviceConnectivity by lazy { AndroidDeviceConnectivity(this) }
 
+    var activePlayer: androidx.media3.exoplayer.ExoPlayer? = null
+    var activeStreamTitle: String? = null
+    var activeStreamerName: String? = null
+
     val liveness: LivenessRepository by lazy {
         LivenessRepository(
             favorites = favorites,
@@ -41,6 +47,7 @@ class TukiWatchApp : Application() {
             nowMs = { System.currentTimeMillis() },
             connectivity = connectivity,
             dispatcher = Dispatchers.IO,
+            cache = JsonFileLivenessCache(File(filesDir, "liveness_cache.json")),
         )
     }
 
@@ -50,6 +57,7 @@ class TukiWatchApp : Application() {
             Python.start(AndroidPlatform(this))
         }
         appScope.launch {
+            liveness.preload()
             try {
                 val module = Python.getInstance().getModule("stream_engine")
                 module.callAttr("warmup")

@@ -3,8 +3,10 @@ package com.snowballons.tukiwatch
 import com.snowballons.tukiwatch.db.FavoritesRepository
 import com.snowballons.tukiwatch.db.createFavoritesDriver
 import com.snowballons.tukiwatch.liveness.DeviceConnectivity
+import com.snowballons.tukiwatch.liveness.LiveStream
 import com.snowballons.tukiwatch.liveness.LivenessRepository
 import com.snowballons.tukiwatch.liveness.LivenessSource
+import com.snowballons.tukiwatch.liveness.MemoryLivenessCache
 import com.snowballons.tukiwatch.liveness.STATUS_ERROR
 import com.snowballons.tukiwatch.liveness.STATUS_OFFLINE
 import com.snowballons.tukiwatch.liveness.STATUS_ONLINE
@@ -249,5 +251,89 @@ class LivenessRepositoryTest {
         release.complete(Unit)
         first.join()
         assertEquals(1, calls, "second refresh must be dropped while one is in flight")
+    }
+
+    @Test
+    fun preloadLoadsFromCacheImmediately() = runBlocking {
+        val cachedStream = LiveStream(
+            id = 1L,
+            streamerName = "CachedStreamer",
+            url = "https://twitch.tv/cached",
+            status = STATUS_ONLINE,
+            title = "Cached Stream Title",
+            platform = "twitch",
+        )
+        val cache = MemoryLivenessCache(listOf(cachedStream))
+        val favorites = FavoritesRepository(createFavoritesDriver(), dbDispatcher)
+        val liveness = LivenessRepository(
+            favorites = favorites,
+            source = online,
+            nowMs = { 5000L },
+            dispatcher = dbDispatcher,
+            cache = cache,
+        )
+
+        assertEquals(emptyList(), liveness.streams.value)
+        liveness.preload()
+        assertEquals(1, liveness.streams.value.size)
+        assertEquals("CachedStreamer", liveness.streams.value.first().streamerName)
+        assertEquals("Cached Stream Title", liveness.streams.value.first().title)
+    }
+
+    @Test
+    fun refreshSavesToCache() = runBlocking {
+        val cache = MemoryLivenessCache()
+        val favorites = FavoritesRepository(createFavoritesDriver(), dbDispatcher)
+        favorites.addFavorite("Streamer1", "https://twitch.tv/streamer1")
+        val liveness = LivenessRepository(
+            favorites = favorites,
+            source = online,
+            nowMs = { 9999L },
+            dispatcher = dbDispatcher,
+            cache = cache,
+        )
+
+        liveness.refresh()
+        val cached = cache.load()
+        assertEquals(1, cached.size)
+        assertEquals("Streamer1", cached.first().streamerName)
+        assertEquals(STATUS_ONLINE, cached.first().status)
+    }
+
+    @Test
+    fun refreshProgressivelyUpdatesStreams() = runBlocking {
+        val checkpoint1 = CompletableDeferred<Unit>()
+        val release1 = CompletableDeferred<Unit>()
+
+        var count = 0
+        val sequentialSource = LivenessSource { url ->
+            val current = count++
+            if (current == 1) {
+                checkpoint1.complete(Unit)
+                release1.await()
+            }
+            StreamStatus(url = url, status = STATUS_ONLINE, author = "S$current")
+        }
+
+        val favorites = FavoritesRepository(createFavoritesDriver(), dbDispatcher)
+        favorites.addFavorite("Fav1", "https://twitch.tv/fav1")
+        favorites.addFavorite("Fav2", "https://twitch.tv/fav2")
+
+        val liveness = LivenessRepository(
+            favorites = favorites,
+            source = sequentialSource,
+            nowMs = { 1000L },
+            dispatcher = dbDispatcher,
+        )
+
+        val job = launch { liveness.refresh() }
+        checkpoint1.await()
+        // Wait until first stream is processed; streams should already have 1 item before second is processed
+        assertEquals(1, liveness.streams.value.size)
+        assertEquals("Fav1", liveness.streams.value[0].streamerName)
+
+        release1.complete(Unit)
+        job.join()
+        assertEquals(2, liveness.streams.value.size)
     }
 }

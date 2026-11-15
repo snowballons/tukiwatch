@@ -46,7 +46,15 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
                     description = "${error.errorCodeName}: ${error.message}",
                 )
             }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
+                    PlaybackService.stop(application)
+                }
+            }
         })
+    }.also {
+        app.activePlayer = it
     }
 
     val controller = StreamController(
@@ -55,6 +63,7 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
             override fun play(item: StreamItem) = playStream(player, item)
 
             override fun stop() {
+                PlaybackService.stop(application)
                 player.stop()
                 player.clearMediaItems()
             }
@@ -89,6 +98,8 @@ class StreamViewModel(application: Application) : AndroidViewModel(application) 
 
     override fun onCleared() {
         super.onCleared()
+        PlaybackService.stop(app)
+        app.activePlayer = null
         player.release()
     }
 }

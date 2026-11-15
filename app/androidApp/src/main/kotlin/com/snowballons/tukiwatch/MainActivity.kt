@@ -45,6 +45,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -427,6 +428,8 @@ fun AppContent(
 
     var activeTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var activeOverlay by rememberSaveable { mutableStateOf<OverlayScreen?>(null) }
+    val homeListState = rememberLazyListState()
+    val libraryListState = rememberLazyListState()
 
     // Inform MainActivity whether the player overlay is active so it can enter PiP on Home press
     val mainActivity = context as? MainActivity
@@ -575,6 +578,7 @@ fun AppContent(
                                 greeting = getTimeGreeting(),
                                 onRefresh = { libraryVm.refresh() },
                                 onStreamClick = { stream -> onPlayLiveStream(stream) },
+                                listState = homeListState,
                             )
                         }
                         MainTab.MY_LIST -> {
@@ -588,6 +592,7 @@ fun AppContent(
                                 onRefresh = { libraryVm.refresh() },
                                 onDeleteFavorite = { id -> libraryVm.removeFavorite(id) },
                                 onStreamClick = { stream -> onPlayLiveStream(stream) },
+                                listState = libraryListState,
                             )
                         }
                         MainTab.ADD -> {
