@@ -51,15 +51,34 @@ data class LiveStream(
 /** Where liveness comes from. Keeps a secretless Twitch source pluggable later. */
 fun interface LivenessSource {
     suspend fun status(url: String): StreamStatus
+    suspend fun statusBulk(urls: List<String>): List<StreamStatus> = urls.map { url ->
+        try {
+            status(url)
+        } catch (c: CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            StreamStatus(
+                url = url,
+                status = STATUS_ERROR,
+                error = "${t::class.simpleName}: ${t.message}",
+                errorDetails = if (isNetworkError(t)) ErrorDetails(errorClass = NETWORK_ERROR_CLASS) else null,
+            )
+        }
+    }
 }
 
 /**
- * Phase 2 source: Streamlink `check_status` for every favorite.
+ * Phase 2 source: Streamlink `check_status` / `check_status_bulk` for favorites.
  * With browse-discovery dropped this is the only liveness path, until a
  * secretless Twitch source returns.
  */
-class StreamlinkLivenessSource(private val engine: StreamEngine) : LivenessSource {
+class StreamlinkLivenessSource(
+    private val engine: StreamEngine,
+    private val maxWorkers: Int = 3,
+) : LivenessSource {
     override suspend fun status(url: String): StreamStatus = engine.checkStatus(url)
+    override suspend fun statusBulk(urls: List<String>): List<StreamStatus> =
+        engine.checkStatusBulk(urls, maxWorkers = maxWorkers)
 }
 
 /** OS-level reachability, the NetInfo replacement. */
@@ -83,6 +102,7 @@ class LivenessRepository(
     private val connectivity: DeviceConnectivity? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val cache: LivenessCache? = null,
+    private val batchSize: Int = 3,
 ) {
     private val _streams = MutableStateFlow<List<LiveStream>>(emptyList())
     val streams: StateFlow<List<LiveStream>> = _streams.asStateFlow()
@@ -153,32 +173,40 @@ class LivenessRepository(
         val currentStreams = _streams.value.associateBy { it.id }.toMutableMap()
         val rows = ArrayList<LiveStream>(favs.size)
         var sawNetworkFailure = false
-        for (fav in favs) {
-            val status = try {
-                source.status(fav.originalUrl)
+
+        // Bulk batching: resolve in concurrent batches (default 3 streams at a time)
+        for (batch in favs.chunked(batchSize)) {
+            val urls = batch.map { it.originalUrl }
+            val statuses = try {
+                source.statusBulk(urls)
             } catch (t: CancellationException) {
                 throw t
             } catch (t: Throwable) {
-                // One dead URL must not abort the other N-1: unlike the server's
-                // single batch POST, failures here are per-row.
+                // One dead batch must not abort the other batches
                 if (isNetworkError(t)) sawNetworkFailure = true
-                StreamStatus(
-                    url = fav.originalUrl,
-                    status = STATUS_ERROR,
-                    error = "${t::class.simpleName}: ${t.message}",
-                )
+                urls.map { u ->
+                    StreamStatus(
+                        url = u,
+                        status = STATUS_ERROR,
+                        error = "${t::class.simpleName}: ${t.message}",
+                    )
+                }
             }
 
-            // The engine reports transport failures as a normal result
-            // (`status=error`, `type=plugin_error`) with an `error_class` flag,
-            // so the throw-only check above cannot see them.
-            if (status.errorDetails?.errorClass == NETWORK_ERROR_CLASS) {
-                sawNetworkFailure = true
+            for (i in batch.indices) {
+                val fav = batch[i]
+                val status = statuses.getOrElse(i) {
+                    StreamStatus(url = fav.originalUrl, status = STATUS_ERROR)
+                }
+                if (status.errorDetails?.errorClass == NETWORK_ERROR_CLASS) {
+                    sawNetworkFailure = true
+                }
+                val enriched = enrich(fav, status, stamp)
+                rows += enriched
+                currentStreams[fav.id] = enriched
             }
-            val enriched = enrich(fav, status, stamp)
-            rows += enriched
-            currentStreams[fav.id] = enriched
-            // Progressively emit so UI reflects each channel as soon as it resolves
+
+            // Progressively emit so UI reflects each batch as soon as it resolves
             _streams.value = favs.mapNotNull { f -> currentStreams[f.id] }
         }
         _streams.value = rows

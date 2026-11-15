@@ -41,7 +41,7 @@ xvfb-run -a ./gradlew :desktopApp:test
 ```
 
 Python engine parity, when changing `stream_engine.py` (Python 3.11 +
-streamlink 8.6.2):
+streamlink 8.6.3):
 
 ```bash
 python3.11 -m pytest androidApp/src/test/python/test_stream_engine.py

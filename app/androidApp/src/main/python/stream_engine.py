@@ -9,6 +9,7 @@ Parity with tukiwatch-core (errors.py, metadata.py, resolution.py):
 - Error details contract matching Expo 422 surface: {type, error, message, reason, alternative}
 """
 
+import concurrent.futures
 import json
 import logging
 import re
@@ -805,6 +806,86 @@ def check_status(url: str, options_json: str = '{}') -> str:
         })
 
 
+def check_status_bulk(urls_json: str, options_json: str = '{}', max_workers: int = 3) -> str:
+    """Bulk liveness check resolving multiple streams concurrently.
+
+    Runs checks in parallel using ThreadPoolExecutor. Streamlink's network requests
+    release the Python GIL during socket I/O, allowing concurrent HTTP requests.
+    Returns a JSON string containing an ordered list of StreamStatus payloads.
+    """
+    try:
+        urls = json.loads(urls_json) if urls_json else []
+    except Exception:
+        urls = []
+
+    if not urls:
+        return '[]'
+
+    try:
+        workers_count = int(max_workers)
+    except Exception:
+        workers_count = 3
+    workers = min(max(1, len(urls)), min(max(1, workers_count), 4))
+
+    def _worker(u: str) -> dict[str, Any]:
+        try:
+            return json.loads(check_status(u, options_json))
+        except Exception as exc:
+            error_msg = f"{type(exc).__name__}: {exc}"
+            return {
+                'url': u,
+                'status': 'error',
+                'platform': extract_platform_from_url(u),
+                'error': error_msg,
+                'error_details': unexpected_error_details(error_msg),
+            }
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        results = list(executor.map(_worker, urls))
+
+    return json.dumps(results)
+
+
+def resolve_details_bulk(
+    urls_json: str,
+    options_json: str = '{}',
+    wanted: str = 'all',
+    max_workers: int = 3,
+) -> str:
+    """Bulk full stream resolution resolving multiple streams concurrently."""
+    try:
+        urls = json.loads(urls_json) if urls_json else []
+    except Exception:
+        urls = []
+
+    if not urls:
+        return '[]'
+
+    try:
+        workers_count = int(max_workers)
+    except Exception:
+        workers_count = 3
+    workers = min(max(1, len(urls)), min(max(1, workers_count), 4))
+
+    def _worker(u: str) -> dict[str, Any]:
+        try:
+            return json.loads(resolve_details(u, options_json, wanted))
+        except Exception as exc:
+            error_msg = f"{type(exc).__name__}: {exc}"
+            return {
+                'url': u,
+                'status': 'error',
+                'error': 'unexpected',
+                'message': error_msg,
+                'error_details': unexpected_error_details(error_msg),
+            }
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        results = list(executor.map(_worker, urls))
+
+    return json.dumps(results)
+
+
 # Backward-compatible alias for prototype callers
 def list_streams(url: str, options_json: str = '{}', wanted: str = 'all') -> str:
     return resolve_details(url, options_json, wanted)
@@ -814,7 +895,15 @@ if __name__ == '__main__':
     # Two supported CLIs:
     #   stream_engine.py <entrypoint> [args...]   (SubprocessStreamEngine)
     #   stream_engine.py <url> [wanted]           (legacy manual use)
-    _ENTRYPOINTS = {'resolve_details', 'check_status', 'list_streams', 'warmup', 'version'}
+    _ENTRYPOINTS = {
+        'resolve_details',
+        'resolve_details_bulk',
+        'check_status',
+        'check_status_bulk',
+        'list_streams',
+        'warmup',
+        'version',
+    }
     _argv = sys.argv[1:]
     if _argv and _argv[0] in _ENTRYPOINTS:
         print(globals()[_argv[0]](*_argv[1:]))

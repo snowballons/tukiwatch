@@ -324,6 +324,7 @@ class LivenessRepositoryTest {
             source = sequentialSource,
             nowMs = { 1000L },
             dispatcher = dbDispatcher,
+            batchSize = 1,
         )
 
         val job = launch { liveness.refresh() }
@@ -335,5 +336,39 @@ class LivenessRepositoryTest {
         release1.complete(Unit)
         job.join()
         assertEquals(2, liveness.streams.value.size)
+    }
+
+    @Test
+    fun refreshResolvesInBulkBatches() = runBlocking {
+        val requestedBatches = mutableListOf<List<String>>()
+        val bulkSource = object : LivenessSource {
+            override suspend fun status(url: String): StreamStatus =
+                StreamStatus(url = url, status = STATUS_ONLINE)
+
+            override suspend fun statusBulk(urls: List<String>): List<StreamStatus> {
+                requestedBatches.add(urls)
+                return urls.map { StreamStatus(url = it, status = STATUS_ONLINE) }
+            }
+        }
+
+        val favorites = FavoritesRepository(createFavoritesDriver(), dbDispatcher)
+        favorites.addFavorite("Fav1", "https://twitch.tv/fav1")
+        favorites.addFavorite("Fav2", "https://twitch.tv/fav2")
+        favorites.addFavorite("Fav3", "https://twitch.tv/fav3")
+        favorites.addFavorite("Fav4", "https://twitch.tv/fav4")
+
+        val liveness = LivenessRepository(
+            favorites = favorites,
+            source = bulkSource,
+            nowMs = { 2000L },
+            dispatcher = dbDispatcher,
+            batchSize = 2,
+        )
+
+        liveness.refresh()
+        assertEquals(4, liveness.streams.value.size)
+        assertEquals(2, requestedBatches.size, "4 items chunked into batches of 2 should produce 2 bulk calls")
+        assertEquals(listOf("https://twitch.tv/fav1", "https://twitch.tv/fav2"), requestedBatches[0])
+        assertEquals(listOf("https://twitch.tv/fav3", "https://twitch.tv/fav4"), requestedBatches[1])
     }
 }

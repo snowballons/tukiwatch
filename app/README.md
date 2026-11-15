@@ -79,7 +79,7 @@ The desktop UI tests render a real `ComposeWindow`; run them under `DISPLAY=:0`
 or `xvfb-run -a ./gradlew :desktopApp:test`. They skip themselves when no display
 can be opened.
 
-Python engine parity (needs Python 3.11 with Streamlink 8.6.2, matching the
+Python engine parity (needs Python 3.11 with Streamlink 8.6.3, matching the
 version bundled in the APK):
 
 ```sh
@@ -96,12 +96,14 @@ exposes the entrypoints used by the Android bridge and the desktop harness:
 
 - `resolve_details(url, options_json, wanted)`
 - `check_status(url, options_json)`
+- `check_status_bulk(urls_json, options_json, max_workers)`
+- `resolve_details_bulk(urls_json, options_json, wanted, max_workers)`
 - `list_streams(url, options_json, wanted)`
 - `warmup(url)`
 - `version()`
 
 It returns JSON with the same snake_case contract consumed by the Kotlin
-`@Serializable` models. Streamlink `8.6.2` is installed into the APK at build
+`@Serializable` models. Streamlink `8.6.3` is installed into the APK at build
 time by Chaquopy; Python 3.11 is bundled per ABI.
 
 The liveness ticker runs only while the activity is `STARTED`
@@ -115,7 +117,7 @@ treating them as plugin errors.
 |---|---|
 | Chaquopy | 17.0.0 |
 | Python | 3.11 |
-| Streamlink | 8.6.2 |
+| Streamlink | 8.6.3 |
 | Media3 | 1.11.1 |
 | Kotlin | 2.4.20 |
 | AGP | 9.1.1 |

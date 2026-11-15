@@ -123,7 +123,7 @@ chaquopy {
             ?: System.getenv("CHAQUOPY_BUILD_PYTHON")?.takeIf { it.isNotBlank() }
         buildPython(configuredPython ?: "python3.11")
         pip {
-            install("streamlink==8.6.2")
+            install("streamlink==8.6.3")
         }
     }
 }

@@ -98,6 +98,13 @@ interface StreamEngine {
     /** Cheap liveness check for non-Twitch staggered status (Phase 1). */
     suspend fun checkStatus(url: String, optionsJson: String = "{}"): StreamStatus
 
+    /** Bulk cheap liveness check resolving multiple streams concurrently. */
+    suspend fun checkStatusBulk(
+        urls: List<String>,
+        optionsJson: String = "{}",
+        maxWorkers: Int = 3,
+    ): List<StreamStatus> = urls.map { checkStatus(it, optionsJson) }
+
     /** Pre-build session off the critical path. Returns true when ready. */
     suspend fun warmup(url: String? = null): Boolean = true
 

@@ -14,6 +14,7 @@ import com.snowballons.tukiwatch.net.NETWORK_ERROR_CLASS
 import com.snowballons.tukiwatch.net.isNetworkError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class ChaquopyStreamEngine(appContext: Context) : StreamEngine {
@@ -107,6 +108,21 @@ class ChaquopyStreamEngine(appContext: Context) : StreamEngine {
                 )
             }
         }
+
+    override suspend fun checkStatusBulk(
+        urls: List<String>,
+        optionsJson: String,
+        maxWorkers: Int,
+    ): List<StreamStatus> = withContext(Dispatchers.IO) {
+        if (urls.isEmpty()) return@withContext emptyList()
+        try {
+            val urlsJson = json.encodeToString(urls)
+            val raw = call<String>("check_status_bulk", urlsJson, optionsJson, maxWorkers.toString())
+            json.decodeFromString<List<StreamStatus>>(raw)
+        } catch (e: Exception) {
+            urls.map { checkStatus(it, optionsJson) }
+        }
+    }
 }
 
 fun playStream(player: ExoPlayer, item: StreamItem) {

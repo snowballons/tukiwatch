@@ -412,3 +412,30 @@ class TestCli:
         parsed = json.loads(proc.stdout.strip().splitlines()[-1])
         assert parsed["status"] == "error"
         assert parsed["error"] == "no_plugin"
+
+
+class TestBulkResolving:
+    def test_check_status_bulk_executes_concurrently(self, monkeypatch):
+        def fake_check_status(url, options_json=None):
+            return json.dumps({"url": url, "status": "offline"})
+
+        monkeypatch.setattr(stream_engine, "check_status", fake_check_status)
+        urls = ["https://example.com/1", "https://example.com/2", "https://example.com/3"]
+        raw = stream_engine.check_status_bulk(json.dumps(urls), "{}", max_workers=2)
+        results = json.loads(raw)
+        assert len(results) == 3
+        assert [r["url"] for r in results] == urls
+
+    def test_resolve_details_bulk_executes_concurrently(self, monkeypatch):
+        def fake_resolve_details(url, options_json=None, quality=None):
+            return json.dumps({"url": url, "status": "online", "quality": quality})
+
+        monkeypatch.setattr(stream_engine, "resolve_details", fake_resolve_details)
+        urls = ["https://example.com/a", "https://example.com/b"]
+        raw = stream_engine.resolve_details_bulk(json.dumps(urls), "{}", "best", max_workers=2)
+        results = json.loads(raw)
+        assert len(results) == 2
+        assert results[0]["url"] == "https://example.com/a"
+        assert results[0]["quality"] == "best"
+        assert results[1]["url"] == "https://example.com/b"
+
