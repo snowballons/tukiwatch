@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version tag (e.g. 1.1.5). Leave empty to just upload the build artifact."
+        description: "Release version tag (e.g. 1.2.0). Leave empty to just upload the build artifact."
         required: false
         default: ""
 
@@ -114,22 +114,35 @@ jobs:
           path: ${{ steps.apk.outputs.path }}
           retention-days: 30
 
-      # ── 10. GitHub Release (only when version is supplied) ─────────────────
+      # ── 10. Extract changelog for this version ─────────────────────────────
+      # Parses CHANGELOG.md to pull out the section for the requested version.
+      # Falls back to a generic message if the version block is not found.
+      - name: Extract changelog for version
+        if: github.event.inputs.version != ''
+        id: changelog
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          # Match the block between "## [VERSION]" and the next "## [" heading
+          NOTES=$(awk \
+            "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" \
+            CHANGELOG.md | sed '/^[[:space:]]*$/d' | head -120)
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+          # Write to a temp file to safely handle multi-line content
+          echo "$NOTES" > /tmp/release_notes.md
+          echo "notes_file=/tmp/release_notes.md" >> "$GITHUB_OUTPUT"
+
+      # ── 11. GitHub Release (only when version is supplied) ─────────────────
       - name: Create GitHub Release
         if: github.event.inputs.version != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: "TukiWatch v${{ github.event.inputs.version }}"
-          body: |
-            ## TukiWatch v${{ github.event.inputs.version }}
-
-            Kotlin Multiplatform release build — built on GitHub Actions.
-
-            ### Install
-            Download the APK below and install it on your Android device.
-            You may need to enable *Install unknown apps* in your device settings.
+          body_path: ${{ steps.changelog.outputs.notes_file }}
           files: ${{ steps.apk.outputs.path }}
-          generate_release_notes: true
+          generate_release_notes: false
           draft: false
           prerelease: false
+

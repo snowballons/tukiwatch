@@ -139,7 +139,95 @@ FastAPI backend; their paths are historical.
 
 ### Fixed
 
-## [1.1.8] - 2026-11-06
+## [1.2.0] - 2026-11-15
+
+### Added
+
+- **Bulk/concurrent stream resolution** — the liveness ticker now resolves
+  favorites in parallel batches (default 3 streams per batch) using Python's
+  `ThreadPoolExecutor`. Streamlink's underlying network I/O releases the GIL
+  during socket operations in C, so multiple streams are probed simultaneously
+  rather than one-by-one. For a typical 9-stream library this cuts the full
+  refresh cycle from ~27 s to ~9 s on a stable connection.
+  - New Python entrypoints `check_status_bulk` and `resolve_details_bulk` in
+    `stream_engine.py` accept a JSON array of URLs, dispatch them concurrently,
+    and return an order-aligned JSON array of results. Each individual failure is
+    isolated so a single bad URL never aborts the rest of the batch.
+  - `StreamEngine` interface extended with `checkStatusBulk`; `ChaquopyStreamEngine`
+    serialises the URL list, calls the Python bulk entrypoint via the Chaquopy bridge,
+    and falls back to sequential per-URL resolution if the bridge call itself fails.
+  - `LivenessSource` default `statusBulk` implementation wraps `status()` per-URL
+    with per-item error isolation so custom sources automatically gain resilience.
+  - `StreamlinkLivenessSource` overrides `statusBulk` to delegate to the engine's
+    bulk path (`checkStatusBulk`), thread-safe on `Dispatchers.IO`.
+  - `LivenessRepository.tick()` refactored from a sequential for-each to a
+    batched for-each using `chunked(batchSize)`, with progressive `_streams`
+    emissions after every batch so the UI reflects results incrementally.
+  - New `refreshResolvesInBulkBatches` JVM test verifies chunk size, invocation
+    count, and URL ordering for the bulk path.
+
+- **Liveness cache for instant cold-start display** (`LivenessCache` / `JsonFileLivenessCache`)
+  — the last known live-status result set is now persisted to
+  `liveness_cache.json` in app-internal storage. On the next app open the
+  cached rows are loaded synchronously before the network tick starts, so the My
+  List shows stale-but-immediate data instead of a blank loading state.
+  - `LiveStream` marked `@Serializable`; `LivenessCache` interface and
+    `JsonFileLivenessCache` (kotlinx.serialization JSON) added to `:shared`.
+  - `LivenessRepository.preload()` loads the cache on the IO dispatcher and
+    emits it into `_streams` only when the list is still empty.
+  - `preload()` is called at the top of `refresh()` for apps that skip the
+    explicit warm-up step, and from `TukiWatchApp` on first composition.
+  - `refreshSavesToCache` and `preloadLoadsFromCacheImmediately` JVM tests added.
+
+- **Foreground media playback service with notification controls** (`PlaybackService`)
+  — when *Background Playback* is toggled on in Settings the player now binds a
+  foreground `Service` that holds a `PARTIAL_WAKE_LOCK` and posts a persistent
+  media notification with **Play / Pause / Stop** actions.
+  - Manifest permissions added: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`,
+    `POST_NOTIFICATIONS`, `WAKE_LOCK`.
+  - `PlaybackService` manages the wake lock lifecycle and notification channel
+    (`tukiwatch_playback`) with a `MediaStyle` controller wired to the active
+    `ExoPlayer` session.
+  - `StreamViewModel` starts and stops `PlaybackService` in response to player
+    state and the `backgroundPlayback` DataStore preference.
+  - `PlayerScreen` starts the service on composition when the preference is
+    enabled, and stops it on `DisposableEffect` cleanup.
+
+- **Scroll-position preservation across player back-navigation** — returning
+  from the full-screen player to the Home or My List screen no longer resets the
+  list to the top.
+  - `LazyListState` for both `HomeScreen` and `LibraryScreen` is now hoisted into
+    `AppContent` / `MainActivity` and threaded down as a parameter, so it
+    survives recomposition triggered by back-stack changes.
+
+- **Streamlink bumped to 8.6.3** — the Chaquopy pip dependency is updated from
+  `8.6.2` to `8.6.3`, picking up upstream plugin fixes and reliability
+  improvements. The parity test suite and all documentation references updated
+  to match.
+
+### Changed
+
+- `LivenessRepository.tick()` now emits a progressive `_streams` update after
+  each resolved batch rather than only at the end of the full tick, so the UI
+  reflects partial results as they arrive.
+- `LivenessRepository` constructor gains two new optional parameters:
+  `cache: LivenessCache?` (default `null`) and `batchSize: Int` (default `3`).
+  Existing call-sites are unaffected.
+- `StreamlinkLivenessSource` constructor gains an optional `maxWorkers: Int`
+  parameter (default `3`) forwarded to the Python bulk entrypoint.
+- Saving an empty favorites list now also writes an empty list to the cache
+  (clears stale data) instead of doing nothing.
+- `AGENTS.md` toolchain pin updated to Streamlink 8.6.3.
+
+### Fixed
+
+- `oneFailingUrlDoesNotAbortTheTick` test correctly handles per-item error
+  isolation now that the default `statusBulk` delegates through the per-URL
+  `status()` guard wrapper rather than a bare sequential map, ensuring a
+  `SocketTimeoutException` on one URL produces `status=error` for that item
+  without affecting other URLs in the same batch.
+
+
 
 ### Added
 
@@ -290,7 +378,9 @@ longer exist in the current Kotlin-only repository.
 - Initial public release of the TukiWatch mobile app and FastAPI backend.
   Track favorite streams, check live status, and watch in-app.
 
-[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/snowballons/tukiwatch/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/snowballons/tukiwatch/compare/v1.1.8...v1.2.0
+[1.1.8]: https://github.com/snowballons/tukiwatch/compare/v1.1.4...v1.1.8
 [1.1.4]: https://github.com/snowballons/tukiwatch/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/snowballons/tukiwatch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/snowballons/tukiwatch/compare/v1.1.1...v1.1.2

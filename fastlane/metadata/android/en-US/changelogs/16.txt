@@ -1,0 +1,5 @@
+- Bulk concurrent stream resolution: liveness ticker now checks multiple streams in parallel (3 at a time), reducing a 9-stream refresh from ~27 s to ~9 s
+- Instant cold-start display: last known stream statuses are cached and shown immediately on app open, before the network refresh completes
+- Foreground media playback service: enabling Background Playback now posts a persistent notification with Play/Pause/Stop controls and keeps audio alive
+- Scroll position preserved when returning from the player back to My List or Home
+- Streamlink engine updated to 8.6.3
