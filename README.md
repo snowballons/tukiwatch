@@ -12,7 +12,7 @@
 
 [Releases](https://github.com/snowballons/tukiwatch/releases) · [Website](https://tukiwatch.snowballons.com/) · [Contributing](CONTRIBUTING.md)
 
-[![Get it on Obtainium](assets/obtainium.png)](obtainium://add/https%3A%2F%2Fgithub.com%2Fsnowballons%2Ftukiwatch)
+[![Get it on Obtainium](assets/obtainium.png)](obtainium://app/%7B%22id%22%3A%22com.tukiwatch.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fsnowballons%2Ftukiwatch%22%2C%22author%22%3A%22snowballons%22%2C%22name%22%3A%22TukiWatch%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EandroidApp-release%5C%5C%5C%5C.apk%24%5C%22%7D%22%2C%22overrideSource%22%3Anull%7D)
 
 </div>
 

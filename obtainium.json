@@ -1,0 +1,9 @@
+{
+  "id": "com.tukiwatch.app",
+  "url": "https://github.com/snowballons/tukiwatch",
+  "author": "snowballons",
+  "name": "TukiWatch",
+  "preferredApkIndex": 0,
+  "additionalSettings": "{\"apkFilterRegEx\":\"^androidApp-release\\\\.apk$\"}",
+  "overrideSource": null
+}
