@@ -12,6 +12,8 @@
 
 [Releases](https://github.com/snowballons/tukiwatch/releases) · [Website](https://tukiwatch.snowballons.com/) · [Contributing](CONTRIBUTING.md)
 
+[![Get it on Obtainium](assets/obtainium.png)](obtainium://add/https%3A%2F%2Fgithub.com%2Fsnowballons%2Ftukiwatch)
+
 </div>
 
 ---
